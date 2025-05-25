@@ -1,10 +1,11 @@
 <?php
 /**
- * Directory Permissions Fix Tool
+ * Laravel Directory Permissions Fix Tool
  * 
  * This tool recursively sets permissions on directories (755) and files (664)
- * Version: 1.0
- * Author: Claude
+ * Auto-detects Laravel root directory when placed in public folder
+ * Version: 2.0
+ * Author: Bixa
  */
 
 // Error reporting
@@ -19,11 +20,101 @@ $auth_password = 'admin123';
 if ($enable_auth) {
     if (!isset($_SERVER['PHP_AUTH_USER']) || !isset($_SERVER['PHP_AUTH_PW']) ||
         $_SERVER['PHP_AUTH_USER'] !== $auth_username || $_SERVER['PHP_AUTH_PW'] !== $auth_password) {
-        header('WWW-Authenticate: Basic realm="Permissions Fix Tool"');
+        header('WWW-Authenticate: Basic realm="Laravel Permissions Fix Tool"');
         header('HTTP/1.0 401 Unauthorized');
         echo 'Access Denied';
         exit;
     }
+}
+
+// Function to detect Laravel root directory
+function detect_laravel_root() {
+    $current_dir = dirname(__FILE__);
+    
+    // Check if we're in public directory of Laravel
+    if (basename($current_dir) === 'public') {
+        $potential_root = dirname($current_dir);
+        
+        // Verify Laravel structure by checking for key files/directories
+        $laravel_indicators = [
+            'artisan',
+            'composer.json',
+            'app/Http/Kernel.php',
+            'bootstrap/app.php',
+            'config/app.php'
+        ];
+        
+        $found_indicators = 0;
+        foreach ($laravel_indicators as $indicator) {
+            if (file_exists($potential_root . '/' . $indicator)) {
+                $found_indicators++;
+            }
+        }
+        
+        // If we found at least 3 Laravel indicators, this is likely Laravel root
+        if ($found_indicators >= 3) {
+            return $potential_root;
+        }
+    }
+    
+    // Fallback: search upward for Laravel root
+    $search_dir = $current_dir;
+    $max_levels = 5; // Don't search too far up
+    
+    for ($i = 0; $i < $max_levels; $i++) {
+        if (file_exists($search_dir . '/artisan') && 
+            file_exists($search_dir . '/composer.json') && 
+            is_dir($search_dir . '/app')) {
+            return $search_dir;
+        }
+        
+        $parent = dirname($search_dir);
+        if ($parent === $search_dir) {
+            break; // Reached filesystem root
+        }
+        $search_dir = $parent;
+    }
+    
+    // If no Laravel root found, return current directory
+    return $current_dir;
+}
+
+// Function to get Laravel project info
+function get_laravel_info($root_dir) {
+    $info = [
+        'is_laravel' => false,
+        'version' => 'Unknown',
+        'app_name' => 'Unknown',
+        'environment' => 'Unknown'
+    ];
+    
+    // Check composer.json for Laravel
+    $composer_file = $root_dir . '/composer.json';
+    if (file_exists($composer_file)) {
+        $composer_data = json_decode(file_get_contents($composer_file), true);
+        if (isset($composer_data['require']['laravel/framework'])) {
+            $info['is_laravel'] = true;
+            $info['version'] = $composer_data['require']['laravel/framework'];
+        }
+    }
+    
+    // Try to read .env file for app info
+    $env_file = $root_dir . '/.env';
+    if (file_exists($env_file)) {
+        $env_content = file_get_contents($env_file);
+        
+        // Extract APP_NAME
+        if (preg_match('/^APP_NAME=(.*)$/m', $env_content, $matches)) {
+            $info['app_name'] = trim($matches[1], '"\'');
+        }
+        
+        // Extract APP_ENV
+        if (preg_match('/^APP_ENV=(.*)$/m', $env_content, $matches)) {
+            $info['environment'] = trim($matches[1], '"\'');
+        }
+    }
+    
+    return $info;
 }
 
 // Function to recursively chmod directories and files
@@ -107,18 +198,22 @@ function get_directory_stats($dir) {
         ];
     }
     
-    $items = new RecursiveIteratorIterator(
-        new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS),
-        RecursiveIteratorIterator::SELF_FIRST
-    );
-    
-    foreach ($items as $item) {
-        if ($item->isDir()) {
-            $dir_count++;
-        } else {
-            $file_count++;
-            $total_size += $item->getSize();
+    try {
+        $items = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::SELF_FIRST
+        );
+        
+        foreach ($items as $item) {
+            if ($item->isDir()) {
+                $dir_count++;
+            } else {
+                $file_count++;
+                $total_size += $item->getSize();
+            }
         }
+    } catch (Exception $e) {
+        // Handle permission errors gracefully
     }
     
     return [
@@ -140,6 +235,10 @@ function format_size($size) {
     
     return round($size, 2) . ' ' . $units[$i];
 }
+
+// Detect Laravel root directory
+$laravel_root = detect_laravel_root();
+$laravel_info = get_laravel_info($laravel_root);
 
 // Process form submission
 $log = [];
@@ -170,8 +269,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['target_dir'])) {
     }
 }
 
-// Get current directory stats
-$current_dir = isset($_POST['target_dir']) ? $_POST['target_dir'] : dirname(__FILE__);
+// Get current directory stats (use Laravel root as default)
+$current_dir = isset($_POST['target_dir']) ? $_POST['target_dir'] : $laravel_root;
 $current_stats = get_directory_stats($current_dir);
 
 // Get web server info
@@ -188,7 +287,7 @@ $server_info = [
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Directory Permissions Fix Tool</title>
+    <title>Laravel Permissions Fix Tool</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/feather-icons"></script>
     <style>
@@ -246,6 +345,12 @@ $server_info = [
             gap: 0.5rem;
         }
         
+        .navbar-subtitle {
+            font-size: 0.875rem;
+            color: var(--gray);
+            margin-left: 0.5rem;
+        }
+        
         .container {
             max-width: 1200px;
             margin: 0 auto;
@@ -254,14 +359,14 @@ $server_info = [
         
         .card {
             background-color: white;
-            border-radius: 0.5rem;
+            border-radius: 0.75rem;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             overflow: hidden;
             margin-bottom: 1.5rem;
         }
         
         .card-header {
-            background-color: white;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
             border-bottom: 1px solid var(--border);
             padding: 1rem 1.25rem;
             font-weight: 600;
@@ -296,7 +401,7 @@ $server_info = [
         .form-control:focus {
             border-color: var(--primary);
             outline: 0;
-            box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+            box-shadow: 0 0 0 0.2rem rgba(255, 45, 32, 0.25);
         }
         
         .btn {
@@ -348,11 +453,24 @@ $server_info = [
         
         .stat-card {
             background-color: white;
-            border-radius: 0.5rem;
+            border-radius: 0.75rem;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             padding: 1.25rem;
             display: flex;
             align-items: center;
+            border-left: 4px solid;
+        }
+        
+        .stat-card.primary {
+            border-left-color: var(--primary);
+        }
+        
+        .stat-card.secondary {
+            border-left-color: var(--secondary);
+        }
+        
+        .stat-card.success {
+            border-left-color: var(--success);
         }
         
         .stat-icon {
@@ -389,6 +507,43 @@ $server_info = [
             margin: 0;
             font-size: 1.5rem;
             font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .laravel-info {
+            background: linear-gradient(135deg, var(--primary-light) 0%, #f0f4ff 100%);
+            border: 1px solid #c7d2fe;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .laravel-info h4 {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .laravel-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        .laravel-info-item {
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .laravel-info-item span:first-child {
+            color: var(--gray);
+        }
+        
+        .laravel-info-item span:last-child {
+            font-weight: 500;
             color: var(--dark);
         }
         
@@ -455,11 +610,13 @@ $server_info = [
         .alert-success {
             background-color: var(--success-light);
             color: var(--success);
+            border: 1px solid #10b981;
         }
         
         .alert-warning {
             background-color: var(--warning-light);
             color: var(--warning);
+            border: 1px solid #f59e0b;
         }
         
         .alert-content {
@@ -490,6 +647,11 @@ $server_info = [
             color: var(--primary);
         }
         
+        .badge-success {
+            background-color: var(--success-light);
+            color: var(--success);
+        }
+        
         .server-info {
             font-size: 0.875rem;
             color: var(--gray);
@@ -505,14 +667,25 @@ $server_info = [
             height: 1em;
             vertical-align: -0.125em;
         }
+        
+        .form-text {
+            font-size: 0.875rem;
+            color: var(--gray);
+            margin-top: 0.25rem;
+        }
     </style>
 </head>
 <body>
     <nav class="navbar">
         <div class="navbar-container">
-            <div class="navbar-title">
-                <i data-feather="shield"></i>
-                Directory Permissions Fix Tool
+            <div>
+                <div class="navbar-title">
+                    <i data-feather="shield"></i>
+                    Laravel Permissions Fix Tool
+                    <?php if ($laravel_info['is_laravel']): ?>
+                    <span class="navbar-subtitle">| Detected Laravel Project</span>
+                    <?php endif; ?>
+                </div>
             </div>
             <div class="server-info">
                 PHP: <span><?= htmlspecialchars($server_info['php_version']) ?></span> | 
@@ -532,17 +705,44 @@ $server_info = [
         </div>
         <?php endif; ?>
         
+        <?php if ($laravel_info['is_laravel']): ?>
+        <div class="laravel-info">
+            <h4>
+                <i data-feather="zap"></i>
+                Laravel Project Detected
+            </h4>
+            <div class="laravel-info-grid">
+                <div class="laravel-info-item">
+                    <span>App Name:</span>
+                    <span><?= htmlspecialchars($laravel_info['app_name']) ?></span>
+                </div>
+                <div class="laravel-info-item">
+                    <span>Environment:</span>
+                    <span><?= htmlspecialchars($laravel_info['environment']) ?></span>
+                </div>
+                <div class="laravel-info-item">
+                    <span>Laravel Version:</span>
+                    <span><?= htmlspecialchars($laravel_info['version']) ?></span>
+                </div>
+                <div class="laravel-info-item">
+                    <span>Root Directory:</span>
+                    <span><?= htmlspecialchars(basename($laravel_root)) ?></span>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+        
         <div class="card">
             <div class="card-header">
-                <span>Current Directory Information</span>
-                <div class="badge badge-primary">
-                    <i data-feather="info" class="me-1"></i>
-                    Information
+                <span>Directory Information</span>
+                <div class="badge <?= $laravel_info['is_laravel'] ? 'badge-success' : 'badge-primary' ?>">
+                    <i data-feather="<?= $laravel_info['is_laravel'] ? 'zap' : 'info' ?>" class="me-1"></i>
+                    <?= $laravel_info['is_laravel'] ? 'Laravel Project' : 'Directory Info' ?>
                 </div>
             </div>
             <div class="card-body">
                 <div class="stats-grid">
-                    <div class="stat-card">
+                    <div class="stat-card primary">
                         <div class="stat-icon primary">
                             <i data-feather="folder"></i>
                         </div>
@@ -551,7 +751,7 @@ $server_info = [
                             <p><?= number_format($current_stats['dirs']) ?></p>
                         </div>
                     </div>
-                    <div class="stat-card">
+                    <div class="stat-card secondary">
                         <div class="stat-icon secondary">
                             <i data-feather="file"></i>
                         </div>
@@ -560,7 +760,7 @@ $server_info = [
                             <p><?= number_format($current_stats['files']) ?></p>
                         </div>
                     </div>
-                    <div class="stat-card">
+                    <div class="stat-card success">
                         <div class="stat-icon success">
                             <i data-feather="hard-drive"></i>
                         </div>
@@ -582,7 +782,11 @@ $server_info = [
                     <i data-feather="alert-triangle"></i>
                     <div class="alert-content">
                         <h4>Important Information</h4>
-                        <p>This tool will recursively set directories to 755 (rwxr-xr-x) and files to 664 (rw-rw-r--) permissions. Use with caution as changing permissions incorrectly may affect the functionality of your application.</p>
+                        <p>This tool will recursively set directories to 755 (rwxr-xr-x) and files to 664 (rw-rw-r--) permissions. 
+                        <?php if ($laravel_info['is_laravel']): ?>
+                        For Laravel projects, this is typically safe for most directories, but be careful with storage and bootstrap/cache folders.
+                        <?php endif ?>
+                        Use with caution as changing permissions incorrectly may affect the functionality of your application.</p>
                     </div>
                 </div>
                 
@@ -590,13 +794,25 @@ $server_info = [
                     <div class="form-group">
                         <label for="target_dir" class="form-label">Target Directory</label>
                         <input type="text" class="form-control" id="target_dir" name="target_dir" value="<?= htmlspecialchars($current_dir) ?>" required>
-                        <small class="form-text">Enter the absolute path to the directory you want to fix permissions for.</small>
+                        <div class="form-text">
+                            <?php if ($laravel_info['is_laravel']): ?>
+                            Auto-detected Laravel root directory. You can change this path if needed.
+                            <?php else: ?>
+                            Enter the absolute path to the directory you want to fix permissions for.
+                            <?php endif ?>
+                        </div>
                     </div>
                     
                     <button type="submit" class="btn btn-primary">
                         <i data-feather="check-square"></i>
                         Fix Permissions
                     </button>
+                    <?php if ($laravel_info['is_laravel']): ?>
+                    <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('target_dir').value='<?= htmlspecialchars($laravel_root . '/storage') ?>'">
+                        <i data-feather="folder"></i>
+                        Fix Storage Only
+                    </button>
+                    <?php endif ?>
                 </form>
             </div>
         </div>
@@ -633,6 +849,17 @@ $server_info = [
     <script>
         // Initialize Feather Icons
         feather.replace();
+        
+        // Add some helpful shortcuts for Laravel
+        <?php if ($laravel_info['is_laravel']): ?>
+        function setStoragePermissions() {
+            document.getElementById('target_dir').value = '<?= htmlspecialchars($laravel_root . '/storage') ?>';
+        }
+        
+        function setBootstrapCachePermissions() {
+            document.getElementById('target_dir').value = '<?= htmlspecialchars($laravel_root . '/bootstrap/cache') ?>';
+        }
+        <?php endif; ?>
     </script>
 </body>
 </html>
