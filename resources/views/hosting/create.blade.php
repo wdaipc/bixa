@@ -1,11 +1,11 @@
 @extends('layouts.master')
 
-@section('title')  {{ __('Create') . ' ' . __('Hosting_Accounts') }} @endsection
+@section('title')  {{ __('Create') . ' ' . __('translation.Hosting_Accounts') }} @endsection
 
 @section('content')
     @component('components.breadcrumb')
         @slot('li_1') @lang('translation.Hosting') @endslot
-        @slot('title') {{ __('Create') . ' ' . __('Hosting_Accounts') }} @endslot
+        @slot('title') {{ __('Create') . ' ' . __('translation.Hosting_Accounts') }} @endslot
     @endcomponent
 
     <div class="row justify-content-center">
