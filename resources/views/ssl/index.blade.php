@@ -3,7 +3,7 @@
 @section('content')
     @component('components.breadcrumb')
         @slot('li_1') @lang('translation.SSL') @endslot
-        @slot('title') @lang('translation.Certificates') @endslot
+        @slot('title') @lang('translation.SSL_Certificates') @endslot
     @endcomponent
     <div class="row">
         <div class="col-xl-12">
