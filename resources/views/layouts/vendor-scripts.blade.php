@@ -11,8 +11,8 @@
 <!-- pace js -->
 <script src="{{ URL::asset('build/libs/pace-js/pace.min.js') }}"></script>
 <script src="{{ URL::asset('build/js/advertisement.js ') }}"></script>
-<script src="build/libs/flatpickr/flatpickr.min.js"></script>
-<script src="build/js/pages/dashboard.init.js"></script>
+<script src="/build/libs/flatpickr/flatpickr.min.js"></script>
+<script src="/build/js/pages/dashboard.init.js"></script>
 @yield('script')
 <script src="{{ URL::asset('build/js/app.js') }}"></script>
 
