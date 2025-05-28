@@ -9,7 +9,7 @@
         "afosto/yaac": "^1.5",
         "alirezax5/check-host": "^1.0",
         "bacon/bacon-qr-code": "^3.0",
-        "coderflex/laravel-ticket": "2.0.*",
+        "coderflex/laravel-ticket": "2.0.0",
         "fabianwennink/iconcaptcha": "^4.0",
         "geerlingguy/ping": "^1.2",
         "geoip2/geoip2": "^3.1",
