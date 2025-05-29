@@ -62,7 +62,7 @@ Your server needs to meet the following minimum requirements:
 - A valid, trusted SSL certificate
 
 ### 💾 Installation 
-For detailed installation instructions, please refer to our comprehensive documentation at [https://bixa.app/docs/#/install](https://bixa.app/docs/#/install/).
+For detailed installation instructions, please refer to our comprehensive documentation at [https://bixa.app/docs/#/install](https://bixa.app/docs/#/install).
 
 In brief:
 1. Download the latest release from our [GitHub repository](https://github.com/bixacloud/bixa/releases/latest)
