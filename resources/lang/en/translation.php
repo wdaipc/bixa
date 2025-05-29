@@ -869,4 +869,5 @@ return [
     "YouTube_embedded_successfully" => "YouTube video embedded successfully!",
     "Invalid_YouTube_URL" => "Invalid YouTube URL",
     "Write_your_reply_here" => "Write your reply here..."
+    "Enter_your_signature_here" => "Enter your signature here"
 ];

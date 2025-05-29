@@ -3,13 +3,19 @@
 @section('title') @lang('translation.Profile') @endsection
 
 @section('css')
-<!-- Ace Editor CSS -->
+<!-- Froala Editor CSS -->
+<link href="https://cdn.jsdelivr.net/npm/froala-editor@latest/css/froala_editor.pkgd.min.css" rel="stylesheet">
+<!-- Font Awesome for Froala icons -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<!-- CodeMirror CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/monokai.min.css">
+<!-- Froala Code View Plugin CSS -->
+<link href="https://cdn.jsdelivr.net/npm/froala-editor@latest/css/plugins/code_view.min.css" rel="stylesheet">
+
 <style>
-    /* Signature Editor/Preview Layout */
+    /* Signature Editor Container */
     .signature-container {
-        display: flex;
-        flex-direction: column;
-        width: 100%;
         margin-bottom: 30px;
     }
 
@@ -20,147 +26,68 @@
         margin-bottom: 15px;
     }
 
-    /* Editor container */
-    #editor-container {
+    /* Editor container styling */
+    .signature-editor-container {
         position: relative;
-        height: 300px;
-        border: 1px solid #ced4da;
-        border-radius: 0 0 0.25rem 0.25rem;
         margin-bottom: 20px;
     }
     
-    /* Editor */
+    /* Froala editor styling */
     #signature-editor {
-        width: 100%;
-        height: 100%;
+        min-height: 250px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         font-size: 14px;
-    }
-
-    /* Editor toolbar */
-    .editor-toolbar {
-        padding: 8px;
-        background-color: #f8f9fa;
         border: 1px solid #ced4da;
-        border-radius: 0.25rem 0.25rem 0 0;
-        border-bottom: none;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 5px;
-    }
-    
-    /* Button groups */
-    .btn-group {
-        display: inline-flex;
-        border: 1px solid #ced4da;
-        border-radius: 3px;
-        overflow: hidden;
-        margin-right: 5px;
-    }
-    
-    .btn-group button {
-        border: none;
-        border-right: 1px solid #ced4da;
-        border-radius: 0;
-        margin: 0;
-        padding: 5px 10px;
-        background: #fff;
-        color: #495057;
-    }
-    
-    .btn-group button:last-child {
-        border-right: none;
-    }
-    
-    .btn-group button:hover {
-        background-color: #f1f3f5;
-    }
-    
-    /* Individual toolbar buttons */
-    .toolbar-button {
-        padding: 5px 10px;
-        background: #fff;
-        border: 1px solid #ced4da;
-        border-radius: 3px;
-        cursor: pointer;
-        font-size: 13px;
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        color: #495057;
-    }
-    
-    .toolbar-button:hover {
-        background-color: #f1f3f5;
-    }
-    
-    .toolbar-button i {
-        font-size: 16px;
-    }
-
-    .signature-preview-container {
-        margin-top: 30px;
-        padding-top: 20px;
-        border-top: 1px solid #e2e8f0;
-    }
-
-    .preview-title {
-        font-size: 16px;
-        font-weight: 600;
-        margin-bottom: 15px;
-        color: #495057;
-    }
-
-    .signature-preview {
-        border: 1px solid #e2e8f0;
-        padding: 15px;
-        border-radius: 5px;
-        background-color: #f8fafc;
-        min-height: 100px;
-        margin-bottom: 10px;
-    }
-    
-    .separator {
-        margin: 15px 0;
-        border-top: 1px solid #e2e8f0;
-    }
-    
-    /* Status bar */
-    .editor-statusbar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 8px;
-        background-color: #f8f9fa;
-        border: 1px solid #e2e8f0;
-        border-top: none;
-        border-radius: 0 0 5px 5px;
-        font-size: 12px;
+        border-radius: 0.25rem;
     }
     
     /* Upload progress indicator */
     #upload-progress {
         display: none;
+        margin-top: 10px;
     }
     
     #upload-progress.show {
         display: block;
     }
     
-    /* Make toolbar scrollable on small screens */
-    @media (max-width: 767.98px) {
-        .editor-toolbar {
-            overflow-x: auto;
-            white-space: nowrap;
-            padding-bottom: 8px;
-        }
-        
-        #editor-container {
-            height: 250px;
-        }
+    #upload-status {
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+    
+    /* Toast notification */
+    .toast-message {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 12px 20px;
+        background-color: #28a745;
+        color: #fff;
+        border-radius: 4px;
+        z-index: 9999;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        display: none;
+    }
+    
+    .toast-message.error {
+        background-color: #dc3545;
+    }
+    
+    .toast-message.show {
+        display: block;
+        animation: fadeInOut 3s ease-in-out;
+    }
+    
+    @keyframes fadeInOut {
+        0% { opacity: 0; }
+        15% { opacity: 1; }
+        85% { opacity: 1; }
+        100% { opacity: 0; }
     }
     
     /* Responsive YouTube Embeds */
-    .responsive-embed-container, .youtube-embed-container {
+    .responsive-embed-container {
         position: relative;
         padding-bottom: 56.25%; /* 16:9 aspect ratio */
         height: 0;
@@ -168,13 +95,10 @@
         max-width: 100%;
         margin: 15px 0;
         border-radius: 8px;
-        background-color: #f8f8f8;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
-
-    .responsive-embed-container iframe,
-    .responsive-embed-container object,
-    .responsive-embed-container embed,
-    .youtube-embed-container iframe {
+    
+    .responsive-embed-container iframe {
         position: absolute;
         top: 0;
         left: 0;
@@ -184,67 +108,28 @@
         border-radius: 8px;
     }
     
-    /* Fix specific for YouTube iframes */
-    .card-body iframe[src*="youtube.com/embed"],
-    .card-body iframe[src*="youtu.be"],
-    .card-body iframe[src*="youtube-nocookie.com/embed"] {
+    /* Style images in editor */
+    .fr-view img {
         max-width: 100%;
-    }
-
-    /* Fix mobile-specific styles */
-    @media (max-width: 767.98px) {
-        .card-body iframe[src*="youtube.com/embed"],
-        .card-body iframe[src*="youtu.be"],
-        .card-body iframe[src*="youtube-nocookie.com/embed"] {
-            width: 100% !important;
-            height: auto !important;
-            aspect-ratio: 16/9;
-        }
-    }
-    
-    /* Toast notification */
-    #toast-notification {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        background-color: #28a745;
-        color: white;
-        padding: 12px 20px;
+        height: auto;
         border-radius: 4px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        z-index: 1000;
-        display: none;
+        margin: 5px 0;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
     
-    #toast-notification.show {
-        display: block;
-        animation: fadeInOut 3s ease-in-out;
-    }
-    
-    @keyframes fadeInOut {
-        0% { opacity: 0; }
-        10% { opacity: 1; }
-        90% { opacity: 1; }
-        100% { opacity: 0; }
-    }
-    
-    /* Make sure signature preview displays correctly */
-    #signature-preview {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    }
-    
-    #signature-preview * {
-        max-width: 100%;
-    }
-    
-    /* Make sure iframes in preview display correctly */
-    #signature-preview iframe {
-        max-width: 100%;
-    }
-    
-    /* Make sure styles in preview are preserved */
-    #signature-preview [style] {
-        all: revert;
+    /* Mobile optimizations */
+    @media (max-width: 767.98px) {
+        #signature-editor {
+            min-height: 200px;
+            font-size: 13px;
+        }
+        
+        /* Make toolbar scrollable on small screens */
+        .fr-toolbar {
+            overflow-x: auto;
+            white-space: nowrap;
+            padding-bottom: 8px;
+        }
     }
 </style>
 @endsection
@@ -352,7 +237,7 @@
 
                 <!-- Edit Profile Form -->
                 <div id="editProfile" style="display: none;">
-                    <form action="{{ route('profile.update') }}" method="POST">
+                    <form action="{{ route('profile.update') }}" method="POST" id="profile-form">
                         @csrf
                         <div class="row mb-3">
                             <label for="name" class="col-sm-3 col-form-label">@lang('translation.Name')</label>
@@ -376,96 +261,29 @@
                                 <label class="col-form-label">@lang('translation.Signature')</label>
                             </div>
                             <div class="col-sm-9">
-                                <!-- Signature Container (Custom Layout) -->
+                                <!-- Signature Container -->
                                 <div class="signature-container">
                                     <div class="signature-label">
                                         <button type="button" class="btn btn-sm btn-outline-primary" id="insert-default-signature">
-                                            @lang('translation.Insert_Default_Signature')
+                                            <i class="bx bx-plus-circle me-1"></i> @lang('translation.Insert_Default_Signature')
                                         </button>
                                     </div>
                                     
-                                    <!-- Editor Section -->
+                                    <!-- Editor Container -->
                                     <div class="signature-editor-container">
-                                        <!-- Editor Toolbar -->
-                                        <div class="editor-toolbar">
-                                            <!-- Text formatting buttons -->
-                                            <div class="btn-group">
-                                                <button type="button" id="boldBtn" title="@lang('translation.Bold')">
-                                                    <i class="bx bx-bold"></i>
-                                                </button>
-                                                <button type="button" id="italicBtn" title="@lang('translation.Italic')">
-                                                    <i class="bx bx-italic"></i>
-                                                </button>
-                                                <button type="button" id="underlineBtn" title="@lang('translation.Underline')">
-                                                    <i class="bx bx-underline"></i>
-                                                </button>
-                                            </div>
-                                            
-                                            <!-- Alignment buttons -->
-                                            <div class="btn-group">
-                                                <button type="button" id="alignLeftBtn" title="@lang('translation.Align_Left')">
-                                                    <i class="bx bx-align-left"></i>
-                                                </button>
-                                                <button type="button" id="alignCenterBtn" title="@lang('translation.Align_Center')">
-                                                    <i class="bx bx-align-middle"></i>
-                                                </button>
-                                                <button type="button" id="alignRightBtn" title="@lang('translation.Align_Right')">
-                                                    <i class="bx bx-align-right"></i>
-                                                </button>
-                                            </div>
-                                            
-                                            <!-- Special functions -->
-                                            <button type="button" id="linkBtn" class="toolbar-button" title="@lang('translation.Insert_Link')">
-                                                <i class="bx bx-link"></i> @lang('translation.Link')
-                                            </button>
-                                            <button type="button" id="imageBtn" class="toolbar-button" title="@lang('translation.Insert_Image')">
-                                                <i class="bx bx-image"></i> @lang('translation.Image')
-                                            </button>
-                                            <button type="button" id="youtubeBtn" class="toolbar-button" title="@lang('translation.Insert_YouTube')">
-                                                <i class="bx bxl-youtube" style="color: #FF0000;"></i> YouTube
-                                            </button>
-                                            
-                                            <!-- Format and theme controls -->
-                                            <button type="button" id="formatBtn" class="toolbar-button" title="@lang('translation.Format_HTML')">
-                                                <i class="bx bx-code-block"></i> @lang('translation.Format')
-                                            </button>
-                                            <button type="button" id="themeBtn" class="toolbar-button" title="@lang('translation.Toggle_Theme')">
-                                                <i class="bx bx-moon"></i> @lang('translation.Theme')
-                                            </button>
-                                        </div>
-                                        
-                                        <!-- Ace Editor Container -->
-                                        <div id="editor-container">
-                                            <div id="signature-editor"></div>
-                                        </div>
-                                        
-                                        <!-- Hidden input to store editor content -->
-                                        <textarea id="signature" name="signature" class="d-none @error('signature') is-invalid @enderror">{{ old('signature', Auth::user()->signature) }}</textarea>
+                                        <textarea id="signature-editor" name="signature" class="@error('signature') is-invalid @enderror">{{ old('signature', Auth::user()->signature) }}</textarea>
                                         
                                         <!-- Upload progress indicator -->
                                         <div id="upload-progress" class="progress mt-2">
                                             <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
                                         </div>
-                                        
-                                        <!-- Upload status message -->
-                                        <div id="upload-status" class="mt-2 small"></div>
+                                        <div id="upload-status" class="mt-1 small"></div>
                                         
                                         <small class="text-muted mt-2 d-block">@lang('translation.Signature_will_be_added')</small>
                                         
                                         @error('signature')
                                         <span class="invalid-feedback">{{ $message }}</span>
                                         @enderror
-                                    </div>
-                                    
-                                    <!-- Preview Section -->
-                                    <div class="signature-preview-container">
-                                        <h5 class="preview-title">@lang('translation.Signature_Preview')</h5>
-                                        <div class="signature-preview">
-                                            <div id="signature-preview">
-                                                {!! Auth::user()->signature !!}
-                                            </div>
-                                        </div>
-                                        <small class="text-muted">@lang('translation.Signature_appearance')</small>
                                     </div>
                                 </div>
                             </div>
@@ -614,24 +432,23 @@
     </div>
 </div>
 
-<!-- Toast Notification -->
-<div id="toast-notification"></div>
+<!-- Toast Message -->
+<div id="toast-message" class="toast-message"></div>
 @endsection
 
 @section('script')
-<!-- Ace Editor and Extensions -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.6/ace.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.6/ext-language_tools.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.6/ext-beautify.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.15.1/beautify-html.min.js"></script>
+<!-- Froala Editor JS -->
+<script src="https://cdn.jsdelivr.net/npm/froala-editor@latest/js/froala_editor.pkgd.min.js"></script>
+<!-- CodeMirror JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/xml/xml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/htmlmixed/htmlmixed.min.js"></script>
+<!-- Froala Code View Plugin -->
+<script src="https://cdn.jsdelivr.net/npm/froala-editor@latest/js/plugins/code_view.min.js"></script>
 
 <script>
 // Global variables
-var editor = null;
-var isDarkMode = false;
-var uploadProgress = null;
-var progressBar = null;
-var uploadStatus = null;
+let signatureEditor = null;
 
 // Function to toggle profile display
 function editProfile() {
@@ -644,105 +461,26 @@ function cancelEdit() {
     document.getElementById('editProfile').style.display = 'none';
 }
 
-// Function to update signature preview
-function updateSignaturePreview(html) {
-    const signaturePreview = document.getElementById('signature-preview');
-    if (signaturePreview) {
-        signaturePreview.innerHTML = html || '';
-    }
-}
-
-// Function to update content from editor to hidden field and preview
-function updateContent() {
-    if (!editor) return;
-    
-    const html = editor.getValue();
-    const signatureField = document.getElementById('signature');
-    
-    if (signatureField) {
-        signatureField.value = html;
-    }
-    
-    // Update the preview
-    updateSignaturePreview(html);
-}
-
-// Show toast notification
-function showToast(message) {
-    const toast = document.getElementById('toast-notification');
-    if (!toast) return;
-    
+// Show toast message
+function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast-message');
     toast.textContent = message;
+    
+    if (type === 'error') {
+        toast.classList.add('error');
+    } else {
+        toast.classList.remove('error');
+    }
+    
     toast.classList.add('show');
     
-    // Remove after animation completes
+    // Auto hide after 3 seconds
     setTimeout(() => {
         toast.classList.remove('show');
     }, 3000);
 }
 
-// Format HTML function
-function formatHtml() {
-    try {
-        const content = editor.getValue();
-        const formatted = html_beautify(content, {
-            indent_size: 2,
-            wrap_line_length: 80,
-            preserve_newlines: true,
-            max_preserve_newlines: 2,
-            end_with_newline: false
-        });
-        editor.setValue(formatted, -1);
-        
-        // Show success toast
-        showToast('@lang("translation.Code_formatted_successfully")');
-    } catch (err) {
-        console.error('Error formatting HTML:', err);
-        showToast('@lang("translation.Error_formatting_code")');
-    }
-}
-
-// Function to insert default signature
-function insertDefaultSignature() {
-    if (!editor) {
-        console.error("Editor not initialized");
-        return false;
-    }
-    
-    const userName = "{{ Auth::user()->name }}";
-    const appName = "{{ config('app.name') }}";
-    const isAdmin = "{{ Auth::user()->role === 'admin' ? 'true' : 'false' }}";
-    
-    const roleColor = isAdmin === 'true' ? "#d63939" : "#198754";
-    const roleTitle = isAdmin === 'true' ? "@lang('translation.Administrator')" : "@lang('translation.Support_Staff')";
-    
-    const defaultSignature = `<div style="font-family: Arial, sans-serif; color: #333;">
-        <p><strong>${userName}</strong><br>
-        <span style="color: ${roleColor};">${roleTitle}</span><br>
-        ${appName} @lang('translation.Support_Team')</p>
-        
-        <p style="font-size: 12px; color: #666;">
-            @lang('translation.Need_further_assistance')
-        </p>
-    </div>`;
-    
-    // Clear existing content and insert the new signature
-    editor.setValue(defaultSignature);
-    
-    // Update the hidden textarea
-    const signatureField = document.getElementById('signature');
-    if (signatureField) {
-        signatureField.value = defaultSignature;
-    }
-    
-    // Update the preview
-    updateSignaturePreview(defaultSignature);
-    
-    console.log("Default signature inserted");
-    return true;
-}
-
-// Parse YouTube URL to get video ID
+// Function to parse YouTube URL
 function parseYoutubeUrl(url) {
     if (!url) return false;
     
@@ -764,402 +502,309 @@ function parseYoutubeUrl(url) {
     return false;
 }
 
-// Create YouTube embed HTML
+// Function to create YouTube embed HTML
 function createYoutubeEmbed(videoId) {
     return `<div class="responsive-embed-container">
         <iframe 
             width="560" 
             height="315" 
-            src="https://www.youtube-nocookie.com/embed/${videoId}?playsinline=1&fs=1" 
+            src="https://www.youtube-nocookie.com/embed/${videoId}?rel=0&showinfo=0&modestbranding=1&playsinline=1&fs=1" 
             title="YouTube video player" 
             frameborder="0" 
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-            loading="lazy"
-            allowfullscreen>
+            allowfullscreen
+            loading="lazy">
         </iframe>
     </div><p><br></p>`;
 }
 
-// Insert YouTube embed
-function insertYoutubeEmbed() {
-    // Prompt user for YouTube URL
-    const url = prompt('@lang("translation.Enter_YouTube_URL"):');
-    if (!url) return;
-    
-    // Parse URL to get video ID
-    const videoId = parseYoutubeUrl(url);
-    if (!videoId) {
-        alert('@lang("translation.Invalid_YouTube_URL")');
-        return;
+// Function to insert default signature
+function insertDefaultSignature() {
+    if (!signatureEditor) {
+        console.error("Editor not initialized");
+        showToast('@lang("translation.Editor_not_ready")', 'error');
+        return false;
     }
     
-    // Get current cursor position
-    const cursorPos = editor.getCursorPosition();
+    const userName = "{{ Auth::user()->name }}";
+    const appName = "{{ config('app.name') }}";
+    const isAdmin = {{ Auth::user()->role === 'admin' ? 'true' : 'false' }};
     
-    // Insert YouTube embed HTML at cursor position
-    editor.session.insert(cursorPos, createYoutubeEmbed(videoId));
+    const roleColor = isAdmin ? "#d63939" : "#198754";
+    const roleTitle = isAdmin ? "@lang('translation.Administrator')" : "@lang('translation.Support_Staff')";
     
-    // Update content and preview
-    updateContent();
+    const defaultSignature = `<div style="font-family: Arial, sans-serif; color: #333; line-height: 1.5;">
+        <p style="margin: 0 0 10px 0;"><strong>${userName}</strong><br>
+        <span style="color: ${roleColor};">${roleTitle}</span><br>
+        ${appName} @lang('translation.Support_Team')</p>
+        
+        <p style="font-size: 12px; color: #666; margin: 0;">
+            @lang('translation.Need_further_assistance')
+        </p>
+    </div>`;
     
-    // Show success message
-    if (uploadStatus) {
-        uploadStatus.innerHTML = '<span class="text-success"><i class="bx bx-check-circle me-1"></i> @lang("translation.YouTube_embedded_successfully")</span>';
-        setTimeout(() => { uploadStatus.innerHTML = ''; }, 3000);
-    }
+    // Set the content in Froala editor
+    signatureEditor.html.set(defaultSignature);
+    
+    showToast('@lang("translation.Default_signature_inserted")');
+    return true;
 }
 
-// Insert link function
-function insertLink() {
-    // Get selected text
-    const selectedText = editor.getSelectedText();
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize elements
+    const uploadProgress = document.getElementById('upload-progress');
+    const progressBar = uploadProgress.querySelector('.progress-bar');
+    const uploadStatus = document.getElementById('upload-status');
     
-    // Prompt for link text if none selected
-    const linkText = selectedText || prompt('@lang("translation.Enter_link_text"):', '@lang("translation.Link_Text")');
-    if (!linkText) return;
-    
-    // Prompt for URL
-    const url = prompt('@lang("translation.Enter_URL"):', 'https://');
-    if (!url) return;
-    
-    // Create HTML for link
-    const html = `<a href="${url}">${linkText}</a>`;
-    
-    // If text was selected, replace it; otherwise insert at cursor
-    if (selectedText) {
-        // Replace selected text with link
-        const range = editor.getSelectionRange();
-        editor.session.replace(range, html);
-    } else {
-        // Insert at cursor position
-        const cursorPos = editor.getCursorPosition();
-        editor.session.insert(cursorPos, html);
-    }
-    
-    // Update hidden input and preview
-    updateContent();
-}
-
-// Upload image to server
-function uploadImageToServer(file) {
-    // Show upload progress
-    if (uploadProgress) {
-        uploadProgress.style.display = 'block';
-        progressBar.style.width = '30%';
-        uploadStatus.innerHTML = '<span class="text-primary"><i class="bx bx-loader-alt bx-spin me-1"></i> @lang("translation.Uploading_image")</span>';
-    }
-    
-    // Create FormData
-    const formData = new FormData();
-    formData.append('image', file);
-    
-    // Add CSRF token
+    // Get CSRF token
     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
     
-    // Send request
-    fetch('/upload/image', {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': csrfToken,
-            'Accept': 'application/json'
-        },
-        body: formData
-    })
-    .then(response => {
-        if (progressBar) progressBar.style.width = '60%';
-        return response.json();
-    })
-    .then(data => {
-        if (progressBar) progressBar.style.width = '100%';
-        
-        if (data.success) {
-            // Insert image HTML at cursor position
-            const imageUrl = data.data.url;
-            const html = `<img src="${imageUrl}" alt="Signature Image" style="max-width: 100%; height: auto;">`;
+    // Initialize Froala Editor for signature
+    const signatureEditorElement = document.getElementById('signature-editor');
+    if (signatureEditorElement) {
+        signatureEditor = new FroalaEditor('#signature-editor', {
+            // License key
+            key: "1C%kZPBZ`JWSDBCQ@ZGD\\@\\JXDAAOZWJh,/.!==",
             
-            const cursorPos = editor.getCursorPosition();
-            editor.session.insert(cursorPos, html);
+            // Basic configuration
+            height: 250,
+            placeholderText: '@lang("translation.Enter_your_signature_here")',
+            charCounterCount: true,
+            attribution: false, // Disable Froala branding with license key
             
-            // Update hidden input and preview
-            updateContent();
+            // CodeMirror configuration for HTML view
+            codeMirror: window.CodeMirror,
+            codeMirrorOptions: {
+                lineNumbers: true,
+                lineWrapping: true,
+                mode: 'text/html',
+                theme: 'monokai',
+                tabSize: 2,
+                indentWithTabs: false
+            },
             
-            // Show success message
-            if (uploadStatus) {
-                uploadStatus.innerHTML = '<span class="text-success"><i class="bx bx-check-circle me-1"></i> @lang("translation.Image_uploaded_successfully")</span>';
-                
-                // Hide progress bar after a delay
-                setTimeout(() => {
-                    uploadProgress.style.display = 'none';
-                    progressBar.style.width = '0%';
-                }, 2000);
-                
-                // Clear status message after a delay
-                setTimeout(() => {
-                    uploadStatus.innerHTML = '';
-                }, 5000);
-            }
-        } else {
-            // Handle error
-            if (uploadStatus) {
-                uploadStatus.innerHTML = '<span class="text-danger"><i class="bx bx-error-circle me-1"></i> ' + (data.error || '@lang("translation.Failed_to_upload_image")') + '</span>';
-                
-                // Hide progress bar after a delay
-                setTimeout(() => {
-                    uploadProgress.style.display = 'none';
-                    progressBar.style.width = '0%';
-                }, 2000);
-            }
-        }
-    })
-    .catch(error => {
-        if (progressBar) progressBar.style.width = '100%';
-        console.error('Upload error:', error);
-        
-        if (uploadStatus) {
-            uploadStatus.innerHTML = '<span class="text-danger"><i class="bx bx-error-circle me-1"></i> @lang("translation.Error_uploading_image")</span>';
+            // Simplified toolbar for signature
+            toolbarButtons: [
+                'bold', 'italic', 'underline', 'textColor', '|',
+                'alignLeft', 'alignCenter', '|',
+                'formatUL', '|',
+                'insertImage', 'insertVideo', '|',
+                'html'
+            ],
             
-            // Hide progress bar after a delay
-            setTimeout(() => {
-                uploadProgress.style.display = 'none';
-                progressBar.style.width = '0%';
-            }, 2000);
-        }
-    });
-}
-
-// Handle text formatting buttons
-function setupFormattingButtons() {
-    // Bold
-    document.getElementById('boldBtn').addEventListener('click', function() {
-        const selectedText = editor.getSelectedText();
-        if (!selectedText) return;
-        
-        const html = `<strong>${selectedText}</strong>`;
-        const range = editor.getSelectionRange();
-        editor.session.replace(range, html);
-        
-        // Update content and preview
-        updateContent();
-    });
-    
-    // Italic
-    document.getElementById('italicBtn').addEventListener('click', function() {
-        const selectedText = editor.getSelectedText();
-        if (!selectedText) return;
-        
-        const html = `<em>${selectedText}</em>`;
-        const range = editor.getSelectionRange();
-        editor.session.replace(range, html);
-        
-        // Update content and preview
-        updateContent();
-    });
-    
-    // Underline
-    document.getElementById('underlineBtn').addEventListener('click', function() {
-        const selectedText = editor.getSelectedText();
-        if (!selectedText) return;
-        
-        const html = `<u>${selectedText}</u>`;
-        const range = editor.getSelectionRange();
-        editor.session.replace(range, html);
-        
-        // Update content and preview
-        updateContent();
-    });
-    
-    // Alignment buttons
-    const alignBtns = [
-        {id: 'alignLeftBtn', align: 'left'},
-        {id: 'alignCenterBtn', align: 'center'},
-        {id: 'alignRightBtn', align: 'right'}
-    ];
-    
-    alignBtns.forEach(function(btn) {
-        document.getElementById(btn.id).addEventListener('click', function() {
-            const selectedText = editor.getSelectedText();
-            if (!selectedText) return;
+            // Disable default image upload to use our custom handler
+            imageUpload: false,
             
-            const html = `<div style="text-align: ${btn.align};">${selectedText}</div>`;
-            const range = editor.getSelectionRange();
-            editor.session.replace(range, html);
-            
-            // Update content and preview
-            updateContent();
-        });
-    });
-    
-    // Link button
-    document.getElementById('linkBtn').addEventListener('click', function() {
-        insertLink();
-    });
-    
-    // Image button
-    document.getElementById('imageBtn').addEventListener('click', function() {
-        // Create file input element
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.accept = 'image/*';
-        fileInput.style.display = 'none';
-        document.body.appendChild(fileInput);
-        
-        // Handle file selection
-        fileInput.onchange = function() {
-            if (fileInput.files && fileInput.files[0]) {
-                uploadImageToServer(fileInput.files[0]);
-            }
-            document.body.removeChild(fileInput);
-        };
-        
-        // Trigger file selection dialog
-        fileInput.click();
-    });
-    
-    // YouTube button
-    document.getElementById('youtubeBtn').addEventListener('click', function() {
-        insertYoutubeEmbed();
-    });
-    
-    // Format button
-    document.getElementById('formatBtn').addEventListener('click', function() {
-        formatHtml();
-    });
-    
-    // Theme button
-    document.getElementById('themeBtn').addEventListener('click', function() {
-        isDarkMode = !isDarkMode;
-        editor.setTheme(isDarkMode ? "ace/theme/monokai" : "ace/theme/chrome");
-        
-        // Update button icon
-        this.innerHTML = isDarkMode ? 
-            '<i class="bx bx-sun"></i> @lang("translation.Theme")' : 
-            '<i class="bx bx-moon"></i> @lang("translation.Theme")';
-    });
-}
-
-// Handle paste events
-function setupPasteHandler() {
-    // Access the editor's textarea element
-    const editorElement = document.querySelector('.ace_text-input');
-    if (!editorElement) return;
-    
-    // Add paste event listener to the document
-    document.addEventListener('paste', function(e) {
-        // Only handle paste if editor has focus
-        if (!editor.isFocused()) return;
-        
-        // Check for image data
-        if (e.clipboardData && e.clipboardData.items) {
-            const items = e.clipboardData.items;
-            for (let i = 0; i < items.length; i++) {
-                if (items[i].type.indexOf('image') !== -1) {
-                    e.preventDefault();
-                    const file = items[i].getAsFile();
-                    if (file) {
-                        uploadImageToServer(file);
+            // Events
+            events: {
+                'initialized': function() {
+                    const that = this;
+                    
+                    // Custom image upload function
+                    function uploadImage(file, editor) {
+                        // Show upload progress
+                        uploadProgress.style.display = 'block';
+                        progressBar.style.width = '30%';
+                        uploadStatus.innerHTML = '@lang("translation.Uploading_image")';
+                        
+                        const formData = new FormData();
+                        formData.append('image', file);
+                        formData.append('_token', csrfToken);
+                        
+                        fetch('/admin/upload-image', {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'X-CSRF-TOKEN': csrfToken,
+                                'Accept': 'application/json'
+                            },
+                            credentials: 'same-origin'
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            progressBar.style.width = '100%';
+                            
+                            if (data.success && data.data && data.data.url) {
+                                // Success! Insert the image
+                                editor.image.insert(data.data.url, null, null, editor.image.get());
+                                
+                                uploadStatus.innerHTML = '<span class="text-success">@lang("translation.Image_uploaded_successfully")</span>';
+                                showToast('@lang("translation.Image_uploaded_successfully")');
+                                
+                                // Hide progress bar after a delay
+                                setTimeout(() => {
+                                    uploadProgress.style.display = 'none';
+                                    progressBar.style.width = '0%';
+                                    uploadStatus.innerHTML = '';
+                                }, 3000);
+                            } else {
+                                // Error from server
+                                const errorMsg = data.error || '@lang("translation.Failed_to_upload_image")';
+                                uploadStatus.innerHTML = `<span class="text-danger">${errorMsg}</span>`;
+                                showToast(errorMsg, 'error');
+                                
+                                // Hide progress bar after a delay
+                                setTimeout(() => {
+                                    uploadProgress.style.display = 'none';
+                                    progressBar.style.width = '0%';
+                                }, 5000);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Image upload error:', error);
+                            const errorMsg = '@lang("translation.Error_uploading_image")';
+                            uploadStatus.innerHTML = `<span class="text-danger">${errorMsg}</span>`;
+                            showToast(errorMsg, 'error');
+                            
+                            // Hide progress bar after a delay
+                            setTimeout(() => {
+                                uploadProgress.style.display = 'none';
+                                progressBar.style.width = '0%';
+                            }, 5000);
+                        });
                     }
-                    return;
+                    
+                    // Override the default image insertion method
+                    this.image.upload = function() {
+                        const input = document.createElement('input');
+                        input.setAttribute('type', 'file');
+                        input.setAttribute('accept', 'image/jpeg,image/png,image/gif,image/webp');
+                        input.click();
+                        
+                        input.onchange = function() {
+                            if (input.files && input.files[0]) {
+                                uploadImage(input.files[0], that);
+                            }
+                        };
+                    };
+                    
+                    // Custom YouTube video insertion
+                    this.registerCommand('insertVideo', {
+                        title: 'Insert YouTube Video',
+                        focus: true,
+                        undo: true,
+                        refreshAfterCallback: true,
+                        callback: function () {
+                            const videoUrl = prompt('@lang("translation.Enter_YouTube_URL")');
+                            if (videoUrl) {
+                                const videoId = parseYoutubeUrl(videoUrl);
+                                if (videoId) {
+                                    const embedHtml = createYoutubeEmbed(videoId);
+                                    this.html.insert(embedHtml);
+                                    showToast('@lang("translation.YouTube_video_embedded_successfully")');
+                                } else {
+                                    showToast('@lang("translation.Invalid_YouTube_URL")', 'error');
+                                }
+                            }
+                        }
+                    });
+                    
+                    // Enhanced paste functionality for images and YouTube links
+                    this.$el.on('paste', function(e) {
+                        if (e.originalEvent && e.originalEvent.clipboardData && e.originalEvent.clipboardData.items) {
+                            const items = e.originalEvent.clipboardData.items;
+                            
+                            // Check for images first
+                            for (let i = 0; i < items.length; i++) {
+                                if (items[i].type.indexOf('image') !== -1) {
+                                    e.preventDefault();
+                                    const blob = items[i].getAsFile();
+                                    if (blob) {
+                                        uploadImage(blob, that);
+                                    }
+                                    return;
+                                }
+                            }
+                            
+                            // Check for YouTube URLs in text
+                            const clipboardText = e.originalEvent.clipboardData.getData('text');
+                            if (clipboardText && (clipboardText.includes('youtube.com/watch') || clipboardText.includes('youtu.be/'))) {
+                                const videoId = parseYoutubeUrl(clipboardText);
+                                if (videoId) {
+                                    e.preventDefault();
+                                    const embedHtml = createYoutubeEmbed(videoId);
+                                    that.html.insert(embedHtml);
+                                    showToast('@lang("translation.YouTube_video_embedded_successfully")');
+                                    return;
+                                }
+                            }
+                        }
+                    });
+                    
+                    // Handle drag and drop for images
+                    this.$el.on('drop', function(e) {
+                        if (e.originalEvent.dataTransfer && e.originalEvent.dataTransfer.files) {
+                            const files = e.originalEvent.dataTransfer.files;
+                            
+                            for (let i = 0; i < files.length; i++) {
+                                if (files[i].type.indexOf('image') !== -1) {
+                                    e.preventDefault();
+                                    uploadImage(files[i], that);
+                                    break;
+                                }
+                            }
+                        }
+                    });
+                },
+                
+                // Handle image insertion after upload to make them responsive
+                'image.inserted': function($img) {
+                    // Ensure images are responsive and styled
+                    $img.addClass('img-fluid');
+                    $img.css('max-width', '100%');
+                    $img.css('height', 'auto');
                 }
             }
-        }
-        
-        // Check for YouTube URL
-        const text = e.clipboardData.getData('text/plain');
-        if (text && (text.includes('youtube.com/watch') || text.includes('youtu.be/'))) {
-            const videoId = parseYoutubeUrl(text);
-            if (videoId) {
-                e.preventDefault();
+        });
+    }
+    
+    // Setup default signature button
+    const insertDefaultBtn = document.getElementById('insert-default-signature');
+    if (insertDefaultBtn) {
+        insertDefaultBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            insertDefaultSignature();
+        });
+    }
+    
+    // Handle form submission
+    const form = document.getElementById('profile-form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            // Add loading state to button
+            const submitBtn = this.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                const originalContent = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> @lang("translation.Saving")';
+                submitBtn.disabled = true;
                 
-                // Insert at cursor position
-                const cursorPos = editor.getCursorPosition();
-                editor.session.insert(cursorPos, createYoutubeEmbed(videoId));
-                
-                // Update content and preview
-                updateContent();
-                
-                // Show success message
-                if (uploadStatus) {
-                    uploadStatus.innerHTML = '<span class="text-success"><i class="bx bx-check-circle me-1"></i> @lang("translation.YouTube_embedded")</span>';
-                    setTimeout(() => { uploadStatus.innerHTML = ''; }, 3000);
-                }
-                
-                return;
+                // Re-enable button after a timeout as fallback
+                setTimeout(() => {
+                    submitBtn.innerHTML = originalContent;
+                    submitBtn.disabled = false;
+                }, 10000);
             }
-        }
-    }, true);
-}
-
-// Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
-    console.log("DOM loaded, initializing editor");
+        });
+    }
+    
+    // Mobile-specific adjustments
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+        // Make toolbar scrollable on mobile
+        setTimeout(() => {
+            const toolbar = document.querySelector('.fr-toolbar');
+            if (toolbar) {
+                toolbar.style.overflowX = 'auto';
+                toolbar.style.flexWrap = 'nowrap';
+                toolbar.style.whiteSpace = 'nowrap';
+            }
+        }, 1000);
+    }
     
     // Initialize Feather Icons
     if (typeof feather !== 'undefined') {
         feather.replace();
-    }
-    
-    // Set up upload progress elements
-    uploadProgress = document.getElementById('upload-progress');
-    if (uploadProgress) {
-        progressBar = uploadProgress.querySelector('.progress-bar');
-        uploadStatus = document.getElementById('upload-status');
-    }
-    
-    // Initialize Ace Editor
-    const editorElement = document.getElementById('signature-editor');
-    if (editorElement) {
-        // Create the editor
-        editor = ace.edit("signature-editor");
-        
-        // Configure editor
-        editor.setTheme("ace/theme/chrome");
-        editor.session.setMode("ace/mode/html");
-        editor.setOptions({
-            enableBasicAutocompletion: true,
-            enableLiveAutocompletion: true,
-            enableSnippets: true,
-            fontSize: "14px",
-            showPrintMargin: false,
-            highlightActiveLine: true,
-            wrap: true
-        });
-        
-        // Get initial content from hidden field
-        const signatureField = document.getElementById('signature');
-        if (signatureField && signatureField.value) {
-            editor.setValue(signatureField.value, -1);
-            
-            // Update preview initially
-            updateSignaturePreview(signatureField.value);
-        }
-        
-        // Setup event listeners for content changes
-        editor.on('change', function() {
-            updateContent();
-        });
-        
-        // Setup default signature button
-        const insertDefaultBtn = document.getElementById('insert-default-signature');
-        if (insertDefaultBtn) {
-            insertDefaultBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                insertDefaultSignature();
-            });
-        }
-        
-        // Setup formatting buttons
-        setupFormattingButtons();
-        
-        // Setup paste handler
-        setupPasteHandler();
-        
-        // Handle form submission
-        const form = editorElement.closest('form');
-        if (form) {
-            form.addEventListener('submit', function() {
-                updateContent();
-            });
-        }
     }
 });
 </script>

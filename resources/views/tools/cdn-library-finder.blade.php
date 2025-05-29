@@ -1,369 +1,265 @@
 @extends('layouts.master')
 
 @section('title')
-    @if(!empty($libraryDetails))
-        {{ $libraryDetails['library'] ?? __('tools.library') }} - {{ __('tools.cdn_library_details') }}
+    @if(!empty($libraryData))
+        {{ $libraryData['name'] ?? 'Library' }} - CDN Library Details
     @else
-        {{ __('tools.cdn_library_finder') }}
+        CDN Library Search
     @endif
 @endsection
 
 @section('css')
+<!-- FontAwesome 6 -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <!-- Highlight.js for syntax highlighting -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
-<!-- GitHub Markdown CSS -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown.min.css">
-<!-- SweetAlert2 CSS -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-<!-- GitHub Fonts -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+<!-- GitHub-style markdown CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown-light.min.css">
+<link href="{{ URL::asset('/build/libs/sweetalert2/sweetalert2.min.css') }}" rel="stylesheet" type="text/css" />
 <style>
-    :root {
-        --primary-color: #4f46e5;
-        --primary-dark: #4338ca;
-        --primary-light: #818cf8;
-        --success-color: #10b981;
-        --danger-color: #ef4444;
-        --warning-color: #f59e0b;
-        --info-color: #3b82f6;
-    }
-    
     /* Header Section */
     .header-section {
-        background: linear-gradient(135deg, var(--primary-dark), #312e81);
+        background: linear-gradient(to right, #4338ca, #312e81);
         color: white;
-        padding: 3rem 0;
-        margin-bottom: 2rem;
-        border-radius: 0.5rem;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        padding: 2.5rem 0;
+        margin-bottom: 1.5rem;
+        border-radius: 0.375rem;
+        text-align: center;
     }
     
     .header-title {
-        font-weight: 700;
         font-size: 2.5rem;
+        font-weight: 700;
         color: white !important;
         margin-bottom: 1rem;
     }
     
     .header-description {
-        font-size: 1.25rem;
+        font-size: 1.125rem;
         opacity: 0.9;
     }
-    
-    /* Main Container */
-    .tool-container {
-        background-color: #fff;
-        border-radius: 0.5rem;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        margin-bottom: 2rem;
-        overflow: hidden;
+	
+	/* Modern location info styling */
+#locationInfo {
+    padding: 0;
+    border-radius: 0.5rem;
+    background-color: #f8f9fa;
+    border: none;
+    margin-bottom: 1.5rem;
+}
+
+.location-card {
+    display: flex;
+    justify-content: space-between;
+    padding: 0;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+/* Left side - Location */
+.location-details {
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: linear-gradient(135deg, #4c6ef5 0%, #6643b5 100%);
+    color: white;
+    flex: 1;
+}
+
+.location-icon {
+    margin-right: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.location-icon img, .location-icon .flag-placeholder {
+    width: 32px;
+    height: 24px;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.location-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.location-primary {
+    margin-bottom: 0.25rem;
+}
+
+.location-label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    opacity: 0.8;
+    letter-spacing: 0.5px;
+    margin-right: 0.5rem;
+}
+
+.location-name {
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.location-secondary {
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+/* Right side - Test info */
+.test-details {
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background-color: white;
+    color: #333;
+}
+
+.test-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #f0f4ff;
+    margin-right: 1rem;
+    color: #4c6ef5;
+}
+
+.test-icon i {
+    font-size: 1rem;
+}
+
+.test-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.test-primary, .test-secondary {
+    display: flex;
+    align-items: center;
+}
+
+.test-primary {
+    margin-bottom: 0.25rem;
+}
+
+.test-stat {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #4c6ef5;
+    margin-right: 0.25rem;
+}
+
+.test-label {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+    .location-card {
+        flex-direction: column;
     }
     
+    .location-details, .test-details {
+        width: 100%;
+    }
+    
+    .test-details {
+        border-top: 1px solid rgba(0,0,0,0.05);
+    }
+}
+
     /* Search Container */
-    .search-wrapper {
+    .search-container {
         position: relative;
         margin-bottom: 1.5rem;
     }
     
-    .search-container {
-        display: flex;
-        align-items: center;
-        border: 2px solid #e5e7eb;
+    .search-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6b7280;
+        z-index: 1;
+    }
+    
+    .search-box {
+        width: 100%;
+        padding: 0.9rem 1rem 0.9rem 2.5rem;
         border-radius: 0.5rem;
-        overflow: hidden;
+        border: 1px solid #e5e7eb;
+        font-size: 1.1rem;
+        background-color: #ffffff;
+        color: #111827;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
         transition: all 0.3s;
     }
     
-    .search-container:focus-within {
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 0.25rem rgba(79, 70, 229, 0.25);
+    .search-box::placeholder {
+        color: #9ca3af;
     }
     
-    .search-icon {
-        padding-left: 1rem;
-        color: #6b7280;
-    }
-    
-    .search-input {
-        width: 100%;
-        padding: 0.875rem 1rem;
-        font-size: 1rem;
-        border: none;
+    .search-box:focus {
         outline: none;
+        border-color: #4f46e5;
+        box-shadow: 0 6px 12px rgba(67, 56, 202, 0.15);
     }
     
-    .search-clear {
-        color: #6b7280;
-        background: none;
-        border: none;
-        padding: 0 1rem;
-        cursor: pointer;
-        transition: color 0.2s;
+    /* Library Details */
+    .library-info {
+        padding: 1rem 0;
     }
     
-    .search-clear:hover {
-        color: #374151;
-    }
-    
-    /* Search Results */
-    .search-results {
-        position: absolute;
-        width: 100%;
-        margin-top: 0.25rem;
-        background-color: white;
-        border: 1px solid #e5e7eb;
-        border-radius: 0.5rem;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-        max-height: 350px;
-        overflow-y: auto;
-        z-index: 50;
-    }
-    
-    .search-results.hidden {
-        display: none;
-    }
-    
-    .search-result-item {
-        padding: 0.875rem 1rem;
-        border-bottom: 1px solid #e5e7eb;
-        cursor: pointer;
-        transition: background-color 0.2s;
-    }
-    
-    .search-result-item:hover {
-        background-color: #f9fafb;
-    }
-    
-    .search-result-item:last-child {
-        border-bottom: none;
-    }
-    
-    .search-result-name {
-        font-weight: 600;
-        color: #111827;
-        margin-bottom: 0.25rem;
-    }
-    
-    .search-result-description {
-        font-size: 0.875rem;
-        color: #6b7280;
-        margin-bottom: 0.5rem;
-    }
-    
-    .search-result-badges {
-        margin-top: 8px;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 4px;
-    }
-    
-    .search-result-badge {
-        display: inline-block;
-        padding: 0.25rem 0.5rem;
-        font-size: 0.75rem;
-        font-weight: 500;
-        border-radius: 9999px;
-    }
-    
-    .search-result-badge-cdnjs {
-        background-color: #e0e7ff;
+    .back-to-search {
+        display: inline-flex;
+        align-items: center;
         color: #4f46e5;
+        margin-bottom: 0.75rem;
+        text-decoration: none;
+        font-weight: 500;
     }
     
-    .search-result-badge-jsdelivr {
-        background-color: #fef3c7;
-        color: #d97706;
+    .back-to-search:hover {
+        text-decoration: underline;
     }
     
-    .search-result-badge-unpkg {
-        background-color: #d1fae5;
-        color: #059669;
-    }
-    
-    /* Loading Indicator */
-    .loading-indicator {
-        text-align: center;
-        padding: 2.5rem 0;
-    }
-    
-    .spinner {
-        width: 2.5rem;
-        height: 2.5rem;
-        border: 0.25rem solid #e5e7eb;
-        border-top-color: var(--primary-color);
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        margin: 0 auto 1rem;
-    }
-    
-    @keyframes spin {
-        to { transform: rotate(360deg); }
-    }
-    
-    /* Info Card */
-    .info-card {
-        background-color: #f9fafb;
-        border: 1px solid #e5e7eb;
-        border-radius: 0.5rem;
-        padding: 1.5rem;
-    }
-    
-    .info-header {
-        display: flex;
-        gap: 0.75rem;
-        margin-bottom: 1rem;
-    }
-    
-    .info-icon {
-        color: var(--primary-color);
-        flex-shrink: 0;
-    }
-    
-    .info-title {
-        font-size: 1.125rem;
-        font-weight: 600;
-        color: #111827;
-    }
-    
-    .info-list {
-        margin-top: 1rem;
-        margin-bottom: 1rem;
-    }
-    
-    .info-list-item {
-        display: flex;
-        gap: 0.5rem;
-        margin-bottom: 0.5rem;
-    }
-    
-    .info-bullet {
-        width: 0.5rem;
-        height: 0.5rem;
-        background-color: var(--primary-color);
-        border-radius: 9999px;
-        margin-top: 0.5rem;
-        flex-shrink: 0;
-    }
-    
-    /* Popular libraries section */
-    .popular-libraries {
-        margin-top: 2rem;
-    }
-    
-    .popular-libraries h3 {
-        font-size: 1.25rem;
-        font-weight: 600;
-        color: #111827;
-        margin-bottom: 1rem;
-    }
-    
-    .library-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 1rem;
-    }
-    
-    @media (min-width: 768px) {
-        .library-grid {
-            grid-template-columns: repeat(3, 1fr);
-        }
-    }
-    
-    @media (min-width: 1024px) {
-        .library-grid {
-            grid-template-columns: repeat(4, 1fr);
-        }
-    }
-    
-    .library-card {
-        background-color: white;
-        border: 1px solid #e5e7eb;
-        border-radius: 0.5rem;
-        padding: 1rem;
-        transition: all 0.2s;
-        cursor: pointer;
-    }
-    
-    .library-card:hover {
-        border-color: var(--primary-color);
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        transform: translateY(-2px);
-    }
-    
-    .library-card-name {
-        font-weight: 600;
-        color: #111827;
-        margin-bottom: 0.5rem;
-    }
-    
-    .library-card-description {
-        font-size: 0.875rem;
-        color: #6b7280;
-        margin-bottom: 0.5rem;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
-    
-    /* Library Details Styles */
     .library-header {
-        padding-bottom: 1.5rem;
-        margin-bottom: 1.5rem;
-        border-bottom: 1px solid #e5e7eb;
-    }
-    
-    .library-header-row {
         display: flex;
-        flex-direction: column;
-        gap: 1rem;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        margin-bottom: 1.5rem;
     }
     
-    @media (min-width: 768px) {
-        .library-header-row {
-            flex-direction: row;
-            justify-content: space-between;
-            align-items: flex-start;
-        }
+    .library-title {
+        margin-right: 1.5rem;
     }
     
     .library-name {
         font-size: 1.75rem;
         font-weight: 700;
-        color: #111827;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.375rem;
     }
     
     .library-description {
         color: #4b5563;
-        margin-bottom: 1rem;
+        margin-bottom: 0.75rem;
+        font-size: 0.9375rem;
     }
     
-    .breadcrumb-back {
-        display: inline-flex;
-        align-items: center;
-        color: #4f46e5;
-        margin-bottom: 1rem;
-        text-decoration: none;
-        position: relative;
-        z-index: 10; /* Ensure this is clickable */
-    }
-    
-    .breadcrumb-back:hover {
-        text-decoration: underline;
-    }
-    
-    .version-selector {
-        min-width: 200px;
-    }
-    
-    /* Library Metadata */
+    /* Library metadata */
     .library-meta {
         display: grid;
         grid-template-columns: 1fr;
         gap: 1rem;
         margin-top: 1.25rem;
+        margin-bottom: 1.5rem;
     }
     
     @media (min-width: 640px) {
@@ -374,7 +270,7 @@
     
     @media (min-width: 1024px) {
         .library-meta {
-            grid-template-columns: 1fr 1fr 1fr 1fr;
+            grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
         }
     }
     
@@ -389,151 +285,198 @@
         color: #4f46e5;
     }
     
-    .meta-link {
+    /* External links */
+    .external-links {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 1rem;
+    }
+    
+    .external-link {
         display: inline-flex;
         align-items: center;
-        justify-content: center;
-        width: 2.5rem;
-        height: 2.5rem;
-        border-radius: 50%;
-        font-size: 1.2rem;
-        background-color: #f5f5f5;
-        color: #333;
+        gap: 5px;
+        text-decoration: none;
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-size: 14px;
         transition: all 0.2s;
-        text-align: center;
-        margin-right: 0.5rem;
+    }
+    
+    .external-link-github {
+        color: #24292e;
+        background-color: #f6f8fa;
+        border: 1px solid #d0d7de;
+    }
+    
+    .external-link-github:hover {
+        background-color: #eaeef2;
+    }
+    
+    .external-link-npm {
+        color: #fff;
+        background-color: #cb3837;
+    }
+    
+    .external-link-npm:hover {
+        background-color: #b02e2c;
+    }
+    
+    .version-selector {
+        margin-left: auto;
+        width: 200px;
+    }
+    
+    /* CDN Links */
+    .cdn-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.75rem;
+        margin-bottom: 2rem;
+    }
+    
+    @media (min-width: 768px) {
+        .cdn-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+    
+    .cdn-column-header {
+        font-size: 1.125rem;
+        font-weight: 600;
+        padding: 1rem 1.25rem;
+        background: linear-gradient(to right, #4338ca, #6366f1);
+        color: white;
+        border-top-left-radius: 0.5rem;
+        border-top-right-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .cdn-column-content {
+        border: 1px solid #e5e7eb;
+        border-top: none;
+        border-bottom-left-radius: 0.5rem;
+        border-bottom-right-radius: 0.5rem;
+        padding: 1.25rem;
+        background-color: white;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    
+    .cdn-provider {
+        margin-bottom: 1.5rem;
+        border: 1px solid #f0f0f0;
+        border-radius: 0.5rem;
+        padding: 1.25rem;
+        transition: all 0.2s;
+    }
+    
+    .cdn-provider:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        border-color: #e5e7eb;
+    }
+    
+    .cdn-provider:last-child {
+        margin-bottom: 0;
+    }
+    
+    .cdn-provider-logo {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px dashed #f0f0f0;
+    }
+    
+    .cdn-provider-logo img {
+        max-width: 140px;
+        height: 32px;
+        object-fit: contain;
+    }
+    
+    .cdn-url {
+        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        font-size: 0.875rem;
+        background-color: #f9fafb;
+        padding: 0.875rem 1rem;
+        border-radius: 0.375rem;
+        color: #111827;
+        margin-bottom: 1rem;
+        word-break: break-all;
+        border: 1px solid #f0f0f0;
         position: relative;
     }
     
-    .meta-link:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    .cdn-url:hover {
+        background-color: #f3f4f6;
     }
     
-    .meta-link-github {
-        background-color: #24292e;
-        color: white;
+    .cdn-buttons {
+        display: flex;
+        gap: 0.75rem;
     }
     
-    .meta-link-github:hover {
-        background-color: #3a434c;
+    .cdn-button {
+        padding: 0.5rem 1rem;
+        border-radius: 0.375rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s;
     }
     
-    .meta-link-npm {
-        background-color: #cb3837;
-        color: white;
-    }
-    
-    .meta-link-npm:hover {
-        background-color: #db4b4a;
-    }
-    
-    .meta-link-website {
+    .btn-url {
         background-color: #4f46e5;
         color: white;
     }
     
-    .meta-link-website:hover {
-        background-color: #6366f1;
+    .btn-url:hover {
+        background-color: #4338ca;
+        transform: translateY(-2px);
     }
     
-    .meta-links-container {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        margin-top: 1rem;
-        margin-bottom: 1rem;
-    }
-    
-    .meta-link .tooltip {
-        visibility: hidden;
-        width: auto;
-        background-color: #333;
+    .btn-html {
+        background-color: #ef4444;
         color: white;
-        text-align: center;
-        padding: 5px 10px;
-        border-radius: 6px;
-        position: absolute;
-        z-index: 1;
-        bottom: 125%;
-        left: 50%;
-        transform: translateX(-50%);
-        opacity: 0;
-        transition: opacity 0.3s;
-        white-space: nowrap;
-        font-size: 0.75rem;
     }
     
-    .meta-link:hover .tooltip {
-        visibility: visible;
-        opacity: 1;
-    }
-    
-    /* Provider badges */
-    .provider-badge {
-        display: inline-flex;
-        align-items: center;
-        padding: 0.375rem 0.625rem;
-        margin-right: 0.5rem;
-        margin-bottom: 0.5rem;
-        border-radius: 9999px;
-        font-size: 0.75rem;
-        font-weight: 600;
-    }
-    
-    .provider-badge-cdnjs {
-        background-color: #e0e7ff;
-        color: #4f46e5;
-    }
-    
-    .provider-badge-jsdelivr {
-        background-color: #fef3c7;
-        color: #d97706;
-    }
-    
-    .provider-badge-unpkg {
-        background-color: #d1fae5;
-        color: #059669;
+    .btn-html:hover {
+        background-color: #dc2626;
+        transform: translateY(-2px);
     }
     
     /* Tabs */
-    .tabs-container {
+    .tabs {
+        margin-top: 1.5rem;
         margin-bottom: 1.5rem;
-        position: relative;
-        z-index: 5;
     }
     
-    .nav-tabs {
+    .tabs-header {
         display: flex;
         border-bottom: 1px solid #e5e7eb;
-        position: relative;
-        z-index: 10;
     }
     
-    .nav-tab {
-        position: relative;
-        padding: 0.75rem 1rem;
-        font-size: 0.875rem;
-        font-weight: 500;
-        color: #4b5563;
-        cursor: pointer;
+    .tab-button {
+        padding: 0.75rem 1.5rem;
         border: none;
         background: none;
-        transition: color 0.2s;
-        outline: none;
-        z-index: 10;
-        pointer-events: auto !important;
+        font-weight: 500;
+        color: #6b7280;
+        cursor: pointer;
+        position: relative;
     }
     
-    .nav-tab:hover {
+    .tab-button.active {
         color: #4f46e5;
     }
     
-    .nav-tab.active {
-        color: #4f46e5;
-    }
-    
-    .nav-tab.active::after {
+    .tab-button.active::after {
         content: '';
         position: absolute;
         bottom: -1px;
@@ -544,1945 +487,2193 @@
     }
     
     .tab-content {
-        padding: 1.5rem 0;
-        position: relative;
-        z-index: 1;
-    }
-    
-    .tab-pane {
         display: none;
+        padding: 1.5rem 0;
     }
     
-    .tab-pane.active {
+    .tab-content.active {
         display: block;
     }
     
-    /* CDN Links */
-    .cdn-links-section {
-        margin-bottom: 2rem;
-        border-bottom: 1px solid #e5e7eb;
-        padding-bottom: 1.5rem;
-    }
-    
-    .cdn-section-title {
-        font-size: 1.25rem;
-        font-weight: 600;
-        color: #111827;
-        margin-bottom: 1rem;
-    }
-    
-    .cdn-links-grid {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 1.5rem;
-    }
-    
-    @media (min-width: 768px) {
-        .cdn-links-grid {
-            grid-template-columns: 1fr 1fr;
-        }
-    }
-    
-    .cdn-category {
-        margin-bottom: 1rem;
-    }
-    
-    .cdn-category-title {
-        font-size: 1.125rem;
-        font-weight: 600;
-        color: #111827;
-        margin-bottom: 1rem;
-    }
-    
-    /* Provider list */
-    .provider-list {
-        margin-bottom: 1rem;
-    }
-    
-    .provider-item {
-        margin-bottom: 1rem;
-    }
-    
-    .provider-name {
-        font-weight: 500;
-        color: #4b5563;
-        margin-bottom: 0.5rem;
-    }
-    
-    .cdn-url {
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-        font-size: 0.875rem;
-        word-break: break-all;
-        background-color: #f9fafb;
-        padding: 0.5rem 0.75rem;
-        border-radius: 0.375rem;
-        color: #111827;
-        margin-bottom: 0.5rem;
-    }
-    
-    .btn-actions {
-        display: flex;
-        gap: 0.5rem;
-        margin-top: 0.5rem;
-        position: relative;
-        z-index: 10;
-    }
-    
-    /* Files Tab */
-    .files-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-    
-    .files-table th {
-        padding: 0.75rem 1rem;
-        text-align: left;
-        font-size: 0.75rem;
-        font-weight: 500;
-        text-transform: uppercase;
-        color: #6b7280;
-        background-color: #f9fafb;
-        border-bottom: 1px solid #e5e7eb;
-    }
-    
-    .files-table td {
-        padding: 0.75rem 1rem;
-        border-bottom: 1px solid #e5e7eb;
-        color: #111827;
-        font-size: 0.875rem;
-    }
-    
-    .files-table tr:hover {
-        background-color: #f9fafb;
-    }
-    
-    .files-table tr:last-child td {
-        border-bottom: none;
-    }
-    
-    /* GitHub-style markdown */
-    .markdown-body {
-        box-sizing: border-box;
-        min-width: 200px;
-        max-width: 980px;
-        margin: 0 auto;
-        padding: 45px;
-        color: #24292f;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
-        font-size: 16px;
-        line-height: 1.5;
-        word-wrap: break-word;
-        background-color: #ffffff;
+    /* README styling */
+    .readme-content {
+        padding: 1.5rem;
         border: 1px solid #e5e7eb;
-        border-radius: 0.5rem;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-    }
-
-    @media (max-width: 767px) {
-        .markdown-body {
-            padding: 15px;
-        }
+        border-radius: 0.375rem;
+        background-color: white;
     }
     
-    /* Links in markdown */
-    .markdown-body a {
-        color: #0969da;
-        text-decoration: none;
-        position: relative;
-        z-index: 2;
-        pointer-events: auto !important;
+    .markdown-body {
+        color: #24292f;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
     }
     
-    .markdown-body a:hover {
-        text-decoration: underline;
-    }
-    
-    /* Headings in markdown */
-    .markdown-body h1, 
-    .markdown-body h2, 
-    .markdown-body h3, 
-    .markdown-body h4, 
-    .markdown-body h5, 
-    .markdown-body h6 {
-        margin-top: 24px;
-        margin-bottom: 16px;
-        font-weight: 600;
-        line-height: 1.25;
-    }
-    
-    .markdown-body h1 {
-        font-size: 2em;
-        border-bottom: 1px solid #eaecef;
-        padding-bottom: 0.3em;
-    }
-    
-    .markdown-body h2 {
-        font-size: 1.5em;
-        border-bottom: 1px solid #eaecef;
-        padding-bottom: 0.3em;
-    }
-    
-    .markdown-body h3 {
-        font-size: 1.25em;
-    }
-    
-    .markdown-body h4 {
-        font-size: 1em;
-    }
-    
-    /* Paragraphs in markdown */
-    .markdown-body p {
-        margin-top: 0;
-        margin-bottom: 16px;
-    }
-    
-    /* Images in markdown */
     .markdown-body img {
         max-width: 100%;
-        box-sizing: border-box;
-        background-color: #fff;
-        border-style: none;
     }
     
-    /* Code in markdown */
-    .markdown-body pre {
-        padding: 16px;
-        overflow: auto;
-        font-size: 85%;
-        line-height: 1.45;
-        background-color: #f6f8fa;
-        border-radius: 6px;
-        margin-bottom: 16px;
+    /* Files styling */
+    .file-item {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem;
+        border-bottom: 1px solid #e5e7eb;
     }
     
-    .markdown-body code {
-        font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
-        padding: 0.2em 0.4em;
-        margin: 0;
-        font-size: 85%;
-        background-color: rgba(175, 184, 193, 0.2);
-        border-radius: 6px;
+    .file-icon {
+        margin-right: 0.75rem;
+        color: #6b7280;
     }
     
-    .markdown-body pre code {
-        padding: 0;
-        margin: 0;
-        background-color: transparent;
-        border: 0;
-        font-size: 100%;
-        word-break: normal;
-        white-space: pre;
-        display: inline;
-        overflow: visible;
+    .file-name {
+        flex: 1;
+        font-family: monospace;
+        font-size: 0.875rem;
     }
     
-    /* Lists in markdown */
-    .markdown-body ul,
-    .markdown-body ol {
-        padding-left: 2em;
-        margin-top: 0;
-        margin-bottom: 16px;
+    .file-actions {
+        display: flex;
+        gap: 0.5rem;
     }
     
-    .markdown-body li {
-        word-wrap: break-all;
-    }
-    
-    .markdown-body li+li {
-        margin-top: 0.25em;
-    }
-    
-    /* Tables in markdown */
-    .markdown-body table {
-        display: block;
-        width: 100%;
-        overflow: auto;
-        border-spacing: 0;
-        border-collapse: collapse;
-        margin-top: 0;
-        margin-bottom: 16px;
-    }
-    
-    .markdown-body table tr {
-        background-color: #fff;
-        border-top: 1px solid #d0d7de;
-    }
-    
-    .markdown-body table tr:nth-child(2n) {
-        background-color: #f6f8fa;
-    }
-    
-    .markdown-body table th,
-    .markdown-body table td {
-        padding: 6px 13px;
-        border: 1px solid #d0d7de;
-    }
-    
-    .markdown-body table th {
-        font-weight: 600;
-    }
-    
-    /* Blockquotes in markdown */
-    .markdown-body blockquote {
-        padding: 0 1em;
-        color: #57606a;
-        border-left: 0.25em solid #d0d7de;
-        margin: 0 0 16px 0;
-    }
-    
-    /* Horizontal rule */
-    .markdown-body hr {
-        height: 0.25em;
-        padding: 0;
-        margin: 24px 0;
-        background-color: #d0d7de;
-        border: 0;
-    }
-    
-    /* Copy button styles */
-    .btn-copy {
+    .file-btn {
+        width: 2rem;
+        height: 2rem;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        padding: 0.375rem 0.75rem;
-        font-size: 0.875rem;
-        font-weight: 500;
-        line-height: 1.5;
-        color: #fff;
-        background-color: #4f46e5;
-        border: none;
-        border-radius: 0.25rem;
-        cursor: pointer;
-        transition: background-color 0.2s;
-        position: relative;
-        z-index: 10;
-        pointer-events: auto !important;
-    }
-    
-    .btn-copy:hover {
-        background-color: #4338ca;
-    }
-    
-    .btn-html {
-        background-color: #ef4444;
-    }
-    
-    .btn-html:hover {
-        background-color: #dc2626;
-    }
-    
-    /* File copy button */
-    .btn-file-copy {
-        background-color: #4f46e5;
-        color: white;
-        border: none;
-        border-radius: 0.25rem;
-        padding: 0.25rem 0.5rem;
-        font-size: 0.75rem;
-        cursor: pointer;
-        transition: background-color 0.2s;
-        position: relative;
-        z-index: 10;
-        pointer-events: auto !important;
-    }
-    
-    .btn-file-copy:hover {
-        background-color: #4338ca;
-    }
-    
-    /* Badge */
-    .badge {
-        display: inline-block;
-        padding: 0.35em 0.65em;
-        font-size: 0.75em;
-        font-weight: 700;
-        line-height: 1;
-        text-align: center;
-        white-space: nowrap;
-        vertical-align: baseline;
-        border-radius: 0.25rem;
-    }
-    
-    .badge-success {
-        color: #fff;
-        background-color: #10b981;
-    }
-    
-    /* Fix z-index and pointer events for all clickable elements */
-    button, .btn, .btn-copy, .nav-tab, a {
-        position: relative;
-        z-index: 5;
-        pointer-events: auto !important;
+        border-radius: 0.375rem;
+        border: 1px solid #e5e7eb;
+        background-color: white;
+        color: #6b7280;
         cursor: pointer;
     }
     
-    /* Ensure card body doesn't block clicks */
-    .card-body {
-        position: relative;
-        z-index: 1;
-    }
-    
-    /* Better font rendering for all text */
-    body {
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-    }
-    
-    /* Back to search button in details view */
-    .back-to-search {
-        display: inline-flex;
-        align-items: center;
-        font-weight: 500;
+    .file-btn:hover {
+        border-color: #4f46e5;
         color: #4f46e5;
-        margin-bottom: 1rem;
-        text-decoration: none;
     }
     
-    .back-to-search:hover {
-        text-decoration: underline;
+    /* Popular libraries */
+    .popular-libraries {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1.25rem;
     }
     
-    /* Active tab highlight */
-    .nav-tabs .nav-tab.active {
-        color: #4f46e5;
-        border-bottom: 2px solid #4f46e5;
-    }
-    
-    /* Loading state overlay */
-    .loading-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: rgba(255, 255, 255, 0.8);
+    .library-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        overflow: hidden;
+        transition: all 0.3s;
+        height: 100%;
         display: flex;
         flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        z-index: 1000;
-        transition: opacity 0.3s;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     }
     
-    .loading-overlay.hidden {
+    .library-card:hover {
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        transform: translateY(-4px);
+        border-color: #d1d5db;
+    }
+    
+    .library-card-header {
+        padding: 1rem;
+        background-color: #f9fafb;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .library-card-header h5 {
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin: 0;
+        color: #111827;
+    }
+    
+    .library-card-body {
+        padding: 1rem;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .library-card-description {
+        color: #6b7280;
+        margin: 0;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 1.5;
+        height: 3em;
+    }
+    
+    /* Search results */
+    .results-container {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 100%;
+        background-color: white;
+        border-radius: 0 0 0.375rem 0.375rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        z-index: 10;
+        max-height: 300px;
+        overflow-y: auto;
         display: none;
     }
     
-    .loading-text {
-        margin-top: 1rem;
-        font-size: 1rem;
-        color: #4f46e5;
-        font-weight: 500;
+    /* Result item styling */
+    .result-item {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #e5e7eb;
+        cursor: pointer;
     }
     
-    /* Cache indicator */
-    .cache-badge {
+    .result-item:hover {
+        background-color: #f9fafb;
+    }
+    
+    .result-name {
+        font-weight: 500;
+        color: #111827;
+    }
+    
+    .result-description {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-bottom: 0.5rem;
+    }
+    
+    .result-providers {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+    
+    .result-providers .cdn-badge {
+        font-size: 0.7rem;
+        padding: 0.15rem 0.4rem;
+    }
+    
+    /* CDN Provider Badges */
+    .cdn-provider-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: -0.25rem;
+        margin-bottom: 1.25rem;
+    }
+    
+    .cdn-badge {
         display: inline-flex;
         align-items: center;
-        padding: 0.25rem 0.5rem;
-        background-color: #bbf7d0;
-        color: #16a34a;
+        padding: 0.35rem 0.75rem;
+        font-size: 0.8rem;
+        font-weight: 500;
+        border-radius: 3px;
+        transition: all 0.2s;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+    
+    .cdn-badge-cdnjs {
+        background-color: #fff5f1;
+        color: #dd6b31;
+        border: 1px solid #f8d3c3;
+    }
+    
+    .cdn-badge-jsdelivr {
+        background-color: #fff7f2;
+        color: #e84d3d;
+        border: 1px solid #fdd9d5;
+    }
+    
+    .cdn-badge-unpkg {
+        background-color: #f8f8f8;
+        color: #333333;
+        border: 1px solid #e0e0e0;
+    }
+    
+    .cdn-badge-disabled {
+        background-color: #f3f4f6;
+        color: #9ca3af;
+        border: 1px solid #e5e7eb;
+    }
+    
+    /* Library card footer */
+    .library-card-footer {
+        padding: 0.75rem;
+        background-color: #f9fafb;
+        border-top: 1px solid #e5e7eb;
+        font-size: 0.875rem;
+        font-weight: 500;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .library-card-footer .cdn-badge {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
+    }
+
+    /* jsDelivr-only version styling */
+    option[data-jsdelivr-only="true"] {
+        background-color: #fffdf2;
+        font-style: italic;
+    }
+    
+    .jsdelivr-only-badge {
         font-size: 0.75rem;
-        font-weight: 600;
-        border-radius: 0.25rem;
+        background-color: #f0ad4e;
+        color: white;
+        padding: 0.15rem 0.5rem;
+        border-radius: 3px;
         margin-left: 0.5rem;
     }
     
-    .cache-badge i {
-        margin-right: 0.25rem;
+    /* CDN Speed Test Styling */
+    .speed-test-container .card-header {
+        background: linear-gradient(to right, #4338ca, #6366f1);
+    }
+    
+    .speed-result {
+        font-weight: 600;
+        text-align: center;
+    }
+    
+    .speed-fast {
+        color: #10b981;
+    }
+    
+    .speed-medium {
+        color: #f59e0b;
+    }
+    
+    .speed-slow {
+        color: #ef4444;
+    }
+    
+    .speed-error {
+        color: #6b7280;
     }
 
-    /* CDN Speed Test Styles */
-    .cdn-speed-section {
-        margin-bottom: 2rem;
-        border-bottom: 1px solid #e5e7eb;
-        padding-bottom: 1.5rem;
+    /* Flag styling */
+    .flag-icon {
+        width: 20px;
+        height: 15px;
+        margin-right: 5px;
+        border-radius: 2px;
+        vertical-align: middle;
+        border: 1px solid rgba(0,0,0,0.1);
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .flag-placeholder {
+        display: inline-block;
+        width: 20px;
+        height: 15px;
+        line-height: 15px;
+        text-align: center;
+        background-color: #f3f4f6;
+        border-radius: 2px;
+        font-size: 8px;
+        margin-right: 5px;
+        border: 1px solid rgba(0,0,0,0.1);
+        vertical-align: middle;
+    }
+
+    /* Provider grouping in results */
+    .provider-header {
+        background-color: #f9fafb;
+    }
+
+    .provider-summary {
+        padding: 0.75rem !important;
+        font-size: 1.1rem;
+        text-align: center !important;
+    }
+
+    .provider-summary .badge {
+        font-size: 0.85rem;
+        font-weight: normal;
+        vertical-align: middle;
+    }
+
+    .provider-summary img {
+        vertical-align: middle;
+    }
+
+    /* Animation for loading */
+    @keyframes fade-in-out {
+        0% { opacity: 0.6; }
+        50% { opacity: 1; }
+        100% { opacity: 0.6; }
+    }
+
+    .test-loading {
+        animation: fade-in-out 1.5s infinite;
+    }
+
+    /* Statistics summary */
+    .cdn-stats-summary {
+        background-color: #f8fafc;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+        border: 1px solid #e5e7eb;
+    }
+
+    .cdn-stats-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .cdn-stats-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .cdn-stats-icon {
+        width: 24px;
+        height: 24px;
+        background-color: #4338ca;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 0.75rem;
+        font-size: 12px;
+    }
+
+    .cdn-stats-value {
+        font-weight: 600;
+        margin-left: auto;
+    }
+    
+    /* Provider logo styling */
+    .provider-logo {
+        height: 24px;
+        width: auto;
+    }
+
+    /* Status badges */
+    .badge-good {
+        background-color: #10b981;
+        color: white;
+        font-size: 0.75rem;
+        padding: 0.35rem 0.65rem;
+        border-radius: 0.25rem;
+    }
+    
+    .badge-bad {
+        background-color: #f59e0b;
+        color: white;
+        font-size: 0.75rem;
+        padding: 0.35rem 0.65rem;
+        border-radius: 0.25rem;
+    }
+    
+    .badge-failed {
+        background-color: #ef4444;
+        color: white;
+        font-size: 0.75rem;
+        padding: 0.35rem 0.65rem;
+        border-radius: 0.25rem;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .speed-test-container th:nth-child(2), 
+        .speed-test-container td:nth-child(2) {
+            max-width: 130px;
+        }
+        
+        .provider-summary .badge {
+            display: block;
+            margin-top: 0.5rem;
+            margin-left: 0 !important;
+            width: fit-content;
+        }
     }
 </style>
 @endsection
 
 @section('content')
-    @component('components.breadcrumb')
-        @slot('li_1') {{ __('tools.tools') }} @endslot
-        @if(!empty($libraryDetails))
-            @slot('li_2') <a href="{{ route('tools.cdn-library-finder') }}">{{ __('tools.cdn_library_finder') }}</a> @endslot
-            @slot('title') {{ $libraryDetails['library'] ?? __('tools.library') }} @endslot
-        @else
-            @slot('title') {{ __('tools.cdn_library_finder') }} @endslot
-        @endif
-    @endcomponent
-
-    <!-- Header Section (always shown) -->
-    <div class="header-section text-center">
-        <div class="container">
-            <h1 class="header-title">{{ __('tools.cdn_library_finder') }}</h1>
-            <p class="header-description">{{ __('tools.find_libraries_description') }}</p>
-        </div>
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="header-section">
+        <h1 class="header-title">CDN Library Search</h1>
+        <p class="header-description">Find and integrate popular JavaScript and CSS libraries into your project</p>
     </div>
 
-    <div class="container">
-        <div class="row">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        <i class="bx bx-search-alt me-2"></i>
-                        {{ !empty($libraryDetails) ? __('tools.library_details') : __('tools.search_libraries') }}
-                    </div>
-                    <div class="card-body position-relative">
-                        <!-- Loading overlay -->
-                        <div id="loadingOverlay" class="loading-overlay hidden">
-                            <div class="spinner"></div>
-                            <div class="loading-text">{{ __('tools.loading_library_details') }}</div>
-                        </div>
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <!-- CSRF Token for AJAX requests -->
+                    <meta name="csrf-token" content="{{ csrf_token() }}">
+                    
+                    <!-- Search Container -->
+                    <div class="search-container">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" id="librarySearch" class="search-box" 
+                               placeholder="Search for JavaScript or CSS libraries (e.g., jquery, bootstrap, vue)"
+                               value="{{ $searchQuery ?? '' }}">
                         
-                        <div class="tool-container p-4">
-                            <!-- Search Component (always shown) -->
-                            <div class="search-wrapper">
-                                <div class="search-container">
-                                    <div class="search-icon">
-                                        <i class="bx bx-search"></i>
-                                    </div>
-                                    <input 
-                                        type="text" 
-                                        id="librarySearch" 
-                                        class="search-input" 
-                                        placeholder="{{ __('tools.search_placeholder') }}" 
-                                        autocomplete="off"
-                                        value="{{ $library ?? '' }}"
-                                    >
-                                    <button type="button" id="searchClear" class="search-clear {{ empty($library) ? 'd-none' : '' }}">
-                                        <i class="bx bx-x"></i>
-                                    </button>
-                                </div>
-                                <!-- Search Results -->
-                                <div id="searchResults" class="search-results hidden"></div>
-                            </div>
-                            
-                            @if(!empty($libraryDetails))
-                                <!-- Library Details Section -->
-                                <div class="library-info mt-4" id="libraryDetailsContainer">
-                                    <!-- Library Header -->
-                                    <div class="library-header">
-                                        <div class="library-header-row">
-                                            <div>
-                                                <a href="{{ route('tools.cdn-library-finder') }}" class="breadcrumb-back">
-                                                    <i class="bx bx-arrow-back me-1"></i>
-                                                    {{ __('tools.back_to_search') }}
-                                                </a>
-                                                <h2 class="library-name">
-                                                    {{ $libraryDetails['library'] ?? __('tools.library') }}
-                                                    <span id="cacheStatus" class="cache-badge hidden">
-                                                        <i class="bx bx-history"></i> {{ __('tools.cached_result') }}
-                                                    </span>
-                                                </h2>
-                                                <div class="library-description">
-                                                    @if(!empty($libraryDetails['cdnjs']['description']))
-                                                        {{ $libraryDetails['cdnjs']['description'] }}
-                                                    @elseif(!empty($libraryDetails['jsdelivr']['description']))
-                                                        {{ $libraryDetails['jsdelivr']['description'] }}
-                                                    @else
-                                                        {{ __('tools.no_description') }}
-                                                    @endif
-                                                </div>
-                                                
-                                                <!-- Provider badges -->
-                                                <div class="mt-2">
-                                                    @if(!empty($libraryDetails['cdnLinks']['cdnjs']) && (!empty($libraryDetails['cdnLinks']['cdnjs']['js']) || !empty($libraryDetails['cdnLinks']['cdnjs']['css'])))
-                                                        <span class="provider-badge provider-badge-cdnjs">CDNJS</span>
-                                                    @endif
-                                                    
-                                                    @if(!empty($libraryDetails['cdnLinks']['jsdelivr']) && (!empty($libraryDetails['cdnLinks']['jsdelivr']['js']) || !empty($libraryDetails['cdnLinks']['jsdelivr']['css'])))
-                                                        <span class="provider-badge provider-badge-jsdelivr">jsDelivr</span>
-                                                    @endif
-                                                    
-                                                    @if(!empty($libraryDetails['cdnLinks']['unpkg']) && (!empty($libraryDetails['cdnLinks']['unpkg']['js']) || !empty($libraryDetails['cdnLinks']['unpkg']['css'])))
-                                                        <span class="provider-badge provider-badge-unpkg">Unpkg</span>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                            
-                                            <div class="version-selector">
-                                                <form method="get" action="{{ route('tools.cdn-library-finder') }}" id="versionForm">
-                                                    <input type="hidden" name="library" value="{{ $libraryDetails['library'] ?? '' }}">
-                                                    <label for="version">{{ __('tools.version') }}</label>
-                                                    <select id="version" name="version" class="form-select" onchange="loadLibraryVersion()">
-                                                        @if(!empty($libraryDetails['versions']))
-                                                            @foreach($libraryDetails['versions'] as $v)
-                                                                <option value="{{ $v }}" {{ ($libraryDetails['version'] ?? '') == $v ? 'selected' : '' }}>
-                                                                    {{ $v }}
-                                                                </option>
-                                                            @endforeach
-                                                        @endif
-                                                    </select>
-                                                </form>
-                                            </div>
-                                        </div>
-                                            
-                                        <!-- Library Metadata -->
-                                        <div class="library-meta">
-                                            <div class="meta-item">
-                                                <i class="bx bx-star meta-icon"></i>
-                                                <span>
-                                                    @if(!empty($libraryDetails['jsdelivr']['github']['stargazers_count']))
-                                                        {{ number_format($libraryDetails['jsdelivr']['github']['stargazers_count']) }} {{ __('tools.stars') }}
-                                                    @elseif(!empty($libraryDetails['github']['stars']))
-                                                        {{ number_format($libraryDetails['github']['stars']) }} {{ __('tools.stars') }}
-                                                    @else
-                                                        N/A
-                                                    @endif
-                                                </span>
-                                            </div>
-                                            
-                                            <div class="meta-item">
-                                                <i class="bx bx-certification meta-icon"></i>
-                                                <span>
-                                                    @if(!empty($libraryDetails['jsdelivr']['license']))
-                                                        {{ $libraryDetails['jsdelivr']['license'] }}
-                                                    @elseif(!empty($libraryDetails['cdnjs']['license']))
-                                                        {{ $libraryDetails['cdnjs']['license'] }}
-                                                    @elseif(!empty($libraryDetails['license']))
-                                                        {{ $libraryDetails['license'] }}
-                                                    @else
-                                                        {{ __('tools.unknown_license') }}
-                                                    @endif
-                                                </span>
-                                            </div>
-                                            
-                                            <!-- External links section -->
-                                            <div class="meta-links-container">
-                                                <!-- GitHub Link -->
-                                                @if(!empty($libraryDetails['github']) && !empty($libraryDetails['github']['url']))
-                                                    <a href="{{ $libraryDetails['github']['url'] }}" target="_blank" rel="noopener noreferrer" class="meta-link meta-link-github" title="GitHub Repository">
-                                                        <i class="fa-brands fa-github"></i>
-                                                        <span class="tooltip">GitHub</span>
-                                                    </a>
-                                                @elseif($isGitHub && !empty($libraryDetails['githubUser']) && !empty($libraryDetails['githubRepo']))
-                                                    <a href="https://github.com/{{ $libraryDetails['githubUser'] }}/{{ $libraryDetails['githubRepo'] }}" target="_blank" rel="noopener noreferrer" class="meta-link meta-link-github" title="GitHub Repository">
-                                                        <i class="fa-brands fa-github"></i>
-                                                        <span class="tooltip">GitHub</span>
-                                                    </a>
-                                                @elseif(!empty($libraryDetails['repository']) && !empty($libraryDetails['repository']['url']) && strpos($libraryDetails['repository']['url'], 'github.com') !== false)
-                                                    <a href="{{ $libraryDetails['repository']['url'] }}" target="_blank" rel="noopener noreferrer" class="meta-link meta-link-github" title="GitHub Repository">
-                                                        <i class="fa-brands fa-github"></i>
-                                                        <span class="tooltip">GitHub</span>
-                                                    </a>
-                                                @endif
-                                                
-                                                <!-- NPM Link -->
-                                                <a href="https://www.npmjs.com/package/{{ $libraryDetails['library'] }}" target="_blank" rel="noopener noreferrer" class="meta-link meta-link-npm" title="NPM Package">
-                                                    <i class="fa-brands fa-npm"></i>
-                                                    <span class="tooltip">npm</span>
-                                                </a>
-                                                
-                                                <!-- Website Link -->
-                                                @if(!empty($libraryDetails['jsdelivr']['homepage']))
-                                                    <a href="{{ $libraryDetails['jsdelivr']['homepage'] }}" target="_blank" rel="noopener noreferrer" class="meta-link meta-link-website" title="Official Website">
-                                                        <i class="fa-solid fa-globe"></i>
-                                                        <span class="tooltip">{{ parse_url($libraryDetails['jsdelivr']['homepage'], PHP_URL_HOST) }}</span>
-                                                    </a>
-                                                @elseif(!empty($libraryDetails['cdnjs']['homepage']))
-                                                    <a href="{{ $libraryDetails['cdnjs']['homepage'] }}" target="_blank" rel="noopener noreferrer" class="meta-link meta-link-website" title="Official Website">
-                                                        <i class="fa-solid fa-globe"></i>
-                                                        <span class="tooltip">{{ parse_url($libraryDetails['cdnjs']['homepage'], PHP_URL_HOST) }}</span>
-                                                    </a>
-                                                @elseif(!empty($libraryDetails['homepage']))
-                                                    <a href="{{ $libraryDetails['homepage'] }}" target="_blank" rel="noopener noreferrer" class="meta-link meta-link-website" title="Official Website">
-                                                        <i class="fa-solid fa-globe"></i>
-                                                        <span class="tooltip">{{ parse_url($libraryDetails['homepage'], PHP_URL_HOST) }}</span>
-                                                    </a>
+                        <div class="results-container" id="searchResults">
+                            @if(!empty($searchResults))
+                                @foreach($searchResults as $result)
+                                    <a href="{{ route('tools.cdn-search', ['library' => $result['name']]) }}" class="text-decoration-none">
+                                        <div class="result-item">
+                                            <div class="result-name">{{ $result['name'] }}</div>
+                                            <div class="result-description">{{ $result['description'] ?? 'No description available' }}</div>
+                                            <div class="result-providers">
+                                                <span class="cdn-badge cdn-badge-cdnjs">cdnjs</span>
+                                                <span class="cdn-badge cdn-badge-jsdelivr">jsDelivr</span>
+                                                @if(strpos($result['name'], '/') === false)
+                                                <span class="cdn-badge cdn-badge-unpkg">unpkg</span>
                                                 @endif
                                             </div>
                                         </div>
-                                    </div>
-                                    
-                                    <!-- CDN Links Section (Always visible at the top) -->
-                                    <div class="cdn-links-section mb-4">
-                                        <h3 class="cdn-section-title">{{ __('tools.cdn_links') }}</h3>
-                                        <div class="cdn-links-grid">
-                                            <!-- JavaScript Column -->
-                                            <div class="cdn-category">
-                                                <h4 class="cdn-category-title">{{ __('tools.javascript') }}</h4>
-                                                
-                                                <div class="provider-list">
-                                                    @if(!empty($cdnLinksFormatted['js']))
-                                                        @foreach($cdnLinksFormatted['js'] as $jsLink)
-                                                            <div class="provider-item">
-                                                                <div class="provider-name">{{ $jsLink['provider'] }}</div>
-                                                                <div class="cdn-url">{{ $jsLink['url'] }}</div>
-                                                                <div class="btn-actions">
-                                                                    <button type="button" class="btn-copy" onclick="copyToClipboard('{{ $jsLink['url'] }}')" data-copy-text="{{ $jsLink['url'] }}">
-                                                                        <i class="bx bx-copy me-1"></i> {{ __('tools.copy_url') }}
-                                                                    </button>
-                                                                    <button type="button" class="btn-copy btn-html" onclick="copyToClipboard('{{ $jsLink['htmlTagRaw'] }}')" data-copy-text="{{ $jsLink['htmlTagRaw'] }}">
-                                                                        <i class="bx bx-code me-1"></i> HTML
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        @endforeach
-                                                    @else
-                                                        <p class="text-muted">{{ __('tools.no_js_files') }}</p>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                            
-                                            <!-- CSS Column -->
-                                            <div class="cdn-category">
-                                                <h4 class="cdn-category-title">{{ __('tools.css') }}</h4>
-                                                
-                                                <div class="provider-list">
-                                                    @if(!empty($cdnLinksFormatted['css']))
-                                                        @foreach($cdnLinksFormatted['css'] as $cssLink)
-                                                            <div class="provider-item">
-                                                                <div class="provider-name">{{ $cssLink['provider'] }}</div>
-                                                                <div class="cdn-url">{{ $cssLink['url'] }}</div>
-                                                                <div class="btn-actions">
-                                                                    <button type="button" class="btn-copy" onclick="copyToClipboard('{{ $cssLink['url'] }}')" data-copy-text="{{ $cssLink['url'] }}">
-                                                                        <i class="bx bx-copy me-1"></i> {{ __('tools.copy_url') }}
-                                                                    </button>
-                                                                    <button type="button" class="btn-copy btn-html" onclick="copyToClipboard('{{ $cssLink['htmlTagRaw'] }}')" data-copy-text="{{ $cssLink['htmlTagRaw'] }}">
-                                                                        <i class="bx bx-code me-1"></i> HTML
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        @endforeach
-                                                    @else
-                                                        <p class="text-muted">{{ __('tools.no_css_files') }}</p>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- CDN Speed Test Section -->
-                                    <div class="cdn-speed-section mb-4">
-                                        <h3 class="cdn-section-title">
-                                            <i class="bx bx-tachometer me-1"></i> {{ __('tools.cdn_speed_test') }}
-                                        </h3>
-                                        <p class="mb-3">{{ __('tools.cdn_speed_description') }}</p>
-                                        
-                                        <button type="button" id="runSpeedTest" class="btn btn-primary mb-4">
-                                            <i class="bx bx-run me-1"></i> {{ __('tools.run_speed_test') }}
-                                        </button>
-                                        
-                                        <div id="cdnSpeedResults"></div>
-                                    </div>
-                                    
-                                    <!-- Tabs container -->
-                                    <div class="tabs-container">
-                                        <div class="nav-tabs">
-                                            <button type="button" class="nav-tab active" data-tab="readme" onclick="openTab('readme')">
-                                                {{ __('tools.readme') }}
-                                            </button>
-                                            <button type="button" class="nav-tab" data-tab="files" onclick="openTab('files')">
-                                                {{ __('tools.files') }}
-                                            </button>
-                                        </div>
-                                        
-                                        <div class="tab-content">
-                                            <!-- README Tab (active by default) -->
-                                            <div id="readme" class="tab-pane active">
-                                                @if(!empty($readmeContent))
-                                                    {!! $readmeContent !!}
-                                                @else
-                                                    <div class="alert alert-info">
-                                                        {{ __('tools.readme_not_available', ['library' => $libraryDetails['library'] ?? 'library', 'version' => $libraryDetails['version'] ?? 'version']) }}
-                                                    </div>
-                                                @endif
-                                            </div>
-                                            
-                                            <!-- Files Tab -->
-                                            <div id="files" class="tab-pane">
-                                                <div class="table-responsive">
-                                                    {!! $filesTable !!}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            @else
-                                <!-- Info Card - Only shown on search page -->
-                                <div id="infoCard" class="info-card">
-                                    <div class="info-header">
-                                        <i class="bx bx-info-circle info-icon fs-4"></i>
-                                        <h3 class="info-title">{{ __('tools.about_cdn_finder') }}</h3>
-                                    </div>
-                                    <p>{{ __('tools.cdn_finder_help') }}</p>
-                                    <div class="info-list">
-                                        <div class="info-list-item">
-                                            <div class="info-bullet"></div>
-                                            <div>
-                                                <strong>jsDelivr:</strong> {{ __('tools.jsdelivr_description') }}
-                                            </div>
-                                        </div>
-                                        <div class="info-list-item">
-                                            <div class="info-bullet"></div>
-                                            <div>
-                                                <strong>CDNJS:</strong> {{ __('tools.cdnjs_description') }}
-                                            </div>
-                                        </div>
-                                        <div class="info-list-item">
-                                            <div class="info-bullet"></div>
-                                            <div>
-                                                <strong>Unpkg:</strong> {{ __('tools.unpkg_description') }}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <p>{{ __('tools.usage_hint') }}</p>
-                                </div>
-                                
-                                <!-- Popular Libraries - Only shown on search page -->
-                                <div class="popular-libraries">
-                                    <h3>
-                                        <i class="bx bx-star text-warning me-2"></i>
-                                        {{ __('tools.popular_libraries') }}
-                                    </h3>
-                                    <div class="library-grid">
-                                        @foreach($popularLibraries as $lib)
-                                            <div class="library-card" data-library="{{ $lib['name'] }}">
-                                                <div class="library-card-name">{{ $lib['name'] }}</div>
-                                                <div class="library-card-description">{{ $lib['description'] }}</div>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                </div>
+                                    </a>
+                                @endforeach
                             @endif
                         </div>
                     </div>
+                    
+                    @if(!empty($libraryData))
+                        <!-- Library Info -->
+                        <div class="library-info">
+                            <a href="{{ route('tools.cdn-search') }}" class="back-to-search">
+                                <i class="fas fa-arrow-left me-2"></i> Back to Search
+                            </a>
+                            
+                            <div class="library-header">
+                                <div class="library-title">
+                                    <h2 class="library-name">{{ $libraryData['name'] ?? $library }}</h2>
+                                    <p class="library-description">{{ $libraryData['description'] ?? 'No description available' }}</p>
+                                    
+                                    <!-- CDN Provider Badges -->
+                                    <div class="cdn-provider-badges">
+                                        @php
+                                            $hasCdnjs = (!isset($libraryData['exists_on_cdnjs']) || $libraryData['exists_on_cdnjs']) &&
+                                                    (!empty($libraryData['cdnLinks']['js']) && isset($libraryData['cdnLinks']['js'][0]['cdnjs']) ||
+                                                     !empty($libraryData['cdnLinks']['css']) && isset($libraryData['cdnLinks']['css'][0]['cdnjs']));
+                                            $hasJsdelivr = !empty($libraryData['cdnLinks']['js']) && isset($libraryData['cdnLinks']['js'][0]['jsdelivr']) || 
+                                                          !empty($libraryData['cdnLinks']['css']) && isset($libraryData['cdnLinks']['css'][0]['jsdelivr']);
+                                            $hasUnpkg = !empty($libraryData['cdnLinks']['js']) && isset($libraryData['cdnLinks']['js'][0]['unpkg']) || 
+                                                       !empty($libraryData['cdnLinks']['css']) && isset($libraryData['cdnLinks']['css'][0]['unpkg']);
+                                            $hasAnyProvider = $hasCdnjs || $hasJsdelivr || $hasUnpkg;
+                                        @endphp
+
+                                        @if($hasAnyProvider)
+                                            @if($hasCdnjs)
+                                                <span class="cdn-badge cdn-badge-cdnjs">cdnjs</span>
+                                            @endif
+                                            
+                                            @if($hasJsdelivr)
+                                                <span class="cdn-badge cdn-badge-jsdelivr">jsDelivr</span>
+                                            @endif
+                                            
+                                            @if($hasUnpkg)
+                                                <span class="cdn-badge cdn-badge-unpkg">unpkg</span>
+                                            @endif
+                                        @else
+                                            <span class="cdn-badge cdn-badge-disabled">No CDN providers available</span>
+                                        @endif
+                                    </div>
+                                    
+                                    <!-- External Links -->
+                                    <div class="external-links">
+                                        @if(!empty($libraryData['github']['url'] ?? $libraryData['github']['path'] ?? null))
+                                            <a href="{{ 'https://github.com/' . ($libraryData['github']['path'] ?? '') }}" 
+                                               target="_blank" rel="noopener noreferrer" 
+                                               class="external-link external-link-github">
+                                                <i class="fab fa-github"></i> GitHub
+                                            </a>
+                                        @endif
+                                        
+                                        <a href="https://www.npmjs.com/package/{{ $libraryData['name'] }}" 
+                                           target="_blank" rel="noopener noreferrer" 
+                                           class="external-link external-link-npm">
+                                            <i class="fab fa-npm"></i> npm
+                                        </a>
+                                        
+                                        @if(!empty($libraryData['homepage']))
+                                            <a href="{{ $libraryData['homepage'] }}" 
+                                               target="_blank" rel="noopener noreferrer" 
+                                               class="external-link" style="background-color: #0ea5e9; color: white;">
+                                                <i class="fas fa-globe"></i> Website
+                                            </a>
+                                        @endif
+                                        
+                                        <span class="external-link" style="background-color: #22c55e; color: white;">
+                                            <i class="fas fa-check-circle"></i> {{ $libraryData['license'] ?? 'MIT' }}
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Version selector with badge for jsDelivr-only versions -->
+                                <div class="version-selector">
+                                    <select id="versionSelect" class="form-select">
+                                        @php
+                                            // Use merged and sorted versions from both sources
+                                            $versions = $libraryData['all_versions'] ?? [];
+                                            if (empty($versions) && !empty($libraryData['versions'])) {
+                                                // Fallback for backward compatibility
+                                                $versions = array_map(function($v) {
+                                                    return ['version' => $v, 'exists_on_cdnjs' => true];
+                                                }, $libraryData['versions']);
+                                            }
+                                        @endphp
+                                        @foreach($versions as $ver)
+                                            <option value="{{ $ver['version'] }}" 
+                                                {{ $version == $ver['version'] ? 'selected' : '' }}
+                                                @if(!$ver['exists_on_cdnjs']) data-jsdelivr-only="true" @endif>
+                                                {{ $ver['version'] }} 
+                                                @if(!$ver['exists_on_cdnjs']) 
+                                                    (jsDelivr only)
+                                                @endif
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- Display warning for jsDelivr-only versions -->
+                            @if(isset($libraryData['exists_on_cdnjs']) && !$libraryData['exists_on_cdnjs'])
+                            <div class="alert alert-warning mt-3">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <strong>Note:</strong> Version {{ $version }} is only available on jsDelivr and not on CDNJS. 
+                                CDN links will be provided for jsDelivr and unpkg, but not for CDNJS.
+                            </div>
+                            @endif
+                            
+                            <!-- Library Metadata -->
+                            <div class="library-meta">
+                                <div class="meta-item">
+                                    <i class="fas fa-star meta-icon"></i>
+                                    <span>
+                                        @if(isset($libraryData['github']['stargazers_count']))
+                                            {{ number_format($libraryData['github']['stargazers_count']) }} stars
+                                        @else
+                                            N/A
+                                        @endif
+                                    </span>
+                                </div>
+                                
+                                <div class="meta-item">
+                                    <i class="fas fa-download meta-icon"></i>
+                                    <span>
+                                        @if(isset($libraryData['npmDownloads']))
+                                            {{ number_format($libraryData['npmDownloads']) }} npm downloads
+                                        @else
+                                            N/A
+                                        @endif
+                                    </span>
+                                </div>
+                                
+                                <div class="meta-item">
+                                    <i class="fas fa-calendar-alt meta-icon"></i>
+                                    <span>Last update: {{ isset($libraryData['github']['lastUpdate']) ? date('M d, Y', strtotime($libraryData['github']['lastUpdate'])) : 'Unknown' }}</span>
+                                </div>
+                                
+                                <div class="meta-item">
+                                    <i class="fas fa-code-branch meta-icon"></i>
+                                    <span>
+                                        @if(isset($libraryData['github']['forks_count']))
+                                            {{ number_format($libraryData['github']['forks_count']) }} forks
+                                        @else
+                                            N/A
+                                        @endif
+                                    </span>
+                                </div>
+                                
+                                <div class="meta-item">
+                                    <i class="fas fa-shield-alt meta-icon"></i>
+                                    <span class="cdn-security-badge cdn-security-badge-success">0 known vulnerabilities</span>
+                                </div>
+                            </div>
+                            
+                            <!-- CDN Links Grid -->
+                            <div class="cdn-grid">
+                                <!-- JavaScript Column -->
+                                <div>
+                                    <div class="cdn-column-header">
+                                        <i class="fab fa-js-square me-2"></i> JavaScript
+                                    </div>
+                                    <div class="cdn-column-content">
+                                        @if(!empty($libraryData['cdnLinks']['js']))
+                                            @foreach($libraryData['cdnLinks']['js'] as $jsLink)
+                                                @if(isset($jsLink['cdnjs']))
+                                                <!-- CDNJS Provider -->
+                                                <div class="cdn-provider">
+                                                    <div class="cdn-provider-logo">
+                                                        <img src="{{ URL::asset('/build/images/cdnjs.svg') }}" alt="CDNJS">
+                                                    </div>
+                                                    
+                                                    <div class="cdn-url">{{ $jsLink['cdnjs']['url'] }}</div>
+                                                    
+                                                    <div class="cdn-buttons">
+                                                        <button class="cdn-button btn-url" data-content="{{ $jsLink['cdnjs']['url'] }}">
+                                                            <i class="fas fa-copy me-1"></i> Copy URL
+                                                        </button>
+                                                        <button class="cdn-button btn-html" data-content="{{ $jsLink['cdnjs']['html'] }}">
+                                                            <i class="fas fa-code me-1"></i> Copy HTML
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                @endif
+                                                
+                                                <!-- jsDelivr Provider - Always shown -->
+                                                <div class="cdn-provider">
+                                                    <div class="cdn-provider-logo">
+                                                        <img src="{{ URL::asset('/build/images/jsdelivr.svg') }}" alt="jsDelivr">
+                                                        @if(isset($libraryData['exists_on_cdnjs']) && !$libraryData['exists_on_cdnjs'])
+                                                            <span class="jsdelivr-only-badge">only on jsDelivr</span>
+                                                        @endif
+                                                    </div>
+                                                    
+                                                    <div class="cdn-url">{{ $jsLink['jsdelivr']['url'] }}</div>
+                                                    
+                                                    <div class="cdn-buttons">
+                                                        <button class="cdn-button btn-url" data-content="{{ $jsLink['jsdelivr']['url'] }}">
+                                                            <i class="fas fa-copy me-1"></i> Copy URL
+                                                        </button>
+                                                        <button class="cdn-button btn-html" data-content="{{ $jsLink['jsdelivr']['html'] }}">
+                                                            <i class="fas fa-code me-1"></i> Copy HTML
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Unpkg Provider - For npm packages -->
+                                                @if(isset($jsLink['unpkg']))
+                                                <div class="cdn-provider">
+                                                    <div class="cdn-provider-logo">
+                                                        <img src="{{ URL::asset('/build/images/unpkg.png') }}" alt="Unpkg">
+                                                    </div>
+                                                    
+                                                    <div class="cdn-url">{{ $jsLink['unpkg']['url'] }}</div>
+                                                    
+                                                    <div class="cdn-buttons">
+                                                        <button class="cdn-button btn-url" data-content="{{ $jsLink['unpkg']['url'] }}">
+                                                            <i class="fas fa-copy me-1"></i> Copy URL
+                                                        </button>
+                                                        <button class="cdn-button btn-html" data-content="{{ $jsLink['unpkg']['html'] }}">
+                                                            <i class="fas fa-code me-1"></i> Copy HTML
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                @endif
+                                                
+                                                @break {{-- Only display the first file --}}
+                                            @endforeach
+                                        @else
+                                            <p class="text-center text-muted py-4">No JavaScript files available for this library.</p>
+                                        @endif
+                                    </div>
+                                </div>
+                                
+                                <!-- CSS Column -->
+                                <div>
+                                    <div class="cdn-column-header">
+                                        <i class="fab fa-css3-alt me-2"></i> CSS
+                                    </div>
+                                    <div class="cdn-column-content">
+                                        @if(!empty($libraryData['cdnLinks']['css']))
+                                            @foreach($libraryData['cdnLinks']['css'] as $cssLink)
+                                                @if(isset($cssLink['cdnjs']))
+                                                <!-- CDNJS Provider -->
+                                                <div class="cdn-provider">
+                                                    <div class="cdn-provider-logo">
+                                                        <img src="{{ URL::asset('/build/images/cdnjs.svg') }}" alt="CDNJS">
+                                                    </div>
+                                                    
+                                                    <div class="cdn-url">{{ $cssLink['cdnjs']['url'] }}</div>
+                                                    
+                                                    <div class="cdn-buttons">
+                                                        <button class="cdn-button btn-url" data-content="{{ $cssLink['cdnjs']['url'] }}">
+                                                            <i class="fas fa-copy me-1"></i> Copy URL
+                                                        </button>
+                                                        <button class="cdn-button btn-html" data-content="{{ $cssLink['cdnjs']['html'] }}">
+                                                            <i class="fas fa-code me-1"></i> Copy HTML
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                @endif
+                                                
+                                                <!-- jsDelivr Provider - Always shown -->
+                                                <div class="cdn-provider">
+                                                    <div class="cdn-provider-logo">
+                                                        <img src="{{ URL::asset('/build/images/jsdelivr.svg') }}" alt="jsDelivr">
+                                                        @if(isset($libraryData['exists_on_cdnjs']) && !$libraryData['exists_on_cdnjs'])
+                                                            <span class="jsdelivr-only-badge">only on jsDelivr</span>
+                                                        @endif
+                                                    </div>
+                                                    
+                                                    <div class="cdn-url">{{ $cssLink['jsdelivr']['url'] }}</div>
+                                                    
+                                                    <div class="cdn-buttons">
+                                                        <button class="cdn-button btn-url" data-content="{{ $cssLink['jsdelivr']['url'] }}">
+                                                            <i class="fas fa-copy me-1"></i> Copy URL
+                                                        </button>
+                                                        <button class="cdn-button btn-html" data-content="{{ $cssLink['jsdelivr']['html'] }}">
+                                                            <i class="fas fa-code me-1"></i> Copy HTML
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Unpkg Provider - For npm packages -->
+                                                @if(isset($cssLink['unpkg']))
+                                                <div class="cdn-provider">
+                                                    <div class="cdn-provider-logo">
+                                                        <img src="{{ URL::asset('/build/images/unpkg.png') }}" alt="Unpkg">
+                                                    </div>
+                                                    
+                                                    <div class="cdn-url">{{ $cssLink['unpkg']['url'] }}</div>
+                                                    
+                                                    <div class="cdn-buttons">
+                                                        <button class="cdn-button btn-url" data-content="{{ $cssLink['unpkg']['url'] }}">
+                                                            <i class="fas fa-copy me-1"></i> Copy URL
+                                                        </button>
+                                                        <button class="cdn-button btn-html" data-content="{{ $cssLink['unpkg']['html'] }}">
+                                                            <i class="fas fa-code me-1"></i> Copy HTML
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                @endif
+                                                
+                                                @break {{-- Only display the first file --}}
+                                            @endforeach
+                                        @else
+                                            <p class="text-center text-muted py-4">No CSS files available for this library.</p>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- CDN Speed Test Section -->
+                            @if(!empty($libraryData) && !empty($libraryData['cdnLinks']) && (count($libraryData['cdnLinks']['js']) > 0 || count($libraryData['cdnLinks']['css']) > 0))
+                            <div class="speed-test-container mt-4 mb-4">
+                                <div class="card">
+                                    <div class="card-header bg-primary text-white">
+                                        <h5 style="color: white !important;" class="mb-0">
+                                            <i class="fas fa-tachometer-alt me-2"></i> Global CDN Speed Test
+                                            <span class="float-end">
+                                                <button type="button" class="btn btn-sm btn-light" id="runSpeedTest">
+                                                    <i class="fas fa-play me-1"></i> Run Test
+                                                </button>
+                                            </span>
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle me-2"></i> This test measures connection speeds to multiple CDN edge servers around the world to help you choose the fastest provider for your location. Tests are run from the server side for more accurate results.
+                                        </div>
+                                        
+                                        <!-- Store library and version for JavaScript -->
+                                        <input type="hidden" id="libraryName" value="{{ $library ?? '' }}">
+                                        <input type="hidden" id="versionValue" value="{{ $version ?? '' }}">
+                                        
+                                        <div id="speedTestLoading" class="text-center py-3 d-none">
+                                            <div class="spinner-border text-primary" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                            <p class="mt-2" id="testProgressText">Testing CDN speeds...</p>
+                                            
+                                            <!-- Progress bar -->
+                                            <div class="progress mt-3">
+                                                <div id="testProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                                                     role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div id="speedTestResults" class="d-none">
+                                            <div class="alert alert-secondary mt-3 mb-3" id="locationInfo">
+                                                <!-- Location info will be displayed here -->
+                                            </div>
+                                            
+                                            <!-- Stats summary will be inserted here -->
+                                            <div id="cdn-stats-summary" class="cdn-stats-summary d-none"></div>
+                                            
+                                            <h6 class="mb-3">Results from global CDN edge servers:</h6>
+                                            <div class="table-responsive">
+                                                <table class="table table-bordered table-hover">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th>Edge Location</th>
+                                                            <th>Response Time</th>
+                                                            <th>Status</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="speedTestResultsBody">
+                                                        <!-- Results will be displayed here -->
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            
+                                            <div class="mt-3">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-info-circle"></i> Results reflect network conditions between our server and CDN edges. Tests performed using HEAD requests to measure initial connection latency.
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            @endif
+                            
+                            <!-- Readme/Files Tabs -->
+                            <div class="tabs">
+                                <div class="tabs-header">
+                                    <button type="button" class="tab-button active" data-tab="readme">Readme</button>
+                                    <button type="button" class="tab-button" data-tab="files">Files</button>
+                                </div>
+                                
+                                <!-- Readme Tab -->
+                                <div id="readme" class="tab-content active">
+                                    <div class="readme-content">
+                                        <div class="markdown-body">
+                                            @if(!empty($libraryData['parsedReadme']))
+                                                {!! $libraryData['parsedReadme'] !!}
+                                            @elseif(!empty($libraryData['readme']))
+                                                <pre>{{ $libraryData['readme'] }}</pre>
+                                            @else
+                                                <div class="alert alert-info">README not available or couldn't be loaded.</div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Files Tab -->
+                                <div id="files" class="tab-content">
+                                    <div class="card">
+                                        <div class="card-body p-0">
+                                            @if(!empty($libraryData['versionFiles']))
+                                                @foreach($libraryData['versionFiles'] as $file)
+                                                    <div class="file-item">
+                                                        <div class="file-icon">
+                                                            @php
+                                                                $extension = pathinfo($file, PATHINFO_EXTENSION);
+                                                                $iconClass = 'fa-file';
+                                                                
+                                                                if ($extension === 'js') $iconClass = 'fa-js';
+                                                                elseif ($extension === 'css') $iconClass = 'fa-css3';
+                                                                elseif ($extension === 'map') $iconClass = 'fa-map';
+                                                                elseif (in_array($extension, ['png', 'jpg', 'jpeg', 'gif', 'svg'])) 
+                                                                    $iconClass = 'fa-image';
+                                                            @endphp
+                                                            <i class="fab {{ $iconClass }}"></i>
+                                                        </div>
+                                                        <div class="file-name">{{ $file }}</div>
+                                                        <div class="file-actions">
+                                                            @php
+                                                                $fileUrl = '';
+                                                                
+                                                                if (isset($libraryData['source']) && $libraryData['source'] === 'jsdelivr') {
+                                                                    // If the file is from jsdelivr
+                                                                    $isGitHubRepo = strpos($library, '/') !== false;
+                                                                    if ($isGitHubRepo) {
+                                                                        list($owner, $repo) = explode('/', $library);
+                                                                        $fileUrl = "https://cdn.jsdelivr.net/gh/{$library}@{$version}/{$file}";
+                                                                    } else {
+                                                                        $fileUrl = "https://cdn.jsdelivr.net/npm/{$library}@{$version}/{$file}";
+                                                                    }
+                                                                } else {
+                                                                    // Default to CDNJS
+                                                                    $fileUrl = "https://cdnjs.cloudflare.com/ajax/libs/{$library}/{$version}/{$file}";
+                                                                }
+                                                            @endphp
+                                                            
+                                                            <button type="button" class="file-btn" 
+                                                                    data-content="{{ $fileUrl }}" 
+                                                                    title="Copy URL">
+                                                                <i class="fas fa-copy"></i>
+                                                            </button>
+                                                            
+                                                            <a href="{{ $fileUrl }}" 
+                                                               target="_blank" rel="noopener noreferrer" 
+                                                               class="file-btn" 
+                                                               title="Open in new tab">
+                                                                <i class="fas fa-external-link-alt"></i>
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            @else
+                                                <div class="p-4 text-center text-muted">No files available for this version.</div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @else
+                        <!-- Popular Libraries Section -->
+                        <div class="mt-4">
+                            <h3 class="mb-4">Popular Libraries</h3>
+                            <div class="popular-libraries">
+                                @foreach($popularLibraries as $lib)
+                                    <div class="library-card-wrapper">
+                                        @php
+                                            // Fix for lodash.js and moment.js packages
+                                            $libraryName = $lib['name'];
+                                            if (in_array($libraryName, ['lodash', 'moment'])) {
+                                                $libraryName .= '.js';
+                                            }
+                                        @endphp
+                                        <a href="{{ route('tools.cdn-search', ['library' => $libraryName]) }}" class="text-decoration-none">
+                                            <div class="library-card">
+                                                <div class="library-card-header">
+                                                    <h5>{{ $lib['name'] }}</h5>
+                                                </div>
+                                                <div class="library-card-body">
+                                                    <p class="library-card-description">{{ $lib['description'] }}</p>
+                                                </div>
+                                                <div class="library-card-footer">
+                                                    <span class="cdn-badge cdn-badge-cdnjs">cdnjs</span>
+                                                    <span class="cdn-badge cdn-badge-jsdelivr">jsDelivr</span>
+                                                    @if(strpos($lib['name'], '/') === false)
+                                                    <span class="cdn-badge cdn-badge-unpkg">unpkg</span>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
     </div>
+</div>
 @endsection
 
 @section('script')
+<!-- SweetAlert2 -->
+<script src="{{ URL::asset('/build/libs/sweetalert2/sweetalert2.min.js') }}"></script>
 <!-- Highlight.js for syntax highlighting -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
-<!-- SweetAlert2 for notifications -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+<!-- CDN Speed Test JavaScript -->
 <script>
 /**
- * CDN Library Finder script with improved provider display and speed testing
- * Fixes:
- * 1. Search results not properly displaying Unpkg provider
- * 2. Speed test running against all providers when only some are available
+ * Country Flags Helper Functions
  */
-(function() {
-    'use strict';
-    
-    // Configuration
-    const appConfig = {
-        endpoints: {
-            search: '{{ url("tools/search-libraries") }}',
-            library: '{{ route("tools.cdn-library-finder") }}',
-            copyUrl: '{{ route("tools.cdn-copy") }}',
-            speedTest: '{{ route("tools.cdn-test-speed") }}'
-        },
-        baseUrl: '{{ url("/") }}',
-        routeUrl: '{{ route("tools.cdn-library-finder") }}',
-        csrfToken: '{{ csrf_token() }}',
-        cacheSettings: {
-            enabled: true,              // Enable caching
-            searchExpiry: 24 * 60 * 60, // Search results cache for 24 hours
-            libraryExpiry: 7 * 24 * 60 * 60, // Library details cache for 1 week
-            prefix: 'cdn_finder_'       // Cache key prefix
-        },
-        translations: {
-            noDescription: '{{ __("tools.no_description") }}',
-            availableOnJsdelivr: '{{ __("tools.available_on_jsdelivr") }}',
-            availableOnUnpkg: '{{ __("tools.available_on_unpkg") }}',
-            noLibrariesFound: '{{ __("tools.no_libraries_found") }}',
-            errorSearching: '{{ __("tools.error_searching") }}',
-            searching: '{{ __("tools.searching") }}',
-            copied: '{{ __("tools.copied_to_clipboard") }}',
-            nothingToCopy: '{{ __("tools.nothing_to_copy") }}',
-            loadingDetails: '{{ __("tools.loading_library_details") }}',
-            errorLoadingDetails: '{{ __("tools.error_loading_details") }}',
-            cachedResult: '{{ __("tools.cached_result") }}',
-            allProviders: '{{ __("tools.all_providers") }}',
-            cdnjsdelivr_only: '{{ __("tools.cdnjsdelivr_only") }}',
-            cdnjsunpkg_only: '{{ __("tools.cdnjsunpkg_only") }}',
-            jsdelivrunpkg_only: '{{ __("tools.jsdelivrunpkg_only") }}',
-            tryAnotherQuery: '{{ __("tools.try_another_query") }}'
-        }
-    };
-    
-    // Store repository information for use in image handling
-    window.libraryRepoInfo = {
-        user: '{{ $libraryDetails["githubUser"] ?? "" }}',
-        repo: '{{ $libraryDetails["githubRepo"] ?? "" }}',
-        isGitHub: {{ isset($isGitHub) && $isGitHub ? 'true' : 'false' }}
-    };
-    
-    // DOM elements
-    const elements = {
-        searchInput: document.getElementById('librarySearch'),
-        searchClear: document.getElementById('searchClear'),
-        searchResults: document.getElementById('searchResults'),
-        libraryCards: document.querySelectorAll('.library-card'),
-        tabButtons: document.querySelectorAll('.nav-tab'),
-        tabPanes: document.querySelectorAll('.tab-pane'),
-        libraryDetailsContainer: document.getElementById('libraryDetailsContainer'),
-        versionSelector: document.getElementById('version'),
-        versionForm: document.getElementById('versionForm'),
-        loadingOverlay: document.getElementById('loadingOverlay'),
-        cacheStatusBadge: document.getElementById('cacheStatus'),
-        runSpeedTest: document.getElementById('runSpeedTest'),
-        cdnSpeedResults: document.getElementById('cdnSpeedResults')
-    };
-    
-    // Application state
-    let appState = {
-        searchTimeout: null,
-        activeTab: 'readme',
-        currentLibrary: '{{ $library ?? "" }}',
-        currentVersion: '{{ $libraryDetails["version"] ?? "" }}',
-        availableProviders: [] // Track available providers for the current library
-    };
-    
-    // Cache helper functions
-    const cache = {
-        /**
-         * Set an item in localStorage with expiration
-         * @param {string} key - Cache key
-         * @param {any} value - Value to store
-         * @param {number} expirySeconds - Expiration time in seconds
-         */
-        set: function(key, value, expirySeconds) {
-            if (!appConfig.cacheSettings.enabled) return;
-            
-            const now = new Date();
-            const item = {
-                value: value,
-                expiry: now.getTime() + (expirySeconds * 1000),
-            };
-            
-            try {
-                localStorage.setItem(
-                    appConfig.cacheSettings.prefix + key, 
-                    JSON.stringify(item)
-                );
-            } catch (e) {
-                console.warn('Cache storage failed:', e);
-                this.clearOldItems(); // Attempt to clear space
-            }
-        },
-        
-        /**
-         * Get an item from localStorage if it exists and is not expired
-         * @param {string} key - Cache key
-         * @returns {any|null} The stored value or null if expired/not found
-         */
-        get: function(key) {
-            if (!appConfig.cacheSettings.enabled) return null;
-            
-            const itemStr = localStorage.getItem(appConfig.cacheSettings.prefix + key);
-            if (!itemStr) return null;
-            
-            try {
-                const item = JSON.parse(itemStr);
-                const now = new Date();
-                
-                // Check if expired
-                if (now.getTime() > item.expiry) {
-                    localStorage.removeItem(appConfig.cacheSettings.prefix + key);
-                    return null;
-                }
-                
-                return item.value;
-            } catch (e) {
-                console.warn('Cache retrieval failed:', e);
-                return null;
-            }
-        },
-        
-        /**
-         * Remove an item from cache
-         * @param {string} key - Cache key
-         */
-        remove: function(key) {
-            localStorage.removeItem(appConfig.cacheSettings.prefix + key);
-        },
-        
-        /**
-         * Clear all items that start with the cache prefix
-         */
-        clear: function() {
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key.startsWith(appConfig.cacheSettings.prefix)) {
-                    localStorage.removeItem(key);
-                }
-            }
-        },
-        
-        /**
-         * Clear older items when storage is full
-         */
-        clearOldItems: function() {
-            const keysToRemove = [];
-            const now = new Date().getTime();
-            
-            // Identify old items
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key.startsWith(appConfig.cacheSettings.prefix)) {
-                    try {
-                        const itemStr = localStorage.getItem(key);
-                        const item = JSON.parse(itemStr);
-                        
-                        // Mark old items for removal
-                        if (now > item.expiry || now > (item.expiry - 24 * 60 * 60 * 1000)) {
-                            keysToRemove.push(key);
-                        }
-                    } catch (e) {
-                        keysToRemove.push(key); // Remove invalid items
-                    }
-                }
-            }
-            
-            // Remove items
-            keysToRemove.forEach(key => localStorage.removeItem(key));
-            
-            // If no items were removed, remove the oldest
-            if (keysToRemove.length === 0) {
-                let oldestKey = null;
-                let oldestTime = Infinity;
-                
-                for (let i = 0; i < localStorage.length; i++) {
-                    const key = localStorage.key(i);
-                    if (key.startsWith(appConfig.cacheSettings.prefix)) {
-                        try {
-                            const itemStr = localStorage.getItem(key);
-                            const item = JSON.parse(itemStr);
-                            
-                            if (item.expiry < oldestTime) {
-                                oldestTime = item.expiry;
-                                oldestKey = key;
-                            }
-                        } catch (e) {
-                            // Skip invalid items
-                        }
-                    }
-                }
-                
-                if (oldestKey) {
-                    localStorage.removeItem(oldestKey);
-                }
-            }
-        }
-    };
-    
-    // Initialize the application
-    document.addEventListener('DOMContentLoaded', function() {
-        initializeSearch();
-        initializeLibraryDetails();
-        
-        // Apply syntax highlighting to code blocks
-        document.querySelectorAll('pre code').forEach(block => {
-            hljs.highlightElement(block);
-        });
-        
-        // Handle clicks outside search results to close them
-        document.addEventListener('click', function(e) {
-            if (!elements.searchResults.contains(e.target) && e.target !== elements.searchInput) {
-                elements.searchResults.classList.add('hidden');
-            }
-        });
-        
-        // Check if current view is from cache
-        if (appState.currentLibrary && elements.cacheStatusBadge) {
-            const cacheKey = `library_${appState.currentLibrary}_${appState.currentVersion}`;
-            const isFromCache = sessionStorage.getItem(cacheKey + '_from_cache');
-            
-            if (isFromCache === 'true') {
-                elements.cacheStatusBadge.classList.remove('hidden');
-            }
-        }
 
-        // Initialize CDN speed test button
-        if (elements.runSpeedTest) {
-            elements.runSpeedTest.addEventListener('click', function() {
-                testCdnSpeed();
-            });
-        }
-        
-        // Extract current library info if on details page
-        extractCurrentLibraryInfo();
-    });
+/**
+ * Get country flag HTML using local images
+ * @param {String} countryCode - Two-letter country code
+ * @returns {String} - HTML for the country flag
+ */
+function getCountryFlag(countryCode) {
+    // Convert country code to lowercase
+    const code = (countryCode || 'xx').toLowerCase();
     
-    /**
-     * Extract current library information from page, including available providers
-     */
-    function extractCurrentLibraryInfo() {
-        // Extract current library and version from URL or page elements
-        const urlParams = new URLSearchParams(window.location.search);
-        appState.currentLibrary = urlParams.get('library') || '';
-        appState.currentVersion = urlParams.get('version') || '';
-        
-        // Extract available providers from the badges
-        if (appState.currentLibrary) {
-            appState.availableProviders = [];
-            document.querySelectorAll('.provider-badge').forEach(badge => {
-                if (badge.classList.contains('provider-badge-cdnjs')) {
-                    appState.availableProviders.push('cdnjs');
-                } else if (badge.classList.contains('provider-badge-jsdelivr')) {
-                    appState.availableProviders.push('jsdelivr');
-                } else if (badge.classList.contains('provider-badge-unpkg')) {
-                    appState.availableProviders.push('unpkg');
-                }
-            });
-            
-            console.log('Current library:', appState.currentLibrary);
-            console.log('Current version:', appState.currentVersion);
-            console.log('Available providers:', appState.availableProviders);
+    // Map of special cases for certain country codes
+    const specialCases = {
+        'uk': 'gb', // United Kingdom is 'gb' in flag icons
+        'lo': null, // Local network - no flag
+        'xx': null  // Unknown - no flag
+    };
+    
+    // If this is a special case with no flag
+    if (specialCases[code] === null) {
+        return `<span class="flag-placeholder">${countryCode}</span>`;
+    }
+    
+    // Convert full country names to ISO codes if necessary
+    if (code.length > 2) {
+        const isoCode = getISOCodeFromCountryName(code);
+        if (isoCode) {
+            return getCountryFlag(isoCode); // Recursive call with the ISO code
         }
     }
     
-    /**
-     * Initialize search functionality
-     */
-    function initializeSearch() {
-        if (!elements.searchInput) return;
-        
-        // Search input events
-        elements.searchInput.addEventListener('input', handleSearchInput);
-        elements.searchInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                clearSearch();
-            }
-        });
-        
-        // Search clear button
-        if (elements.searchClear) {
-            elements.searchClear.addEventListener('click', clearSearch);
+    // Use the mapped code if it exists, otherwise use the original
+    const flagCode = specialCases[code] || code;
+    
+    // Now use local flag images from build/images/flags directory
+    return `<img src="/build/images/flags/${flagCode}.png" 
+               class="flag-icon" alt="${countryCode}" 
+               title="${getCountryName(countryCode)}">`;
+}
+
+/**
+ * Convert full country name to ISO code
+ * @param {String} countryName - Full country name
+ * @returns {String} - Two-letter ISO country code or null if not found
+ */
+function getISOCodeFromCountryName(countryName) {
+    if (!countryName) return null;
+    
+    // Remove spaces and convert to lowercase for better matching
+    const normalizedName = countryName.toLowerCase().trim();
+    
+    // Map of country names to ISO codes
+    const countryMap = {
+        'united states': 'us',
+        'vietnam': 'vn',
+        'united kingdom': 'gb',
+        'germany': 'de',
+        'france': 'fr',
+        'japan': 'jp',
+        'china': 'cn',
+        'india': 'in',
+        'brazil': 'br',
+        'russia': 'ru',
+        'canada': 'ca',
+        'australia': 'au',
+        'italy': 'it',
+        'spain': 'es',
+        'mexico': 'mx',
+        'indonesia': 'id',
+        'turkey': 'tr',
+        'netherlands': 'nl',
+        'saudi arabia': 'sa',
+        'switzerland': 'ch',
+        'poland': 'pl',
+        'thailand': 'th',
+        'sweden': 'se',
+        'belgium': 'be',
+        'nigeria': 'ng',
+        'argentina': 'ar',
+        'austria': 'at',
+        'hong kong': 'hk',
+        'singapore': 'sg',
+        'malaysia': 'my',
+        'philippines': 'ph',
+        'ireland': 'ie',
+        'denmark': 'dk',
+        'south africa': 'za',
+        'south korea': 'kr',
+        'norway': 'no',
+        'finland': 'fi',
+        'local': 'lo',
+        'unknown': 'xx'
+        // Add more countries as needed
+    };
+    
+    return countryMap[normalizedName] || null;
+}
+
+/**
+ * Get country name from code
+ * @param {String} countryCode - Two-letter country code
+ * @returns {String} - Country name
+ */
+function getCountryName(countryCode) {
+    if (!countryCode) return 'Unknown';
+    
+    // Map of country codes to names
+    const countryNames = {
+        'us': 'United States',
+        'uk': 'United Kingdom',
+        'gb': 'United Kingdom',
+        'de': 'Germany',
+        'jp': 'Japan',
+        'hk': 'Hong Kong',
+        'au': 'Australia',
+        'sg': 'Singapore',
+        'in': 'India',
+        'br': 'Brazil',
+        'ca': 'Canada',
+        'fr': 'France',
+        'it': 'Italy',
+        'es': 'Spain',
+        'ru': 'Russia',
+        'cn': 'China',
+        'kr': 'South Korea',
+        'nl': 'Netherlands',
+        'se': 'Sweden',
+        'ch': 'Switzerland',
+        'be': 'Belgium',
+        'mx': 'Mexico',
+        'za': 'South Africa',
+        'pl': 'Poland',
+        'tr': 'Turkey',
+        'ar': 'Argentina',
+        'id': 'Indonesia',
+        'th': 'Thailand',
+        'my': 'Malaysia',
+        'vn': 'Vietnam',
+        'ph': 'Philippines',
+        'lo': 'Local Network',
+        'xx': 'Unknown'
+        // Add more as needed
+    };
+    
+    return countryNames[countryCode.toLowerCase()] || countryCode.toUpperCase();
+}
+
+/**
+ * Count total CDN nodes from all providers
+ * 
+ * @param {Object} providers - CDN providers object
+ * @return {Number} - Total number of nodes
+ */
+function getCdnNodeCount(providers) {
+    let count = 0;
+    for (const provider of Object.values(providers || {})) {
+        if (provider.nodes && Array.isArray(provider.nodes)) {
+            count += provider.nodes.length;
         }
-        
-        // Library cards click event
-        elements.libraryCards.forEach(card => {
-            card.addEventListener('click', function() {
-                const library = this.getAttribute('data-library');
-                if (library) {
-                    loadLibraryDetails(library);
-                }
-            });
-        });
+    }
+    return count;
+}
+
+/**
+ * Update the table structure to show only 3 columns
+ */
+function updateTableStructure() {
+    const table = document.querySelector('.speed-test-container table');
+    if (!table) return;
+    
+    const thead = table.querySelector('thead');
+    if (!thead) return;
+    
+    // Replace the header row
+    thead.innerHTML = `
+        <tr>
+            <th>Edge Location</th>
+            <th>Response Time</th>
+            <th>Status</th>
+        </tr>
+    `;
+}
+
+/**
+ * Get CSS class for speed result with safe handling of undefined values
+ * @param {Object} result - Test result
+ * @returns {String} - CSS class
+ */
+function getSpeedClass(result) {
+    if (!result || result.status !== 'success') return 'speed-error';
+    if (!result.time) return 'speed-error';
+    if (result.time < 150) return 'speed-fast';
+    if (result.time < 400) return 'speed-medium';
+    return 'speed-slow';
+}
+
+/**
+ * Get the status badge HTML based on response time
+ * @param {Object} result - Test result
+ * @returns {String} - HTML for the status badge
+ */
+function getStatusBadge(result) {
+    if (!result || result.status !== 'success') {
+        return '<span class="badge badge-failed">Failed</span>';
     }
     
-    /**
-     * Initialize library details functionality
-     */
-    function initializeLibraryDetails() {
-        // Initialize tab functionality
-        elements.tabButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const tabId = this.getAttribute('data-tab');
-                openTab(tabId);
-            });
-        });
-        
-        // Version selector change event
-        if (elements.versionSelector) {
-            elements.versionSelector.addEventListener('change', loadLibraryVersion);
-        }
-        
-        // Make sure links in README open in new tabs
-        document.querySelectorAll('.markdown-body a').forEach(link => {
-            link.style.pointerEvents = 'auto';
-            link.style.position = 'relative';
-            link.style.zIndex = '2';
-            
-            if (link.hostname && link.hostname !== window.location.hostname) {
-                link.setAttribute('target', '_blank');
-                link.setAttribute('rel', 'noopener noreferrer');
-            }
-        });
-        
-        // Fix any broken images with enhanced error handling
-        document.querySelectorAll('.markdown-body img').forEach(img => {
-            img.onerror = function() {
-                handleImageError(img);
-            };
-        });
+    // Classify response speed
+    if (!result.time) {
+        return '<span class="badge badge-failed">Failed</span>';
+    } else if (result.time < 200) {
+        return '<span class="badge badge-good">Good</span>';
+    } else if (result.time < 500) {
+        return '<span class="badge badge-bad">Bad</span>';
+    } else {
+        return '<span class="badge badge-failed">Failed</span>';
+    }
+}
+
+/**
+ * Get formatted text for speed result
+ * @param {Object} result - Test result
+ * @returns {String} - Formatted text
+ */
+function getSpeedText(result) {
+    if (!result || result.status !== 'success' || !result.time) {
+        return 'Connection failed';
+    }
+    return `${result.time} ms`;
+}
+
+/**
+ * Update progress bar and text
+ *
+ * @param {Number} percent - Progress percentage (0-100)
+ * @param {String} message - Progress message
+ */
+function updateProgress(percent, message) {
+    const progressBar = document.getElementById('testProgressBar');
+    const progressText = document.getElementById('testProgressText');
+    
+    if (progressBar) {
+        progressBar.style.width = `${percent}%`;
+        progressBar.setAttribute('aria-valuenow', percent);
     }
     
-    /**
-     * Handle search input with debounce
-     */
-    function handleSearchInput() {
-        const query = elements.searchInput.value.trim();
-        
-        // Toggle clear button
-        if (query.length > 0) {
-            elements.searchClear.classList.remove('d-none');
-        } else {
-            elements.searchClear.classList.add('d-none');
-            elements.searchResults.classList.add('hidden');
-            return;
-        }
-        
-        // Debounce search
-        clearTimeout(appState.searchTimeout);
-        
-        if (query.length >= 2) {
-            appState.searchTimeout = setTimeout(function() {
-                searchLibraries(query);
-            }, 300);
-        } else {
-            elements.searchResults.classList.add('hidden');
-        }
+    if (progressText && message) {
+        progressText.textContent = message;
     }
-    
-    /**
-     * Clear search input and results
-     */
-    function clearSearch() {
-        elements.searchInput.value = '';
-        elements.searchClear.classList.add('d-none');
-        elements.searchResults.classList.add('hidden');
+}
+
+/**
+ * Show error alert using SweetAlert2
+ * @param {String} message - Error message to display
+ */
+function showErrorAlert(message) {
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            title: 'Error',
+            text: message,
+            icon: 'error',
+            confirmButtonText: 'OK'
+        });
+    } else {
+        alert(message);
     }
+}
+
+/**
+ * Display user location information with modern design and error handling
+ * 
+ * @param {Object} locationInfo - User location information from the server
+ */
+function displayUserLocation(locationInfo) {
+    const locationInfoElement = document.getElementById('locationInfo');
+    if (!locationInfoElement) return;
     
-    /**
-     * Search libraries using AJAX
-     * @param {string} query - Search query string
-     */
-    function searchLibraries(query) {
-        // Check cache first
-        const cacheKey = `search_${query.toLowerCase().replace(/\W+/g, '_')}`;
-        const cachedResults = cache.get(cacheKey);
+    try {
+        if (!locationInfo) throw new Error('No location information provided');
         
-        if (cachedResults) {
-            console.log('Using cached search results for:', query);
-            displaySearchResults(cachedResults);
-            return;
-        }
+        const countryCode = (locationInfo.location?.country_code || locationInfo.location?.countryCode || 'XX').toUpperCase();
+        const country = locationInfo.location?.country || 'Unknown';
+        const city = locationInfo.location?.city || 'Unknown';
+        const ip = locationInfo.ip || 'Unknown';
         
-        // Show loading indicator
-        elements.searchResults.innerHTML = `
-            <div class="p-3 text-center">
-                <div class="spinner" style="width: 1.5rem; height: 1.5rem; margin-bottom: 0.5rem;"></div>
-                <p class="mb-0">${appConfig.translations.searching}</p>
+        // Count providers and servers
+        const providerCount = Object.keys(window.speedTestData?.cdn_providers || {}).length;
+        const serverCount = getCdnNodeCount(window.speedTestData?.cdn_providers || {});
+        
+        // Create modern card design
+        locationInfoElement.innerHTML = `
+            <div class="location-card">
+                <div class="location-details">
+                    <div class="location-icon">
+                        ${getCountryFlag(countryCode)}
+                    </div>
+                    <div class="location-info">
+                        <div class="location-primary">
+                            <span class="location-label">Your Location</span>
+                            <span class="location-name">${city !== 'Unknown' ? city + ', ' : ''}${country}</span>
+                        </div>
+                        <div class="location-secondary">
+                            <span class="location-ip">IP: ${ip}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="test-details">
+                    <div class="test-icon">
+                        <i class="fas fa-server"></i>
+                    </div>
+                    <div class="test-info">
+                        <div class="test-primary">
+                            <span class="test-stat">${providerCount}</span>
+                            <span class="test-label">CDN Providers</span>
+                        </div>
+                        <div class="test-secondary">
+                            <span class="test-stat">${serverCount}</span>
+                            <span class="test-label">Edge Servers</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         `;
-        elements.searchResults.classList.remove('hidden');
-        
-        // Create an XMLHttpRequest
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', appConfig.endpoints.search, true);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.setRequestHeader('X-CSRF-TOKEN', appConfig.csrfToken);
-        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-        
-        xhr.onload = function() {
-            if (xhr.status >= 200 && xhr.status < 400) {
-                try {
-                    const data = JSON.parse(xhr.responseText);
-                    
-                    if (data.success) {
-                        // Cache the search results
-                        cache.set(cacheKey, data, appConfig.cacheSettings.searchExpiry);
-                        
-                        // Display results
-                        displaySearchResults(data);
-                    } else {
-                        showToast(data.error || appConfig.translations.errorSearching, 'error');
-                        elements.searchResults.classList.add('hidden');
-                    }
-                } catch (error) {
-                    console.error('Error parsing JSON:', error);
-                    showToast(appConfig.translations.errorSearching, 'error');
-                    elements.searchResults.classList.add('hidden');
-                }
-            } else {
-                showToast(appConfig.translations.errorSearching, 'error');
-                elements.searchResults.classList.add('hidden');
-            }
-        };
-        
-        xhr.onerror = function() {
-            console.error('Network error during search');
-            showToast(appConfig.translations.errorSearching, 'error');
-            elements.searchResults.classList.add('hidden');
-        };
-        
-        // Send the request
-        xhr.send(JSON.stringify({
-            query: query,
-            limit: 10
-        }));
-    }
-    
-   /**
-    * Display search results in the dropdown with improved provider handling
-    * @param {Object} data - Search results data
-    */
-   function displaySearchResults(data) {
-       let resultsHTML = '';
-       
-       // Map to store all libraries
-       const libraries = {};
-       
-       console.log('Raw search results:', data);
-
-       // Process CDNJS results
-       if (data.cdnjs && data.cdnjs.results && data.cdnjs.results.length > 0) {
-           for (const library of data.cdnjs.results) {
-               const name = library.name;
-               
-               if (!libraries[name]) {
-                   libraries[name] = {
-                       name: name,
-                       description: library.description || data.translations.noDescription,
-                       providers: ['cdnjs']
-                   };
-               } else if (!libraries[name].providers.includes('cdnjs')) {
-                   libraries[name].providers.push('cdnjs');
-               }
-           }
-       }
-       
-       // Process jsDelivr results
-       if (data.jsdelivr && Array.isArray(data.jsdelivr) && data.jsdelivr.length > 0) {
-           for (const item of data.jsdelivr) {
-               if (!item || !item.name) continue;
-               
-               const name = item.name;
-               
-               if (!libraries[name]) {
-                   libraries[name] = {
-                       name: name,
-                       description: item.description || data.translations.availableOnJsdelivr,
-                       providers: ['jsdelivr']
-                   };
-               } else if (!libraries[name].providers.includes('jsdelivr')) {
-                   libraries[name].providers.push('jsdelivr');
-               }
-           }
-       }
-       
-       // Process unpkg results - ensure unpkg is properly processed
-       if (data.unpkg && Array.isArray(data.unpkg) && data.unpkg.length > 0) {
-           for (const item of data.unpkg) {
-               if (!item || !item.name) continue;
-               
-               const name = item.name;
-               
-               if (!libraries[name]) {
-                   libraries[name] = {
-                       name: name,
-                       description: item.description || data.translations.availableOnUnpkg,
-                       providers: ['unpkg']
-                   };
-               } else if (!libraries[name].providers.includes('unpkg')) {
-                   libraries[name].providers.push('unpkg');
-               }
-           }
-       }
-       
-       // Convert libraries object to array and sort
-       const librariesArray = Object.values(libraries).sort((a, b) => {
-           // Sort by number of providers first (more providers first)
-           if (a.providers.length !== b.providers.length) {
-               return b.providers.length - a.providers.length;
-           }
-           
-           // Then alphabetically
-           return a.name.localeCompare(b.name);
-       });
-       
-       console.log('Processed search results:', librariesArray);
-       
-       // Generate HTML for each library with explicit providers display
-       for (const library of librariesArray) {
-           // Create badges for providers - ensure ALL providers are displayed
-           let badgesHTML = '';
-           
-           // Make sure to generate badges for all available providers
-           if (library.providers.includes('cdnjs')) {
-               badgesHTML += `<span class="search-result-badge search-result-badge-cdnjs">CDNJS</span> `;
-           }
-           
-           if (library.providers.includes('jsdelivr')) {
-               badgesHTML += `<span class="search-result-badge search-result-badge-jsdelivr">JSDELIVR</span> `;
-           }
-           
-           if (library.providers.includes('unpkg')) {
-               badgesHTML += `<span class="search-result-badge search-result-badge-unpkg">UNPKG</span> `;
-           }
-           
-           // Add a special message for availability description based on providers
-           let availabilityDesc = library.description;
-           
-           // Explicit message about provider availability
-           if (library.providers.length === 3) {
-               availabilityDesc += ` <small>(${data.translations.allProviders})</small>`;
-           } else if (library.providers.length === 2) {
-               // Create provider-specific messages for combinations
-               const providerSet = library.providers.sort().join(',');
-               if (providerSet === 'cdnjs,jsdelivr') {
-                   availabilityDesc += ` <small>(${data.translations.cdnjsdelivr_only})</small>`;
-               } else if (providerSet === 'cdnjs,unpkg') {
-                   availabilityDesc += ` <small>(${data.translations.cdnjsunpkg_only})</small>`;
-               } else if (providerSet === 'jsdelivr,unpkg') {
-                   availabilityDesc += ` <small>(${data.translations.jsdelivrunpkg_only})</small>`;
-               }
-           }
-           
-           resultsHTML += `
-               <div class="search-result-item" data-type="library" data-name="${library.name}" data-providers="${library.providers.join(',')}">
-                   <div class="search-result-name">${library.name}</div>
-                   <div class="search-result-description">${availabilityDesc}</div>
-                   <div class="search-result-badges">${badgesHTML}</div>
-               </div>
-           `;
-       }
-       
-       if (librariesArray.length === 0) {
-           resultsHTML = `
-               <div class="p-3 text-center">
-                   <p class="mb-1">${data.translations.noLibrariesFound}</p>
-                   <p class="small text-muted mb-0">${data.translations.tryAnotherQuery}</p>
-               </div>
-           `;
-       }
-       
-       elements.searchResults.innerHTML = resultsHTML;
-       elements.searchResults.classList.remove('hidden');
-       
-       // Add click event listeners to search results
-       document.querySelectorAll('.search-result-item').forEach(item => {
-           item.addEventListener('click', function() {
-               const name = this.getAttribute('data-name');
-               const providers = this.getAttribute('data-providers');
-               
-               // Pass providers information when loading library details
-               loadLibraryDetails(name, '', providers);
-           });
-       });
-   }
-    
-    /**
-     * Load library details
-     * @param {string} libraryName - Name of the library
-     * @param {string} version - Optional specific version
-     * @param {string} providers - Optional string with comma-separated providers
-     */
-    function loadLibraryDetails(libraryName, version = '', providers = '') {
-        // Update browser history
-        const url = new URL(appConfig.routeUrl);
-        url.searchParams.set('library', libraryName);
-        if (version) {
-            url.searchParams.set('version', version);
-        }
-        if (providers) {
-            url.searchParams.set('providers', providers);
-        }
-        
-        // Use History API for smooth navigation
-        window.history.pushState({ 
-            library: libraryName, 
-            version, 
-            providers 
-        }, '', url.toString());
-        
-        // Show loading overlay
-        if (elements.loadingOverlay) {
-            elements.loadingOverlay.classList.remove('hidden');
-        }
-        
-        // Navigate to the URL
-        window.location.href = url.toString();
-    }
-    
-    /**
-     * Load a different version of the current library
-     */
-    function loadLibraryVersion() {
-        if (!elements.versionSelector || !elements.versionForm) return;
-        
-        const version = elements.versionSelector.value;
-        const library = elements.versionForm.querySelector('input[name="library"]').value;
-        
-        // Load new version details
-        loadLibraryDetails(library, version);
-    }
-    
-    /**
-     * Switch between tabs in library details view
-     * @param {string} tabId - ID of the tab to open
-     */
-    function openTab(tabId) {
-        // Update application state
-        appState.activeTab = tabId;
-        
-        // Hide all tabs
-        elements.tabPanes.forEach(function(tab) {
-            tab.style.display = 'none';
-            tab.classList.remove('active');
-        });
-        
-        // Show selected tab
-        const selectedTab = document.getElementById(tabId);
-        if (selectedTab) {
-            selectedTab.style.display = 'block';
-            selectedTab.classList.add('active');
-        }
-        
-        // Update active tab state
-        elements.tabButtons.forEach(function(tab) {
-            tab.classList.remove('active');
-            if (tab.getAttribute('data-tab') === tabId) {
-                tab.classList.add('active');
-            }
-        });
-    }
-    
-    /**
-     * Test CDN connection speed only for providers that are available for the current library
-     */
-    function testCdnSpeed() {
-        // Show loading state
-        const speedTestContainer = document.getElementById('cdnSpeedResults');
-        if (!speedTestContainer) return;
-        
-        const library = appState.currentLibrary;
-        const version = appState.currentVersion;
-        
-        if (!library) {
-            speedTestContainer.innerHTML = '<div class="alert alert-warning">Library information not available</div>';
-            return;
-        }
-        
-        // Get available providers for this library
-        const availableProviders = appState.availableProviders.length > 0 
-            ? appState.availableProviders 
-            : ['cdnjs', 'jsdelivr', 'unpkg']; // Fallback to all if not detected
-        
-        // Show loading state
-        speedTestContainer.innerHTML = `
-            <div class="text-center py-4">
-                <div class="spinner mb-2"></div>
-                <p>Testing connection speed to available CDN providers...</p>
-                <p class="small text-muted">Testing: ${availableProviders.map(p => p.toUpperCase()).join(', ')}</p>
+    } catch (error) {
+        console.error('Error displaying user location:', error);
+        locationInfoElement.innerHTML = `
+            <div class="location-card">
+                <div class="location-details">
+                    <div class="location-icon">
+                        <span class="flag-placeholder">?</span>
+                    </div>
+                    <div class="location-info">
+                        <div class="location-primary">
+                            <span class="location-label">Your Location</span>
+                            <span class="location-name">Unknown</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         `;
-        
-        // Make API request
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', appConfig.endpoints.speedTest, true);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.setRequestHeader('X-CSRF-TOKEN', appConfig.csrfToken);
-        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-        
-        xhr.onload = function() {
-            if (xhr.status >= 200 && xhr.status < 400) {
-                try {
-                    const data = JSON.parse(xhr.responseText);
-                    
-                    if (data.success) {
-                        // Filter results to only include available providers
-                        const filteredResults = {};
-                        for (const provider of availableProviders) {
-                            if (data.results[provider]) {
-                                filteredResults[provider] = data.results[provider];
-                            }
-                        }
-                        
-                        displaySpeedResults(filteredResults);
-                    } else {
-                        speedTestContainer.innerHTML = `<div class="alert alert-danger">${data.error || 'Error testing CDN speed'}</div>`;
-                    }
-                } catch (error) {
-                    console.error('Error parsing JSON:', error);
-                    speedTestContainer.innerHTML = '<div class="alert alert-danger">Error processing speed test results</div>';
-                }
-            } else {
-                speedTestContainer.innerHTML = '<div class="alert alert-danger">Error communicating with server</div>';
-            }
-        };
-        
-        xhr.onerror = function() {
-            speedTestContainer.innerHTML = '<div class="alert alert-danger">Network error during speed test</div>';
-        };
-        
-        // Add available providers to the request
-        xhr.send(JSON.stringify({
-            library: library,
-            version: version,
-            providers: availableProviders
-        }));
     }
+}
 
-    /**
-     * Display CDN speed test results
-     * @param {Object} results - Speed test results from server
-     */
-    function displaySpeedResults(results) {
-        const speedTestContainer = document.getElementById('cdnSpeedResults');
-        if (!speedTestContainer) return;
+/**
+ * Calculate and display summary statistics for test results with error handling
+ * @param {Array} results - Array of test results
+ * @returns {Object} - Statistics summary
+ */
+function calculateStatsSummary(results) {
+    try {
+        // Safety check for results
+        if (!Array.isArray(results) || results.length === 0) {
+            return {
+                fastest: null,
+                slowest: null,
+                average: null,
+                medianResponse: null,
+                successRate: 0
+            };
+        }
         
-        // Use this to track the fastest provider
-        let fastestProvider = null;
-        let fastestTime = Number.MAX_VALUE;
+        // Only consider successful tests
+        const successfulResults = results.filter(r => r && r.status === 'success');
         
-        // Determine fastest provider
-        for (const [provider, data] of Object.entries(results)) {
-            if (data.available && data.time && data.time < fastestTime) {
-                fastestTime = data.time;
+        if (successfulResults.length === 0) {
+            return {
+                fastest: null,
+                slowest: null,
+                average: null,
+                medianResponse: null,
+                successRate: 0
+            };
+        }
+        
+        // Sort by response time
+        const sortedResults = [...successfulResults].sort((a, b) => (a.time || 0) - (b.time || 0));
+        
+        // Calculate fastest and slowest
+        const fastest = sortedResults[0];
+        const slowest = sortedResults[sortedResults.length - 1];
+        
+        // Calculate average response time
+        const totalTime = successfulResults.reduce((sum, result) => sum + (result.time || 0), 0);
+        const averageTime = Math.round(totalTime / successfulResults.length);
+        
+        // Calculate median response time
+        const medianIndex = Math.floor(sortedResults.length / 2);
+        const medianResponse = sortedResults.length % 2 === 0
+            ? Math.round(((sortedResults[medianIndex - 1].time || 0) + (sortedResults[medianIndex].time || 0)) / 2)
+            : sortedResults[medianIndex].time || 0;
+        
+        // Calculate success rate
+        const successRate = Math.round((successfulResults.length / results.length) * 100);
+        
+        // Group by CDN provider
+        const providerStats = {};
+        for (const result of successfulResults) {
+            const provider = result.provider || 'unknown';
+            if (!providerStats[provider]) {
+                providerStats[provider] = [];
+            }
+            providerStats[provider].push(result);
+        }
+        
+        // Find fastest provider
+        let fastestProvider = 'unknown';
+        let fastestProviderTime = Infinity;
+        
+        for (const [provider, providerResults] of Object.entries(providerStats)) {
+            if (providerResults.length === 0) continue;
+            
+            const avgTime = providerResults.reduce((sum, r) => sum + (r.time || 0), 0) / providerResults.length;
+            if (avgTime < fastestProviderTime) {
+                fastestProviderTime = avgTime;
                 fastestProvider = provider;
             }
         }
         
-        // Create results HTML
-        let html = `
-            <div class="card mb-4">
-                <div class="card-header bg-primary text-white">
-                    <i class="bx bx-tachometer me-1"></i> {{ __('tools.speed_test_results') }}
-                </div>
-                <div class="card-body">
-                    <p class="card-text mb-3">{{ __('tools.connection_speed') }}</p>
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-hover">
-                            <thead>
-                                <tr>
-                                    <th>{{ __('tools.provider') }}</th>
-                                    <th>{{ __('tools.status') }}</th>
-                                    <th>{{ __('tools.response_time') }}</th>
-                                    <th>{{ __('tools.recommendation') }}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-        `;
-        
-        // Add each provider's results
-        for (const [provider, data] of Object.entries(results)) {
-            // Status badge
-            let statusBadge = data.available 
-                ? `<span class="badge bg-success">{{ __('tools.available') }}</span>` 
-                : `<span class="badge bg-danger">{{ __('tools.unavailable') }}</span>`;
+        return {
+            fastest,
+            slowest,
+            averageTime,
+            medianResponse,
+            successRate,
+            fastestProvider,
+            fastestProviderTime: Math.round(fastestProviderTime),
+            totalTests: results.length,
+            successfulTests: successfulResults.length
+        };
+    } catch (error) {
+        console.error('Error calculating statistics:', error);
+        return {
+            fastest: null,
+            slowest: null,
+            average: null,
+            medianResponse: null,
+            successRate: 0,
+            error: error.message
+        };
+    }
+}
+
+/**
+ * Display statistics summary in UI
+ * @param {Object} stats - Statistics object
+ */
+function displayStatisticsSummary(stats) {
+    try {
+        // Create the summary element if it doesn't exist
+        let summaryElement = document.getElementById('cdn-stats-summary');
+        if (!summaryElement) {
+            summaryElement = document.createElement('div');
+            summaryElement.id = 'cdn-stats-summary';
+            summaryElement.className = 'cdn-stats-summary mt-3 mb-3';
             
-            // Response time
-            let responseTime = data.time ? `${data.time} ms` : 'N/A';
-            
-            html += `
-                <tr>
-                    <td>
-                        <strong class="text-capitalize">${provider}</strong>
-                    </td>
-                    <td>${statusBadge}</td>
-                    <td>${responseTime}</td>
-                    <td id="recommendation-${provider}"></td>
-                </tr>
-            `;
+            // Insert after the locationInfo element
+            const locationInfo = document.getElementById('locationInfo');
+            if (locationInfo && locationInfo.parentNode) {
+                locationInfo.parentNode.insertBefore(summaryElement, locationInfo.nextSibling);
+            }
         }
         
-        html += `
-                        </tbody>
-                    </table>
+        // If we couldn't calculate stats, show an error
+        if (!stats || !stats.fastest) {
+            summaryElement.innerHTML = `
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    No successful tests completed. Please try again.
                 </div>
-                <div class="alert alert-info mt-3">
-                    <i class="bx bx-info-circle me-1"></i> 
-                    {{ __('tools.speed_disclaimer') }}
+            `;
+            summaryElement.classList.remove('d-none');
+            return;
+        }
+        
+        // Generate HTML for the summary
+        summaryElement.innerHTML = `
+            <h6 class="mb-3"><i class="fas fa-chart-line me-2"></i> Performance Summary</h6>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="cdn-stats-item">
+                        <div class="cdn-stats-icon"><i class="fas fa-bolt"></i></div>
+                        <div>Fastest Response</div>
+                        <div class="cdn-stats-value speed-fast">${stats.fastest.time} ms</div>
+                    </div>
+                    <div class="cdn-stats-item">
+                        <div class="cdn-stats-icon"><i class="fas fa-stopwatch"></i></div>
+                        <div>Slowest Response</div>
+                        <div class="cdn-stats-value speed-slow">${stats.slowest.time} ms</div>
+                    </div>
+                    <div class="cdn-stats-item">
+                        <div class="cdn-stats-icon"><i class="fas fa-calculator"></i></div>
+                        <div>Average Response</div>
+                        <div class="cdn-stats-value">${stats.averageTime} ms</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="cdn-stats-item">
+                        <div class="cdn-stats-icon"><i class="fas fa-trophy"></i></div>
+                        <div>Fastest Provider</div>
+                        <div class="cdn-stats-value speed-fast">${stats.fastestProvider} (avg: ${stats.fastestProviderTime} ms)</div>
+                    </div>
+                    <div class="cdn-stats-item">
+                        <div class="cdn-stats-icon"><i class="fas fa-check-circle"></i></div>
+                        <div>Success Rate</div>
+                        <div class="cdn-stats-value">${stats.successRate}% (${stats.successfulTests}/${stats.totalTests})</div>
+                    </div>
+                    <div class="cdn-stats-item">
+                        <div class="cdn-stats-icon"><i class="fas fa-sort-numeric-down"></i></div>
+                        <div>Median Response</div>
+                        <div class="cdn-stats-value">${stats.medianResponse} ms</div>
+                    </div>
                 </div>
             </div>
         `;
         
-        // Display the results
-        speedTestContainer.innerHTML = html;
+        summaryElement.classList.remove('d-none');
+    } catch (error) {
+        console.error('Error displaying statistics summary:', error);
+    }
+}
+
+/**
+ * Display speed test results in the table with error handling for missing properties
+ * @param {Array} results - Array of test results
+ */
+function displaySpeedTestResults(results) {
+    try {
+        const resultsBody = document.getElementById('speedTestResultsBody');
+        if (!resultsBody) return;
         
-        // Add recommendations after the table is rendered
-        for (const [provider, data] of Object.entries(results)) {
-            const recommendationCell = document.getElementById(`recommendation-${provider}`);
-            if (!recommendationCell) continue;
+        // Safety check for results
+        if (!Array.isArray(results)) {
+            console.error('Results is not an array:', results);
+            resultsBody.innerHTML = '<tr><td colspan="3" class="text-center text-danger">Invalid results format</td></tr>';
+            return;
+        }
+        
+        // Clear previous results
+        resultsBody.innerHTML = '';
+        
+        // Group results by provider
+        const resultsByProvider = {};
+        results.forEach(result => {
+            if (!result) return;
             
-            if (provider === fastestProvider) {
-                recommendationCell.innerHTML = `
-                    <span class="badge bg-success">{{ __('tools.fastest') }}</span>
-                    <small class="d-block mt-1">{{ __('tools.best_choice') }}</small>
-                `;
-            } else if (data.available) {
-                const percentSlower = data.time && fastestTime 
-                    ? Math.round(((data.time - fastestTime) / fastestTime) * 100) 
-                    : null;
+            // Ensure provider exists or use 'unknown'
+            const provider = result.provider || 'unknown';
+            if (!resultsByProvider[provider]) {
+                resultsByProvider[provider] = [];
+            }
+            resultsByProvider[provider].push(result);
+        });
+        
+        // Process each provider and add their nodes
+        for (const [provider, providerResults] of Object.entries(resultsByProvider)) {
+            // Find the fastest node for this provider - ONLY from successful results
+            const successfulResults = providerResults.filter(r => r && r.status === 'success');
+            const fastestResult = successfulResults.length > 0 ? 
+                successfulResults.reduce((fastest, current) => {
+                    if (!fastest || ((fastest.time || Infinity) > (current.time || Infinity))) return current;
+                    return fastest;
+                }, null) : null;
+            
+            // Calculate percentage of "bad" results (>=200ms)
+            const badResultsCount = successfulResults.filter(r => (r.time || 0) >= 200).length;
+            const badResultsPercentage = successfulResults.length > 0 ? 
+                (badResultsCount / successfulResults.length) * 100 : 0;
+            
+            // Calculate percentage of "fail" results
+            const failResultsCount = providerResults.filter(r => !r || r.status !== 'success').length;
+            const failResultsPercentage = providerResults.length > 0 ?
+                (failResultsCount / providerResults.length) * 100 : 0;
+            
+            // Add a provider group header
+            const headerRow = document.createElement('tr');
+            headerRow.className = 'table-light provider-header';
+            
+            // Get provider name and logo
+            const providerName = providerResults[0]?.provider_name || provider;
+            const logoUrl = providerResults[0]?.logo || `/build/images/${provider}.${provider === 'jsdelivr' || provider === 'cdnjs' ? 'svg' : 'png'}`;
+            
+            // Different header based on whether we have successful results
+            if (fastestResult) {
+                // Ensure node object exists before accessing properties
+                const nodeCountry = fastestResult.node?.country || 'XX'; 
+                const nodeLocation = fastestResult.node?.location || 'Unknown';
                 
-                if (percentSlower !== null) {
-                    if (percentSlower < 20) {
-                        recommendationCell.innerHTML = `
-                            <span class="badge bg-primary">{{ __('tools.good') }}</span>
-                            <small class="d-block mt-1">${percentSlower}% {{ __('tools.slower_than_fastest') }}</small>
-                        `;
-                    } else if (percentSlower < 50) {
-                        recommendationCell.innerHTML = `
-                            <span class="badge bg-warning text-dark">{{ __('tools.acceptable') }}</span>
-                            <small class="d-block mt-1">${percentSlower}% {{ __('tools.slower_than_fastest') }}</small>
-                        `;
-                    } else {
-                        recommendationCell.innerHTML = `
-                            <span class="badge bg-danger">{{ __('tools.slow') }}</span>
-                            <small class="d-block mt-1">${percentSlower}% {{ __('tools.slower_than_fastest') }}</small>
-                        `;
-                    }
+                // Use appropriate message and style based on response time and result distribution
+                let badgeClass = "bg-primary";
+                let message = "Fastest";
+                
+                // Check for "Not Connected" condition
+                if ((fastestResult.time || 0) >= 500 || (failResultsPercentage > 60 && (fastestResult.time || 0) >= 200)) {
+                    badgeClass = "bg-danger";
+                    message = "Not Connected";
+                }
+                // Check for "All Slow" condition
+                else if ((fastestResult.time || 0) >= 200 && (fastestResult.time || 0) < 500 || badResultsPercentage > 60) {
+                    badgeClass = "bg-warning text-dark";
+                    message = "All Slow";
+                }
+                
+                headerRow.innerHTML = `
+                    <td colspan="3" class="provider-summary text-center">
+                        <img src="${logoUrl}" alt="${providerName}" height="28" class="me-2">
+                        <span class="badge ms-2 ${badgeClass}">
+                            ${message}: ${getCountryFlag(nodeCountry)} ${nodeLocation} (${fastestResult.time} ms)
+                        </span>
+                    </td>
+                `;
+            } else {
+                // Show "All tests failed" when there are no successful tests
+                headerRow.innerHTML = `
+                    <td colspan="3" class="provider-summary text-center">
+                        <img src="${logoUrl}" alt="${providerName}" height="28" class="me-2">
+                        <span class="badge bg-danger">All tests failed</span>
+                    </td>
+                `;
+            }
+            
+            resultsBody.appendChild(headerRow);
+            
+            // Add each node result
+            providerResults.forEach(result => {
+                if (!result) return;
+                
+                const row = document.createElement('tr');
+                row.className = (result === fastestResult) ? 'table-success' : '';
+                
+                // Ensure node object exists before accessing properties
+                const nodeCountry = result.node?.country || 'XX';
+                const nodeLocation = result.node?.location || 'Unknown';
+                const nodeIp = result.node?.reference_ip || result.node?.ip || result.ip || 'Unknown';
+                
+                // Create the row with 3 columns
+                row.innerHTML = `
+                    <td>
+                        ${getCountryFlag(nodeCountry)} ${nodeLocation} 
+                        <br><small class="text-muted">${nodeIp}</small>
+                    </td>
+                    <td class="speed-result ${getSpeedClass(result)}">
+                        ${getSpeedText(result)}
+                    </td>
+                    <td>
+                        ${getStatusBadge(result)}
+                    </td>
+                `;
+                
+                resultsBody.appendChild(row);
+            });
+        }
+    } catch (error) {
+        console.error('Error displaying speed test results:', error);
+        const resultsBody = document.getElementById('speedTestResultsBody');
+        if (resultsBody) {
+            resultsBody.innerHTML = `
+                <tr>
+                    <td colspan="3" class="text-center text-danger">
+                        Error displaying results: ${error.message}
+                    </td>
+                </tr>
+            `;
+        }
+    }
+}
+
+// Global test counter
+window.testCount = 0;
+
+/**
+ * Run CDN speed test from server-side with improved error handling
+ */
+function runCdnSpeedTest() {
+    try {
+        const speedTestContainer = document.querySelector('.speed-test-container');
+        if (speedTestContainer) {
+            speedTestContainer.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Increment test count
+        window.testCount = (window.testCount || 0) + 1;
+        console.log(`Running test #${window.testCount}`);
+        
+        // Update table structure first
+        updateTableStructure();
+        
+        // Show loading indicator
+        const speedTestLoading = document.getElementById('speedTestLoading');
+        const speedTestResults = document.getElementById('speedTestResults');
+        
+        if (!speedTestLoading || !speedTestResults) {
+            console.error('Missing UI elements: speedTestLoading or speedTestResults');
+            return;
+        }
+        
+        // Remove Test Again container if exists
+        const testAgainContainer = document.getElementById('testAgainContainer');
+        if (testAgainContainer) {
+            testAgainContainer.remove();
+        }
+        
+        speedTestLoading.classList.remove('d-none');
+        speedTestResults.classList.add('d-none');
+        
+        // Hide stats summary
+        const statsSummary = document.getElementById('cdn-stats-summary');
+        if (statsSummary) {
+            statsSummary.classList.add('d-none');
+        }
+        
+        // Clear previous results
+        const resultsBody = document.getElementById('speedTestResultsBody');
+        const locationInfo = document.getElementById('locationInfo');
+        
+        if (!resultsBody || !locationInfo) {
+            console.error('Missing UI elements: speedTestResultsBody or locationInfo');
+            speedTestLoading.classList.add('d-none');
+            return;
+        }
+        
+        resultsBody.innerHTML = '';
+        locationInfo.innerHTML = '';
+        
+        // Get the library and version information from the page
+        const library = document.querySelector('input#libraryName')?.value || 'jquery';
+        const version = document.querySelector('input#versionValue')?.value || document.querySelector('select#versionSelect')?.value || '3.6.0';
+        
+        // Get CSRF token - handle multiple potential sources of csrf token
+        let csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        if (!csrfToken) {
+            csrfToken = document.querySelector('input[name="_token"]')?.value;
+        }
+        
+        if (!csrfToken) {
+            console.error('CSRF token not found');
+            showErrorAlert('CSRF token not found. Please reload the page and try again.');
+            speedTestLoading.classList.add('d-none');
+            return;
+        }
+        
+        // Debugging information
+        console.log('Starting server-side CDN speed test...');
+        console.log(`Testing library: ${library}, version: ${version}`);
+        
+        // First step: Get edge servers information
+        updateProgress(0, 'Fetching CDN edge server information...');
+        
+        // Setup the request with proper error handling
+        const fetchOptions = {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': csrfToken
+            },
+            body: JSON.stringify({ library, version })
+        };
+        
+        // Add timeout to fetch
+        const controller = new AbortController();
+        const signal = controller.signal;
+        const timeout = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        
+        fetch('/tools/cdn-search/edge-servers', {
+            ...fetchOptions,
+            signal
+        })
+        .then(response => {
+            clearTimeout(timeout);
+            console.log('Server response status:', response.status);
+            
+            if (!response.ok) {
+                if (response.status === 419) {
+                    throw new Error('CSRF token mismatch - Please reload the page');
+                } else if (response.status === 500) {
+                    throw new Error('Internal server error - Please try again later');
                 } else {
-                    recommendationCell.innerHTML = `
-                        <span class="badge bg-secondary">{{ __('tools.unknown_speed') }}</span>
-                        <small class="d-block mt-1">{{ __('tools.couldnt_determine_speed') }}</small>
-                    `;
+                    throw new Error(`Network error: ${response.status}`);
                 }
-            } else {
-                recommendationCell.innerHTML = `
-                    <span class="badge bg-danger">{{ __('tools.not_recommended') }}</span>
-                    <small class="d-block mt-1">{{ __('tools.service_unavailable') }}</small>
+            }
+            
+            return response.json();
+        })
+        .then(data => {
+            console.log('Edge servers data received:', data);
+            
+            if (!data || !data.success) {
+                throw new Error(data?.message || 'Unknown error getting server information');
+            }
+            
+            // Save data in global scope for use in other functions
+            window.speedTestData = data;
+            
+            // Display user location information
+            displayUserLocation(data.user_location);
+            
+            // Second step: Run the actual speed test
+            updateProgress(30, 'Running server-side CDN speed tests...');
+            
+            return fetch('/tools/cdn-search/run-speed-test', {
+                ...fetchOptions,
+                signal: (new AbortController()).signal
+            });
+        })
+        .then(response => {
+            console.log('Speed test response status:', response.status);
+            
+            if (!response.ok) {
+                if (response.status === 419) {
+                    throw new Error('CSRF token mismatch - Please reload the page');
+                } else if (response.status === 500) {
+                    throw new Error('Internal server error - Please try again later');
+                } else {
+                    throw new Error(`Network error: ${response.status}`);
+                }
+            }
+            
+            return response.json();
+        })
+        .then(data => {
+            console.log('Speed test data received:', data);
+            
+            if (!data || !data.success) {
+                throw new Error(data?.message || 'Unknown error running speed test');
+            }
+            
+            updateProgress(100, 'Processing test results...');
+            
+            // Use the improved extractTestResults function
+            const results = extractTestResults(data);
+            
+            // Calculate statistics from results
+            try {
+                const stats = calculateStatsSummary(results);
+                displayStatisticsSummary(stats);
+            } catch (statsError) {
+                console.error('Error calculating statistics:', statsError);
+                // Continue execution even if stats calculation fails
+            }
+            
+            // Display results
+            displaySpeedTestResults(results);
+            
+            // Hide loading indicator
+            speedTestLoading.classList.add('d-none');
+            speedTestResults.classList.remove('d-none');
+            
+            // Add Test Again button if we haven't reached the limit
+            if (window.testCount < 3) {
+                const buttonContainer = document.createElement('div');
+                buttonContainer.id = 'testAgainContainer';
+                buttonContainer.className = 'text-center mt-3 mb-3';
+                
+                // Show remaining tests count
+                const remainingTests = 3 - window.testCount;
+                
+                buttonContainer.innerHTML = `
+                    <button type="button" class="btn btn-primary" id="testAgainButton">
+                        <i class="fas fa-redo me-1"></i> Test Again <span class="badge bg-light text-dark ms-1">${remainingTests} left</span>
+                    </button>
                 `;
-            }
-        }
-    }
-    
-    /**
-     * Handle image loading errors with multiple fallback strategies
-     * @param {HTMLImageElement} img - The image element that failed to load
-     */
-    function handleImageError(img) {
-        const src = img.getAttribute('src');
-        const library = '{{ $libraryDetails["library"] ?? "" }}';
-        const version = '{{ $libraryDetails["version"] ?? "" }}';
-        let newSrc = null;
-        
-        // Check if this is a GitHub repository (has a slash in it)
-        const isGitHub = window.libraryRepoInfo.isGitHub || library.includes('/');
-        
-        console.log('Attempting to fix broken image:', src);
-        
-        // Strategy 1: Handle GitHub raw content URLs
-        if (src && src.includes('raw.githubusercontent.com')) {
-            const match = src.match(/https:\/\/raw\.githubusercontent\.com\/([^\/]+)\/([^\/]+)\/([^\/]+)\/(.*)/);
-            if (match) {
-                const [, user, repo, branch, path] = match;
-                newSrc = `https://cdn.jsdelivr.net/gh/${user}/${repo}@${branch}/${path}`;
-                console.log('Strategy 1: Converting GitHub raw URL:', newSrc);
-            }
-        }
-        
-        // Strategy 2: Library-specific handling for known libraries
-        else if (library === 'sweetalert2' && (src.includes('logo') || src.includes('swal2'))) {
-            newSrc = `https://cdn.jsdelivr.net/gh/sweetalert2/sweetalert2@${version}/assets/swal2-logo.png`;
-            console.log('Strategy 2: Using sweetalert2 specific path:', newSrc);
-        }
-        
-        // Strategy 3: Converting relative paths based on library type
-        else if (!src.startsWith('http') && !src.startsWith('data:')) {
-            const imgPath = src.startsWith('/') ? src.substring(1) : src;
-            
-            if (isGitHub && window.libraryRepoInfo.user && window.libraryRepoInfo.repo) {
-                // GitHub repository format
-                newSrc = `https://cdn.jsdelivr.net/gh/${window.libraryRepoInfo.user}/${window.libraryRepoInfo.repo}@${version}/${imgPath}`;
-                console.log('Strategy 3A: Converting relative path using GitHub format:', newSrc);
+                
+                speedTestResults.appendChild(buttonContainer);
+                
+                // Add event listener to the button
+                setTimeout(() => {
+                    document.getElementById('testAgainButton')?.addEventListener('click', runCdnSpeedTest);
+                }, 100);
             } else {
-                // NPM package format
-                newSrc = `https://cdn.jsdelivr.net/npm/${library}@${version}/${imgPath}`;
-                console.log('Strategy 3B: Converting relative path using NPM format:', newSrc);
-            }
-        }
-        
-        // Strategy 4: Handle converting npm URLs to GitHub URLs
-        else if (src && src.includes('cdn.jsdelivr.net/npm/') && isGitHub) {
-            // Extract GitHub user/repo from library name
-            const parts = library.split('/');
-            if (parts.length === 2) {
-                const user = parts[0];
-                const repo = parts[1];
+                // Show message that max tests reached
+                const messageContainer = document.createElement('div');
+                messageContainer.id = 'testAgainContainer';
+                messageContainer.className = 'text-center mt-3 mb-3';
+                messageContainer.innerHTML = `
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i> Maximum test limit reached. Refresh the page to run more tests.
+                    </div>
+                `;
                 
-                // Extract path after version
-                const pathMatch = src.match(/cdn\.jsdelivr\.net\/npm\/[^@]+@[^\/]+\/(.+)/);
-                if (pathMatch && pathMatch[1]) {
-                    newSrc = `https://cdn.jsdelivr.net/gh/${user}/${repo}@${version}/${pathMatch[1]}`;
-                    console.log('Strategy 4: Converting npm to GitHub URL:', newSrc);
-                }
+                speedTestResults.appendChild(messageContainer);
+            }
+        })
+        .catch(error => {
+            clearTimeout(timeout);
+            console.error('Error in CDN speed test:', error);
+            speedTestLoading.classList.add('d-none');
+            showErrorAlert('Unable to run CDN speed test: ' + error.message);
+            
+            // Even on error, count it as a test attempt
+            if (window.testCount >= 3) {
+                const errorContainer = document.createElement('div');
+                errorContainer.id = 'testAgainContainer';
+                errorContainer.className = 'text-center mt-3 mb-3';
+                errorContainer.innerHTML = `
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i> Maximum test limit reached. Refresh the page to run more tests.
+                    </div>
+                `;
+                speedTestResults.appendChild(errorContainer);
+            }
+        });
+    } catch (outerError) {
+        console.error('Unexpected error in runCdnSpeedTest:', outerError);
+        showErrorAlert('An unexpected error occurred: ' + outerError.message);
+    }
+}
+
+/**
+ * Extract test results from response data with improved error handling
+ * for the specific structure returned by CDNSpeedTestAdapter
+ * 
+ * @param {Object} data - Response data from server
+ * @returns {Array} - Array of test results
+ */
+function extractTestResults(data) {
+    console.log('Extracting test results from data:', data);
+    
+    if (!data || !data.test_results) {
+        console.error('No test_results in data:', data);
+        return [];
+    }
+    
+    // Debug the structure of test_results
+    console.log('Test results structure:', data.test_results);
+    console.log('Test results keys:', Object.keys(data.test_results));
+    
+    let results = [];
+    
+    // The CDNSpeedTestAdapter specifically puts the results in test_results.results
+    if (data.test_results.results && Array.isArray(data.test_results.results)) {
+        console.log('Found results in data.test_results.results with length:', data.test_results.results.length);
+        results = data.test_results.results;
+    } else {
+        console.warn('Results not found in expected location');
+        
+        // Try to find results in any array property
+        for (const key in data.test_results) {
+            if (Array.isArray(data.test_results[key]) && 
+                data.test_results[key].length > 0 && 
+                typeof data.test_results[key][0] === 'object' && 
+                data.test_results[key][0].hasOwnProperty('location')) {
+                
+                console.log(`Found results array in data.test_results.${key}`);
+                results = data.test_results[key];
+                break;
             }
         }
+    }
+    
+    // Create fallback if still empty
+    if (!results || results.length === 0) {
+        console.warn('Creating fallback results array');
         
-        // Strategy 5: Try comprehensive path search for common image locations
-        if (!newSrc) {
-            console.log('Strategy 5: Attempting comprehensive path search');
-            findImageInCommonLocations(library, version, img);
-            return; // Early return as we're handling this asynchronously
-        }
-        
-        // Apply new source if one was determined
-        if (newSrc) {
-            img.src = newSrc;
-            
-            // If the new source also fails, try one final fallback approach
-            img.onerror = function() {
-                console.log('New source failed, attempting final fallback strategy');
-                findImageInCommonLocations(library, version, img);
+        results = [{
+            location: 'Error: No results found',
+            country: 'XX',
+            ip: '0.0.0.0',
+            region: 'Unknown',
+            provider: 'unknown',
+            provider_name: 'Unknown',
+            status: 'fail',
+            time: null,
+            error: 'No test results were returned in the expected format'
+        }];
+    }
+    
+    // Verify each result has required properties
+    results = results.map(result => {
+        // Ensure this is an object
+        if (!result || typeof result !== 'object') {
+            return {
+                location: 'Error: Invalid result',
+                country: 'XX',
+                ip: '0.0.0.0',
+                status: 'fail',
+                time: null,
+                error: 'Invalid result format'
             };
-        } else {
-            showImageError(img);
         }
-    }
+        
+        // Ensure it has required properties
+        if (!result.status) result.status = 'unknown';
+        if (!result.country) result.country = 'XX';
+        if (!result.time && result.status === 'success') result.time = 0;
+        
+        // Add download/upload speed if missing
+        if (!result.download_speed) result.download_speed = 0;
+        if (!result.upload_speed) result.upload_speed = 0;
+        
+        return result;
+    });
     
-    /**
-     * Search for images in common library locations
-     * @param {string} library - The library name
-     * @param {string} version - The library version
-     * @param {HTMLImageElement} img - The image element
-     */
-    async function findImageInCommonLocations(library, version, img) {
-        const isGitHub = window.libraryRepoInfo.isGitHub || library.includes('/');
-        const repoUser = window.libraryRepoInfo.user || (isGitHub ? library.split('/')[0] : '');
-        const repoName = window.libraryRepoInfo.repo || (isGitHub ? library.split('/')[1] : '');
-        
-        // Generate possible image filename from alt text or original src
-        const originalSrc = img.getAttribute('src');
-        const fileName = originalSrc.split('/').pop();
-        const altText = img.alt || (fileName ? fileName.split('.')[0] : '') || 'logo';
-        
-        // Common locations where images might be found
-        const commonPaths = [
-            // Alt-text specific paths
-            `/assets/${altText}.png`, 
-            `/assets/images/${altText}.png`,
-            `/assets/img/${altText}.png`,
-            `/dist/images/${altText}.png`,
-            `/dist/img/${altText}.png`,
-            `/images/${altText}.png`,
-            `/img/${altText}.png`,
-            `/docs/images/${altText}.png`,
-            `/docs/img/${altText}.png`,
-            
-            // Generic logo paths
-            `/assets/logo.png`,
-            `/assets/images/logo.png`, 
-            `/assets/img/logo.png`,
-            `/dist/logo.png`,
-            `/logo.png`,
-            `/images/logo.png`,
-            `/img/logo.png`
-        ];
-        
-        // Add SVG variations
-        const svgPaths = commonPaths.map(path => path.replace('.png', '.svg'));
-        const allPaths = [...commonPaths, ...svgPaths];
-        
-        let imageFound = false;
-        
-        // Try GitHub paths if we have GitHub info
-        if (isGitHub && repoUser && repoName) {
-            for (const path of allPaths) {
-                if (imageFound) break;
+    console.log(`Extracted ${results.length} test results:`, results);
+    return results;
+}
+
+/**
+ * Fix image paths in README content
+ */
+function fixReadmeImages() {
+    const images = document.querySelectorAll('.markdown-body img');
+    const library = document.querySelector('input#libraryName')?.value || '';
+    const version = document.querySelector('input#versionValue')?.value || document.querySelector('select#versionSelect')?.value || '';
+    
+    images.forEach(img => {
+        img.onerror = function() {
+            // Special case for sweetalert2 logo
+            if (img.src.includes('swal2-logo.png') || library === 'sweetalert2') {
+                img.src = "https://cdn.jsdelivr.net/gh/sweetalert2/sweetalert2@839d906cabda403cf5e647b6ff1008198d2455f9/assets/swal2-logo.png";
+            } else {
+                // Handle other relative paths
+                const originalSrc = img.getAttribute('src');
                 
-                const testSrc = `https://cdn.jsdelivr.net/gh/${repoUser}/${repoName}@${version}${path}`;
-                try {
-                    const response = await fetch(testSrc, { method: 'HEAD' });
-                    if (response.ok) {
-                        console.log('Found image at GitHub path:', testSrc);
-                        img.src = testSrc;
-                        imageFound = true;
-                        break;
+                // Only process relative URLs (not starting with http:// or https://)
+                if (originalSrc && !originalSrc.match(/^https?:\/\//)) {
+                    // Remove leading ./ or ../ if present
+                    const cleanSrc = originalSrc.replace(/^\.\/|^\.\.\//, '');
+                    
+                    // Try GitHub raw content as a fallback
+                    if (library.includes('/')) {
+                        const [owner, repo] = library.split('/');
+                        img.src = `https://raw.githubusercontent.com/${owner}/${repo}/master/${cleanSrc}`;
+                    } else {
+                        // Try jsDelivr path
+                        img.src = `https://cdn.jsdelivr.net/npm/${library}@${version}/${cleanSrc}`;
                     }
-                } catch (e) {
-                    // Continue to next path
+                    
+                    // Set one more fallback if that fails
+                    img.onerror = function() {
+                        this.src = 'https://via.placeholder.com/300x150?text=Image+Not+Found';
+                    };
                 }
             }
-        }
-        
-        // Try npm paths if not found or no GitHub info
-        if (!imageFound) {
-            for (const path of allPaths) {
-                if (imageFound) break;
-                
-                const testSrc = `https://cdn.jsdelivr.net/npm/${library}@${version}${path}`;
-                try {
-                    const response = await fetch(testSrc, { method: 'HEAD' });
-                    if (response.ok) {
-                        console.log('Found image at npm path:', testSrc);
-                        img.src = testSrc;
-                        imageFound = true;
-                        break;
-                    }
-                } catch (e) {
-                    // Continue to next path
-                }
-            }
-        }
-        
-        // If no image is found, show error message
-        if (!imageFound) {
-            showImageError(img);
-        }
-    }
-    
-    /**
-     * Display error placeholder when an image cannot be found
-     * @param {HTMLImageElement} img - The image element that failed to load
-     */
-    function showImageError(img) {
-        img.style.display = 'none';
-        const errorText = document.createElement('span');
-        errorText.className = 'image-error';
-        errorText.textContent = '[Image not found]';
-        errorText.style.color = '#ee0000';
-        errorText.style.fontStyle = 'italic';
-        img.parentNode.insertBefore(errorText, img.nextSibling);
-    }
-    
-    /**
-     * Copy text to clipboard
-     * @param {string} text - Text to copy
-     */
-    window.copyToClipboard = function(text) {
-        // Create a temporary textarea
-        const textarea = document.createElement('textarea');
-        textarea.value = text;
-        textarea.style.position = 'fixed';  // Avoid scrolling to bottom
-        document.body.appendChild(textarea);
-        textarea.select();
-        
-        try {
-            // Execute copy command
-            document.execCommand('copy');
-            
-            // Show toast notification
-            showToast(appConfig.translations.copied, 'success');
-        } catch (err) {
-            console.error('Failed to copy text: ', err);
-            showToast(appConfig.translations.nothingToCopy, 'error');
-        }
-        
-        // Remove the temporary element
-        document.body.removeChild(textarea);
-    };
-    
-    /**
-     * Show toast notification
-     * @param {string} message - Message to show
-     * @param {string} type - Toast type (success or error)
-     */
-    function showToast(message, type = 'success') {
-        // Use SweetAlert2 toast
-        const Toast = Swal.mixin({
-            toast: true,
-            position: 'bottom-end',
-            showConfirmButton: false,
-            timer: 1500,
-            timerProgressBar: true,
-        });
-        
-        Toast.fire({
-            icon: type,
-            title: message
-        });
-    }
-    
-    // Handle browser back/forward buttons
-    window.addEventListener('popstate', function(event) {
-        if (event.state && event.state.library) {
-            loadLibraryDetails(event.state.library, event.state.version || '');
-        } else {
-            window.location.reload(); // Fallback to reload
+        };
+    });
+}
+
+// Initialize when document is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize syntax highlighting
+    document.querySelectorAll('pre code').forEach((block) => {
+        if (typeof hljs !== 'undefined') {
+            hljs.highlightBlock(block);
         }
     });
-})();
+    
+    // Tab functionality
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const tabId = this.getAttribute('data-tab');
+            
+            // Hide all tabs
+            tabContents.forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabId)?.classList.add('active');
+            
+            // Update active tab state
+            tabButtons.forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            this.classList.add('active');
+        });
+    });
+    
+    // Version selector
+    const versionSelect = document.getElementById('versionSelect');
+    if (versionSelect) {
+        versionSelect.addEventListener('change', function() {
+            const library = document.querySelector('input#libraryName')?.value || '';
+            window.location.href = `/tools/cdn-search?library=${library}&version=${this.value}`;
+        });
+    }
+    
+    // Copy to clipboard functionality
+    const copyButtons = document.querySelectorAll('.cdn-button, .file-btn');
+    copyButtons.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const content = this.getAttribute('data-content');
+            if (!content) return;
+            
+            // Create a temporary textarea
+            const textarea = document.createElement('textarea');
+            textarea.value = content;
+            textarea.setAttribute('readonly', '');
+            textarea.style.position = 'absolute';
+            textarea.style.left = '-9999px';
+            document.body.appendChild(textarea);
+            
+            // Select and copy
+            textarea.select();
+            document.execCommand('copy');
+            
+            // Remove the temporary element
+            document.body.removeChild(textarea);
+            
+            // Show success toast
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Copied!',
+                    text: 'Content copied to clipboard',
+                    icon: 'success',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 2000
+                });
+            } else {
+                alert('Copied to clipboard!');
+            }
+        });
+    });
+    
+    // Fix README images
+    fixReadmeImages();
+    
+    // AJAX Live Search Implementation
+    const searchInput = document.getElementById('librarySearch');
+    const searchResults = document.getElementById('searchResults');
+    let searchTimeout;
+
+    if (searchInput) {
+        // Handle input changes for live search
+        searchInput.addEventListener('keyup', function() {
+            const query = this.value.trim();
+            
+            // Clear previous timeout
+            clearTimeout(searchTimeout);
+            
+            // Don't search if query is too short
+            if (query.length < 2) {
+                if (searchResults) searchResults.style.display = 'none';
+                return;
+            }
+
+            // Set a slight delay to prevent sending too many requests
+            searchTimeout = setTimeout(function() {
+                // Show loading indicator
+                if (searchResults) {
+                    searchResults.innerHTML = '<div class="text-center p-3"><i class="fas fa-spinner fa-spin"></i> Searching...</div>';
+                    searchResults.style.display = 'block';
+                    
+                    // Send AJAX request
+                    fetch(`/tools/cdn-search/ajax?query=${encodeURIComponent(query)}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.results && data.results.length > 0) {
+                                let html = '';
+                                
+                                // Generate HTML for results
+                                data.results.forEach(function(result) {
+                                    const isGithubRepo = result.name.indexOf('/') !== -1;
+                                    
+                                    html += `
+                                        <a href="/tools/cdn-search?library=${encodeURIComponent(result.name)}" class="text-decoration-none">
+                                            <div class="result-item">
+                                                <div class="result-name">${result.name}</div>
+                                                <div class="result-description">${result.description || 'No description available'}</div>
+                                                <div class="result-providers">
+                                                    <span class="cdn-badge cdn-badge-cdnjs">cdnjs</span>
+                                                    <span class="cdn-badge cdn-badge-jsdelivr">jsDelivr</span>
+                                                    ${!isGithubRepo ? '<span class="cdn-badge cdn-badge-unpkg">unpkg</span>' : ''}
+                                                </div>
+                                            </div>
+                                        </a>
+                                    `;
+                                });
+                                
+                                searchResults.innerHTML = html;
+                            } else {
+                                searchResults.innerHTML = '<div class="p-3 text-center">No libraries found matching your query</div>';
+                            }
+                        })
+                        .catch(() => {
+                            searchResults.innerHTML = '<div class="p-3 text-center text-danger">Error searching libraries. Please try again.</div>';
+                        });
+                }
+            }, 300);
+        });
+
+        // Show search results when focusing on search input if there are results
+        searchInput.addEventListener('focus', function() {
+            const query = this.value.trim();
+            if (query.length >= 2 && searchResults && searchResults.children.length > 0) {
+                searchResults.style.display = 'block';
+            }
+        });
+    }
+    
+    // Hide search results when clicking outside
+    document.addEventListener('click', function(e) {
+        if (searchResults && searchInput && !searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+            searchResults.style.display = 'none';
+        }
+    });
+
+    // CDN Speed Test Button
+    const runSpeedTestButton = document.getElementById('runSpeedTest');
+    if (runSpeedTestButton) {
+        runSpeedTestButton.addEventListener('click', runCdnSpeedTest);
+    }
+});
 </script>
 @endsection
