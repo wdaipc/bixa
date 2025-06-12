@@ -2109,4 +2109,13 @@ class ToolsController extends Controller
             ], 500);
         }
     } 
+	/**
+ * Display the Website Speed Test tool
+ *
+ * @return \Illuminate\View\View
+ */
+public function websiteSpeedTest()
+{
+    return view('tools.website-speed-test');
+}
 }

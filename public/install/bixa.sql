@@ -1282,6 +1282,30 @@ CREATE TABLE `web_ftp_settings` (
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `hosting_databases`
+--
+
+CREATE TABLE `hosting_databases` (
+  `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
+  `hosting_account_id` bigint UNSIGNED NOT NULL,
+  `database_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `full_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `mysql_host` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_db_per_account` (`hosting_account_id`, `database_name`),
+  KEY `full_name` (`full_name`),
+  KEY `hosting_account_id` (`hosting_account_id`, `created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+ALTER TABLE `hosting_databases`
+  ADD CONSTRAINT `hosting_databases_ibfk_1` FOREIGN KEY (`hosting_account_id`) REFERENCES `hosting_accounts` (`id`) ON DELETE CASCADE;
+
+
 --
 -- Indexes for dumped tables
 --

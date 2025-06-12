@@ -1,133 +1,394 @@
 @extends('layouts.master')
 
-@section('title') @lang('translation.Account_Details')
-@endsection
+@section('title') @lang('translation.Account_Details') @endsection
 
 @section('css')
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.17/dist/sweetalert2.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.17/dist/sweetalert2.all.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js"></script>
+
 <style>
-    .verification-banner {
-        background-color: #f8f9fa;
-        border-left: 4px solid #4338ca;
-        border-radius: 0.25rem;
-        margin-bottom: 20px;
-        padding: 15px;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-        opacity: 0;
-        transform: translateY(-10px);
-        transition: opacity 0.3s ease, transform 0.3s ease;
+:root {
+    --minia-primary: #4B38B3;
+    --minia-secondary: #74788D;
+    --minia-success: #45CB85;
+    --minia-info: #68E1FD;
+    --minia-warning: #FFB902;
+    --minia-danger: #F06548;
+    --minia-light: #F3F6F9;
+    --minia-dark: #2D3646;
+}
+
+body {
+    background-color: #f8f8fb;
+    font-family: "Poppins", sans-serif;
+}
+
+.card {
+    box-shadow: 0 1px 2px rgba(56,65,74,0.15);
+    border: none;
+    margin-bottom: 24px;
+}
+
+.card-header {
+    background: #fff;
+    border-bottom: 1px solid #e9e9ef;
+    padding: 1rem 1.25rem;
+}
+
+.stats-card {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #fff 0%, rgba(248,250,252,0.5) 100%);
+    border: 1px solid rgba(233,233,239,0.8);
+    border-radius: 12px;
+    padding: 1.25rem;
+    transition: all 0.3s ease;
+}
+
+.stats-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(75,56,179,0.1);
+}
+
+.stats-card::before {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 6rem;
+    height: 6rem;
+    background: linear-gradient(135deg, var(--minia-primary), rgba(75,56,179,0.1));
+    border-radius: 0 0 0 100%;
+    opacity: 0.1;
+}
+
+.stats-card .icon-box {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--minia-primary), #5a4cd6);
+    color: white;
+    margin-bottom: 1rem;
+}
+
+.stats-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--minia-dark);
+    margin-bottom: 0.25rem;
+}
+
+.stats-label {
+    color: var(--minia-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.verification-banner {
+    background: linear-gradient(135deg, rgba(255,185,0,0.1), rgba(255,185,0,0.05));
+    border-left: 4px solid var(--minia-warning);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.quick-action-card {
+    background: linear-gradient(135deg, #fff 0%, rgba(248,250,252,0.5) 100%);
+    border: 1px solid rgba(233,233,239,0.8);
+    border-radius: 12px;
+    padding: 1.25rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.quick-action-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(75,56,179,0.1);
+    border-color: var(--minia-primary);
+    color: inherit;
+}
+
+.quick-action-card .icon-box {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--minia-primary), #5a4cd6);
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.quick-action-card:hover .icon-box {
+    transform: scale(1.1);
+}
+
+.copy-field {
+    position: relative;
+}
+
+.copy-input {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Monaco', 'Menlo', monospace;
+    font-size: 0.875rem;
+}
+
+.copy-input:hover {
+    background-color: #e9ecef;
+    border-color: var(--minia-primary);
+}
+
+.copy-input.copied {
+    background-color: #d1f2eb;
+    border-color: var(--minia-success);
+    color: var(--minia-success);
+}
+
+.position-relative .btn-link {
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    transition: color 0.2s ease;
+}
+
+.position-relative .btn-link:hover {
+    color: var(--minia-primary) !important;
+}
+
+.position-relative .btn-link:focus {
+    box-shadow: none !important;
+}
+
+.alert {
+    border: none;
+    border-radius: 8px;
+    padding: 12px 16px;
+}
+
+.alert-info {
+    background-color: rgba(13, 110, 253, 0.1);
+    color: #084298;
+}
+
+.alert-warning {
+    background-color: rgba(255, 193, 7, 0.1);
+    color: #664d03;
+}
+
+.alert-danger {
+    background-color: rgba(220, 53, 69, 0.1);
+    color: #721c24;
+}
+
+.alert i {
+    font-size: 1.1em;
+}
+
+.password-toggle {
+    cursor: pointer;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-left: none;
+    padding: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.password-toggle:hover {
+    background-color: #e9ecef;
+}
+
+.progress-custom {
+    height: 8px;
+    background-color: rgba(75,56,179,0.1);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar-custom {
+    height: 100%;
+    background: linear-gradient(90deg, var(--minia-primary), #5a4cd6);
+    border-radius: 4px;
+    transition: width 0.6s ease;
+}
+
+.db-stats-card {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+}
+
+.db-stats-value {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--minia-dark);
+    margin-bottom: 0.25rem;
+}
+
+.db-stats-label {
+    font-size: 0.75rem;
+    color: var(--minia-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.connection-info {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.form-prefix {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-right: none;
+    padding: 0.75rem;
+    display: flex;
+    align-items: center;
+    font-family: 'Monaco', 'Menlo', monospace;
+    font-size: 0.875rem;
+    color: var(--minia-secondary);
+    border-radius: 6px 0 0 6px;
+}
+
+.chart-container {
+    height: 280px;
+    width: 100%;
+}
+
+.toast-notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9999;
+    background: white;
+    color: #2d3646;
+    border: 1px solid #e9ecef;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.toast-notification.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+}
+
+@media (max-width: 768px) {
+    .stats-card {
+        margin-bottom: 1rem;
     }
     
-    .verification-banner.show {
-        opacity: 1;
-        transform: translateY(0);
+    .quick-action-card {
+        margin-bottom: 0.75rem;
     }
     
-    .copyable {
-        cursor: pointer;
-        padding: 4px 8px;
-        border-radius: 4px;
-        transition: background-color 0.2s ease;
-        position: relative;
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-        user-select: none;
+    .chart-container {
+        height: 220px;
     }
-    
-    .copyable:hover {
-        background-color: rgba(67, 56, 202, 0.1);
-    }
-    
-    /* Hiển thị "Click to copy" chỉ trên desktop */
-    @media (min-width: 769px) {
-        .copyable:hover::after {
-            content: "@lang('translation.Click_to_copy')";
-            position: absolute;
-            top: -25px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: #333;
-            color: white;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            white-space: nowrap;
-            z-index: 100;
-        }
-    }
-    
-    /* Animation for copying */
-    @keyframes copiedAnimation {
-        0% { background-color: rgba(16, 185, 129, 0); }
-        50% { background-color: rgba(16, 185, 129, 0.2); }
-        100% { background-color: rgba(16, 185, 129, 0); }
-    }
-    
-    .copied {
-        animation: copiedAnimation 1s ease;
-    }
-    
-    /* Admin Deactivation Notice */
-    .admin-deactivation-notice {
-        border-left: 4px solid #ef4444;
-    }
-    
-    /* Feature locked styling */
-    .feature-locked .feature-btn {
-        position: relative;
-    }
-    
-    .feature-locked .feature-btn::before {
-        content: "@lang('translation.Verify_cPanel_first')";
-        position: absolute;
-        top: -30px;
-        left: 50%;
-        transform: translateX(-50%);
-        background-color: #333;
-        color: white;
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 12px;
-        white-space: nowrap;
-        opacity: 0;
-        transition: opacity 0.2s ease;
-        z-index: 10;
-    }
-    
-    .feature-locked .feature-btn:hover::before {
-        opacity: 1;
-    }
-    
-    /* Thêm style cho nút copy trên mobile */
-    @media (max-width: 768px) {
-        .copy-btn-container {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .mobile-copy-btn {
-            background-color: transparent;
-            border: none;
-            color: #4338ca;
-            padding: 4px;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 30px;
-            height: 30px;
-        }
-        
-        .mobile-copy-btn:hover, .mobile-copy-btn:active {
-            background-color: rgba(67, 56, 202, 0.1);
-        }
-        
-        .mobile-copy-btn i {
-            font-size: 16px;
-        }
-    }
+}
+
+.btn-soft-primary {
+    color: var(--minia-primary);
+    background-color: rgba(75,56,179,0.1);
+    border: 1px solid rgba(75,56,179,0.2);
+}
+
+.btn-soft-primary:hover {
+    background-color: var(--minia-primary);
+    color: white;
+}
+
+.table > :not(caption) > * > * {
+    padding: 0.75rem 1rem;
+    border-bottom-color: #e9ecef;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.status-active {
+    background: rgba(69,203,133,0.1);
+    color: var(--minia-success);
+}
+
+.status-suspended {
+    background: rgba(240,101,72,0.1);
+    color: var(--minia-danger);
+}
+
+.status-pending {
+    background: rgba(255,185,2,0.1);
+    color: var(--minia-warning);
+}
+
+.timeline {
+    position: relative;
+}
+
+.timeline-item {
+    position: relative;
+}
+
+.timeline-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 14px;
+    top: 30px;
+    width: 2px;
+    height: calc(100% + 12px);
+    background: linear-gradient(to bottom, var(--minia-primary), rgba(75,56,179,0.2));
+}
+
+.timeline-marker {
+    font-size: 0.75rem;
+    box-shadow: 0 2px 4px rgba(75,56,179,0.2);
+}
+
+.modal-lg {
+    max-width: 800px;
+}
+
+.accordion-button:not(.collapsed) {
+    background-color: rgba(75,56,179,0.1);
+    color: var(--minia-primary);
+}
+
+.accordion-button:focus {
+    box-shadow: 0 0 0 0.25rem rgba(75,56,179,0.25);
+}
 </style>
 @endsection
 
@@ -137,172 +398,169 @@
         @slot('title') @lang('translation.Account_Details') @endslot
     @endcomponent
 
-    {{-- Verification Banner --}}
+    {{-- 🔐 Verification Banner --}}
     @if($account->status === 'active' && !$account->cpanel_verified)
-    <div id="verificationBanner" class="verification-banner">
-        <div class="d-flex align-items-center">
-            <div class="me-3">
-                <i data-feather="alert-circle" class="font-size-24"></i>
+    <div class="verification-banner">
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center">
+                <div class="me-3">
+                    <i class="ri-shield-keyhole-line text-warning" style="font-size: 1.5rem;"></i>
+                </div>
+                <div>
+                    <h5 class="mb-1 fw-semibold">@lang('translation.Verify_Your_cPanel_Access')</h5>
+                    <p class="mb-0 text-muted">@lang('translation.cpanel_verify_messs')</p>
+                </div>
             </div>
-            <div class="flex-grow-1">
-                <h5 class="mb-1">@lang('translation.Verify_Your_cPanel_Access')</h5>
-                <p class="mb-0">@lang('translation.cpanel_verify_messs')</p>
-            </div>
-            <div class="ms-3">
-                <button type="button" id="loginNowBtn" class="btn btn-light btn-sm waves-effect">
-                    <i data-feather="log-in" class="me-1"></i> @lang('translation.Login_Now')
-                </button>
-            </div>
+            <button type="button" 
+                    onclick="handleCpanelLogin()" 
+                    class="btn btn-warning fw-medium">
+                <i class="ri-login-circle-line me-1"></i>
+                Login Now
+            </button>
         </div>
     </div>
     @endif
 
-    {{-- Alert Messages --}}
-    @if(session()->has('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-
-    @if($errors->any())
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            @foreach ($errors->all() as $error)
-                {{ $error }}<br>
-            @endforeach
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-
-    {{-- Stats Cards --}}
-    <div class="row">
-        {{-- Status Card --}}
-        <div class="col-md-6 col-lg-3">
-            <div class="card stat-card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="avatar-sm">
-                            <span class="avatar-title bg-primary-subtle text-primary rounded-3">
-                                <i data-feather="server" class="font-size-24"></i>
+    {{-- 📊 Stats Grid --}}
+    <div class="row mb-4">
+        {{-- Account Status --}}
+        <div class="col-xl-3 col-md-6">
+            <div class="stats-card">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <p class="stats-label mb-2">Account Status</p>
+                        @if($account->status === 'active')
+                            <span class="status-badge status-active">
+                                <i class="ri-check-circle-line me-1"></i>
+                                Active
                             </span>
-                        </div>
-                        <div class="flex-grow-1 ms-3">
-                            <p class="text-muted mb-2">@lang('translation.Status')</p>
-                            <h5 class="mb-0">
-                                @if($account->status === 'active')
-                                    <span class="badge rounded-pill bg-success">@lang('translation.status_active')</span>
-                                @elseif($account->status === 'suspended')
-                                    <span class="badge rounded-pill bg-danger">@lang('translation.status_suspended')</span>
-                                @else
-                                    <span class="badge rounded-pill bg-warning">@lang('translation.status_' . $account->status)</span>
-                                @endif
-                            </h5>
-                        </div>
+                        @elseif($account->status === 'suspended')
+                            <span class="status-badge status-suspended">
+                                <i class="ri-close-circle-line me-1"></i>
+                                Suspended
+                            </span>
+                        @else
+                            <span class="status-badge status-pending">
+                                <i class="ri-time-line me-1"></i>
+                                {{ ucfirst($account->status) }}
+                            </span>
+                        @endif
                     </div>
+                    <div class="icon-box">
+                        <i class="ri-server-line"></i>
+                    </div>
+                </div>
+                <div class="mt-auto">
+                    <small class="text-muted d-block">Created: {{ $account->created_at->format('M j, Y') }}</small>
+                    <small class="text-muted">Last updated: {{ $account->updated_at->format('M j, Y') }}</small>
                 </div>
             </div>
         </div>
 
-        {{-- Admin Deactivation Notice --}}
-        @if($account->admin_deactivated)
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="alert alert-danger admin-deactivation-notice">
-                    <div class="d-flex">
-                        <div class="flex-shrink-0 me-3">
-                            <i data-feather="alert-octagon" class="font-size-24"></i>
-                        </div>
-                        <div class="flex-grow-1">
-                            <h5 class="mt-0 mb-1">@lang('translation.admin_deactivated')</h5>
-                            <p class="mb-0">@lang('translation.can_reactivated')</p>
-                            <p class="mt-2 mb-0"><strong>@lang('translation.Reason'):</strong> {{ $account->admin_deactivation_reason }}</p>
-                            <p class="mt-2 mb-0">@lang('translation.If_Questions') <a href="{{ route('user.tickets.create') }}">{{ __('Open') . ' ' . __('Tickets') }}</a>.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        @endif
-        
         {{-- Dynamic Stats Cards --}}
-        @foreach(['disk', 'bandwidth', 'inodes'] as $stat)
-        <div class="col-md-6 col-lg-3">
-            <div class="card stat-card" data-stat="{{ $stat }}" style="display: none;">
-                <div class="card-body">
-                    <div class="d-flex align-items-center justify-content-center" style="min-height: 120px;">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">@lang('translation.Loading')...</span>
-                        </div>
+        @foreach(['disk', 'bandwidth', 'inodes'] as $index => $stat)
+        <div class="col-xl-3 col-md-6">
+            <div class="stats-card" data-stat="{{ $stat }}" style="display: none;">
+                <div class="text-center">
+                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
                     </div>
+                    <p class="mt-2 mb-0 text-muted">Loading...</p>
                 </div>
             </div>
         </div>
         @endforeach
     </div>
 
-    {{-- Quick Actions --}}
+    {{-- 🚀 Quick Actions --}}
     <div class="row mb-4">
         <div class="col-12">
             <div class="card">
+                <div class="card-header">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <h5 class="card-title mb-0">
+                            <i class="ri-apps-2-line me-2 text-primary"></i>
+                            Quick Actions
+                        </h5>
+                    </div>
+                </div>
                 <div class="card-body">
                     <div class="row g-3">
-                        {{-- Control Panel --}}
-                        <div class="col-md-6 col-lg-3">
+                        <div class="col-lg-3 col-md-6">
                             <button type="button" 
-                                   onclick="handleCpanelLogin()" 
-                                   class="btn btn-primary w-100 waves-effect waves-light cpanel-btn {{ $account->status !== 'active' ? 'disabled' : '' }}">
-                                <i data-feather="monitor" class="font-size-16 align-middle me-2"></i>
-                                @lang('translation.Control_Panel')
+                                    onclick="handleCpanelLogin()" 
+                                    class="quick-action-card w-100 border-0 bg-transparent {{ $account->status !== 'active' ? 'disabled' : '' }}">
+                                <div class="icon-box">
+                                    <i class="ri-computer-line"></i>
+                                </div>
+                                <h6 class="fw-medium mb-1">Control Panel</h6>
+                                <p class="text-muted mb-0 small">Manage cPanel</p>
                             </button>
                         </div>
 
-                        {{-- File Manager --}}
-                        <div class="col-md-6 col-lg-3 {{ (!$account->cpanel_verified) ? 'feature-locked' : '' }}">
+                        <div class="col-lg-3 col-md-6">
                             @if(App\Models\WebFtpSetting::isEnabled())
                                 <a href="{{ route('webftp.index', $account->username) }}"
-                                   class="btn btn-info w-100 waves-effect waves-light feature-btn {{ (!$account->cpanel_verified || $account->status !== 'active') ? 'disabled' : '' }}"
-                                   target="_blank">
-                                    <i data-feather="folder" class="font-size-16 align-middle me-2"></i>
-                                    @lang('translation.File_Manager')
+                                   target="_blank"
+                                   class="quick-action-card {{ (!$account->cpanel_verified || $account->status !== 'active') ? 'disabled' : '' }}">
+                                    <div class="icon-box">
+                                        <i class="ri-folder-line"></i>
+                                    </div>
+                                    <h6 class="fw-medium mb-1">File Manager</h6>
+                                    <p class="text-muted mb-0 small">Manage files</p>
                                 </a>
                             @else
                                 <a href="{{ route('hosting.filemanager', $account->username) }}"
-                                   class="btn btn-info w-100 waves-effect waves-light feature-btn {{ (!$account->cpanel_verified || $account->status !== 'active') ? 'disabled' : '' }}"
-                                   target="_blank">
-                                    <i data-feather="folder" class="font-size-16 align-middle me-2"></i>
-                                    @lang('translation.File_Manager')
+                                   target="_blank"
+                                   class="quick-action-card {{ (!$account->cpanel_verified || $account->status !== 'active') ? 'disabled' : '' }}">
+                                    <div class="icon-box">
+                                        <i class="ri-folder-line"></i>
+                                    </div>
+                                    <h6 class="fw-medium mb-1">File Manager</h6>
+                                    <p class="text-muted mb-0 small">Manage files</p>
                                 </a>
                             @endif
                         </div>
 
-                        {{-- Softaculous --}}
-                        <div class="col-md-6 col-lg-3 {{ (!$account->cpanel_verified) ? 'feature-locked' : '' }}">
-                            <a href="{{ route('hosting.softaculous', $account->username) }}" target="_blank"
-                               class="btn btn-secondary w-100 waves-effect waves-light feature-btn {{ (!$account->cpanel_verified || $account->status !== 'active') ? 'disabled' : '' }}">
-                                <i data-feather="box" class="font-size-16 align-middle me-2"></i>
-                                @lang('translation.Softaculous')
+                        <div class="col-lg-3 col-md-6">
+                            <a href="{{ route('hosting.softaculous', $account->username) }}" 
+                               target="_blank"
+                               class="quick-action-card {{ (!$account->cpanel_verified || $account->status !== 'active') ? 'disabled' : '' }}">
+                                <div class="icon-box">
+                                    <i class="ri-archive-line"></i>
+                                </div>
+                                <h6 class="fw-medium mb-1">Softaculous</h6>
+                                <p class="text-muted mb-0 small">Install apps</p>
                             </a>
                         </div>
 
-                        {{-- Settings/Actions --}}
-                        <div class="col-md-6 col-lg-3 {{ (!$account->cpanel_verified) ? 'feature-locked' : '' }}">
+                        <div class="col-lg-3 col-md-6">
                             @if($account->status === 'deactivated')
                                 <a href="{{ route('hosting.reactivate', $account->username) }}"
-                                   class="btn btn-success w-100 waves-effect waves-light">
-                                    <i data-feather="refresh-cw" class="font-size-16 align-middle me-2"></i>
-                                    @lang('translation.Reactivate')
+                                   class="quick-action-card">
+                                    <div class="icon-box" style="background: linear-gradient(135deg, var(--minia-success), #45cb85);">
+                                        <i class="ri-refresh-line"></i>
+                                    </div>
+                                    <h6 class="fw-medium mb-1">Reactivate</h6>
+                                    <p class="text-muted mb-0 small">Restore account</p>
                                 </a>
                             @elseif($account->status === 'suspended')
                                 <a href="{{ route('user.tickets.create') }}"
-                                   class="btn btn-warning w-100 waves-effect waves-light">
-                                    <i data-feather="message-square" class="font-size-16 align-middle me-2"></i>
-                                    @lang('translation.Open') @lang('translation.Tickets')
+                                   class="quick-action-card">
+                                    <div class="icon-box" style="background: linear-gradient(135deg, var(--minia-warning), #ffb902);">
+                                        <i class="ri-customer-service-line"></i>
+                                    </div>
+                                    <h6 class="fw-medium mb-1">Open Ticket</h6>
+                                    <p class="text-muted mb-0 small">Get support</p>
                                 </a>
                             @else
                                 <a href="{{ route('hosting.settings', $account->username) }}"
-                                   class="btn btn-dark w-100 waves-effect waves-light feature-btn {{ (!$account->cpanel_verified || $account->status !== 'active') ? 'disabled' : '' }}">
-                                    <i data-feather="settings" class="font-size-16 align-middle me-2"></i>
-                                    @lang('translation.Settings')
+                                   class="quick-action-card {{ (!$account->cpanel_verified || $account->status !== 'active') ? 'disabled' : '' }}">
+                                    <div class="icon-box">
+                                        <i class="ri-settings-line"></i>
+                                    </div>
+                                    <h6 class="fw-medium mb-1">Settings</h6>
+                                    <p class="text-muted mb-0 small">Account settings</p>
                                 </a>
                             @endif
                         </div>
@@ -312,203 +570,319 @@
         </div>
     </div>
 
-    {{-- Account Info & Connection Details --}}
-    <div class="row">
-        {{-- Account Info --}}
+    {{-- 📋 Account Details & FTP Info --}}
+    <div class="row mb-4">
+        {{-- Account Details --}}
         <div class="col-lg-8">
             <div class="card">
                 <div class="card-header">
-                    <h4 class="card-title mb-0">@lang('translation.Account_Details')</h4>
+                    <h5 class="card-title mb-0">Account Details</h5>
                 </div>
                 <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-nowrap mb-0">
-                            <tbody>
-                                <tr>
-                                    <th scope="row">
-                                        <div class="d-flex align-items-center">
-                                            <i data-feather="user" class="font-size-20 text-primary me-2"></i>
-                                            @lang('translation.Username')
-                                        </div>
-                                    </th>
-                                    <td>
-                                        <div class="copy-btn-container">
-                                            <span id="account-username" class="copyable">
-                                                {{ $account->status === 'active' ? $account->username : __('translation.Loading') . '...' }}
-                                            </span>
-                                            <button class="mobile-copy-btn d-md-none" data-copy-target="account-username">
-                                                <i class="fas fa-copy"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th scope="row">
-                                        <div class="d-flex align-items-center">
-                                            <i data-feather="key" class="font-size-20 text-primary me-2"></i>
-                                            @lang('translation.Password')
-                                        </div>
-                                    </th>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <span id="password-hidden">••••••••</span>
-                                            <div class="copy-btn-container">
-                                                <span id="password-shown" class="copyable d-none">
-                                                    {{ $account->status === 'active' ? $account->password : '••••••••' }}
-                                                </span>
-                                                <button class="mobile-copy-btn d-md-none" data-copy-target="password-shown">
-                                                    <i class="fas fa-copy"></i>
-                                                </button>
-                                            </div>
-                                            <button type="button" onclick="togglePassword()" class="btn btn-link text-muted p-0 ms-2">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th scope="row">
-                                        <div class="d-flex align-items-center">
-                                            <i data-feather="globe" class="font-size-20 text-primary me-2"></i>
-                                            @lang('translation.Server_IP')
-                                        </div>
-                                    </th>
-                                    <td>
-                                        @if($serverIp)
-                                            <div class="copy-btn-container">
-                                                <span id="server-ip" class="copyable">{{ $serverIp }}</span>
-                                                <button class="mobile-copy-btn d-md-none" data-copy-target="server-ip">
-                                                    <i class="fas fa-copy"></i>
-                                                </button>
-                                            </div>
-                                        @else
-                                            <span class="text-muted">N/A</span>
-                                        @endif
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th scope="row">
-                                        <div class="d-flex align-items-center">
-                                            <i data-feather="globe" class="font-size-20 text-primary me-2"></i>
-                                            @lang('translation.Domains')
-                                        </div>
-                                    </th>
-                                    <td>
-                                        @if($account->status === 'active' && count($domains) > 0)
-                                            @foreach($domains as $domain)
-                                                <div class="d-flex align-items-center justify-content-between mb-2">
-                                                    <div class="copy-btn-container">
-                                                        <span class="domain-item copyable">{{ $domain['domain'] ?? $domain }}</span>
-                                                        <button class="mobile-copy-btn d-md-none" data-copy-target="domain-item">
-                                                            <i class="fas fa-copy"></i>
-                                                        </button>
-                                                    </div>
-                                                    <a href="{{ route('hosting.builder', [
-                                                        'username' => $account->username,
-                                                        'domain' => is_array($domain) ? $domain['domain'] : $domain
-                                                    ]) }}"
-                                                        class="btn btn-sm btn-primary waves-effect waves-light feature-btn {{ !$account->cpanel_verified ? 'disabled' : '' }}"
-                                                        target="_blank">
-                                                        <i class="fas fa-paint-brush me-1"></i>
-                                                        SitePro
-                                                    </a>
-                                                </div>
-                                            @endforeach
-                                        @else
-                                            <span class="text-muted">@lang('translation.No_domains')</span>
-                                        @endif
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Username</label>
+                            <div class="copy-field">
+                                <input type="text" 
+                                       value="{{ $account->status === 'active' ? $account->username : 'Loading...' }}" 
+                                       class="copy-input form-control" 
+                                       readonly 
+                                       onclick="copyToClipboard('{{ $account->username }}', this)">
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Password</label>
+                            <div class="position-relative">
+                                <input type="password" 
+                                       value="{{ $account->status === 'active' ? $account->password : '••••••••••••••' }}" 
+                                       id="password-field" 
+                                       class="form-control pe-5" 
+                                       readonly
+                                       onclick="copyToClipboard('{{ $account->password }}', this)"
+                                       style="cursor: pointer;">
+                                <button type="button" 
+                                        class="btn btn-link position-absolute end-0 top-50 translate-middle-y border-0 text-muted"
+                                        onclick="togglePassword('password-field', this)"
+                                        style="z-index: 10; padding: 0.375rem 0.75rem;">
+                                    <i class="ri-eye-off-line"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Domain</label>
+                            <div class="copy-field">
+                                <input type="text" 
+                                       value="{{ $account->domain }}" 
+                                       class="copy-input form-control" 
+                                       readonly 
+                                       onclick="copyToClipboard('{{ $account->domain }}', this)">
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Server IP</label>
+                            <div class="copy-field">
+                                <input type="text" 
+                                       value="{{ $serverIp ?? 'N/A' }}" 
+                                       class="copy-input form-control" 
+                                       readonly 
+                                       onclick="copyToClipboard('{{ $serverIp ?? '' }}', this)">
+                            </div>
+                        </div>
                     </div>
+
+                    {{-- Domain Actions --}}
+                    @if($account->status === 'active' && $account->cpanel_verified)
+                    <div class="mt-4">
+                        <label class="form-label fw-semibold">Quick Actions</label>
+                        <div class="d-flex flex-wrap gap-2">
+                            <a href="{{ route('hosting.builder', ['username' => $account->username, 'domain' => $account->domain]) }}"
+                               target="_blank"
+                               class="btn btn-primary btn-sm">
+                                <i class="ri-layout-line me-1"></i> SitePro
+                            </a>
+                            
+                            @if(App\Models\WebFtpSetting::isEnabled())
+                                <a href="{{ route('webftp.index', $account->username) }}"
+                                   target="_blank"
+                                   class="btn btn-info btn-sm">
+                                    <i class="ri-folder-line me-1"></i> Files
+                                </a>
+                            @else
+                                <a href="{{ route('hosting.filemanager', $account->username) }}"
+                                   target="_blank"
+                                   class="btn btn-info btn-sm">
+                                    <i class="ri-folder-line me-1"></i> Files
+                                </a>
+                            @endif
+                            
+                            <a href="https://{{ $account->domain }}" 
+                               target="_blank"
+                               class="btn btn-success btn-sm">
+                                <i class="ri-external-link-line me-1"></i> Visit Website
+                            </a>
+                        </div>
+                    </div>
+                    @endif
                 </div>
             </div>
         </div>
 
-        {{-- Connection Details --}}
+        {{-- FTP Details --}}
         <div class="col-lg-4">
             <div class="card">
                 <div class="card-header">
-                    <h4 class="card-title mb-0">@lang('translation.Connection_Details')</h4>
+                    <h5 class="card-title mb-0">FTP Details</h5>
                 </div>
                 <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Hostname</label>
+                            <div class="copy-field">
+                                <input type="text" 
+                                       value="ftpupload.net" 
+                                       class="copy-input form-control" 
+                                       readonly 
+                                       onclick="copyToClipboard('ftpupload.net', this)">
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Username</label>
+                            <div class="copy-field">
+                                <input type="text" 
+                                       value="{{ $account->username }}" 
+                                       class="copy-input form-control" 
+                                       readonly 
+                                       onclick="copyToClipboard('{{ $account->username }}', this)">
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Password</label>
+                            <div class="position-relative">
+                                <input type="password" 
+                                       value="{{ $account->password }}" 
+                                       id="ftp-password-field" 
+                                       class="form-control pe-5" 
+                                       readonly
+                                       onclick="copyToClipboard('{{ $account->password }}', this)"
+                                       style="cursor: pointer;">
+                                <button type="button" 
+                                        class="btn btn-link position-absolute end-0 top-50 translate-middle-y border-0 text-muted"
+                                        onclick="togglePassword('ftp-password-field', this)"
+                                        style="z-index: 10; padding: 0.375rem 0.75rem;">
+                                    <i class="ri-eye-off-line"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Port</label>
+                            <div class="copy-field">
+                                <input type="text" 
+                                       value="21" 
+                                       class="copy-input form-control" 
+                                       readonly 
+                                       onclick="copyToClipboard('21', this)">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <div class="d-flex flex-wrap gap-2">
+                            <a href="https://filezilla-project.org/download.php?type=client" 
+                               target="_blank"
+                               class="btn btn-primary flex-fill">
+                                <i class="ri-download-cloud-line me-1"></i> Download FileZilla
+                            </a>
+                            <button type="button"
+                                    class="btn btn-outline-secondary flex-fill"
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#ftpGuideModal">
+                                <i class="ri-question-line me-1"></i> Connection Guide
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- 🗄️ Database Management --}}
+@if($account->status === 'active' && $account->cpanel_verified)
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex align-items-center justify-content-between">
+                    <h5 class="card-title mb-0">Database Management</h5>
+                    <button type="button" 
+                            onclick="syncDatabases()" 
+                            class="btn btn-soft-primary btn-sm"
+                            id="sync-databases-btn">
+                        <i class="ri-refresh-line me-1"></i> Sync
+                    </button>
+                </div>
+            </div>
+            
+            <div class="card-body">
+                {{-- Database Stats --}}
+                <div id="databaseStatsContainer">
+                    <div class="row g-3 mb-4">
+                        <div class="col-lg-3 col-md-6">
+                            <div class="db-stats-card">
+                                <div class="db-stats-value" id="db-used-count">
+                                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                                <div class="db-stats-label">Used</div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="db-stats-card">
+                                <div class="db-stats-value" id="db-max-count">
+                                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                                <div class="db-stats-label">Maximum</div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="db-stats-card">
+                                <div class="db-stats-value" id="db-available-count">
+                                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                                <div class="db-stats-label">Available</div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="db-stats-card">
+                                <div class="db-stats-value" id="db-usage-percent">
+                                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                                <div class="db-stats-label">Usage</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Create Database Form --}}
+                <div class="mb-4">
+                    <h6 class="fw-semibold mb-3">Create New Database</h6>
+                    
+                    {{-- Warning Alert for Limits --}}
+                    <div id="database-limit-alert" class="alert alert-warning d-none">
+                        <span class="glyphicon glyphicon-exclamation-sign"></span>
+                        <div class="alert-message">
+                            <span id="limit-message"></span>
+                        </div>
+                    </div>
+                    
+                    <form id="createDatabaseForm">
+                        @csrf
+                        <div class="row g-3">
+                            <div class="col-md-10">
+                                <label class="form-label small">Database Name</label>
+                                <div class="input-group">
+                                    <span class="form-prefix">{{ $account->username }}_</span>
+                                    <input type="text" 
+                                           id="databaseNameInput"
+                                           name="database_name"
+                                           class="form-control" 
+                                           placeholder="Enter database name"
+                                           maxlength="54"
+                                           pattern="[a-zA-Z0-9_]+"
+                                           autocomplete="off">
+                                </div>
+                                <div class="form-text">Only letters, numbers, and underscores allowed</div>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small text-transparent">Action</label>
+                                <button type="submit" class="btn btn-primary w-100" id="create-db-btn">
+                                    <span class="btn-text">
+                                        <i class="ri-add-line me-1"></i> Create Database
+                                    </span>
+                                    <span class="btn-loading d-none">
+                                        <div class="spinner-border spinner-border-sm me-1" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        Creating...
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                {{-- Database List --}}
+                <div id="databaseList">
+                    <h6 class="fw-semibold mb-3">Current Databases</h6>
                     <div class="table-responsive">
-                        <table class="table table-nowrap mb-0">
-                            <tbody>
+                        <table class="table table-nowrap table-hover">
+                            <thead class="table-light">
                                 <tr>
-                                    <th scope="row">
-                                        <div class="d-flex align-items-center">
-                                            <i data-feather="database" class="font-size-20 text-primary me-2"></i>
-                                            {{ __('MySQL') . ' ' . __('Host') }}
-                                        </div>
-                                    </th>
-                                    <td class="{{ !$account->cpanel_verified ? 'text-muted' : '' }}">
-                                        @if($account->status === 'active' && $account->cpanel_verified)
-                                            <div class="copy-btn-container">
-                                                <span id="mysql-host" class="copyable">
-                                                    {{ $account->mysql_host }}
-                                                    @if(empty($account->sql_server))
-                                                        <span class="text-warning">(@lang('translation.SQL_server_not_assigned'))</span>
-                                                    @endif
-                                                </span>
-                                                <button class="mobile-copy-btn d-md-none" data-copy-target="mysql-host">
-                                                    <i class="fas fa-copy"></i>
-                                                </button>
-                                            </div>
-                                        @else
-                                            <span class="text-muted">@lang('translation.Verify_cPanel_to_view')</span>
-                                        @endif
-                                    </td>
+                                    <th>Database Name</th>
+                                    <th>Created</th>
+                                    <th>Size</th>
+                                    <th class="text-end">Actions</th>
                                 </tr>
+                            </thead>
+                            <tbody id="databaseTableBody">
                                 <tr>
-                                    <th scope="row">
-                                        <div class="d-flex align-items-center">
-                                            <i data-feather="git-commit" class="font-size-20 text-primary me-2"></i>
-                                            {{ __('MySQL') . ' ' . __('Port') }}
+                                    <td colspan="4" class="text-center py-4">
+                                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
                                         </div>
-                                    </th>
-                                    <td class="{{ !$account->cpanel_verified ? 'text-muted' : '' }}">
-                                        @if($account->cpanel_verified)
-                                            3306
-                                        @else
-                                            <span class="text-muted">@lang('translation.Verify_cPanel_to_view')</span>
-                                        @endif
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th scope="row">
-                                        <div class="d-flex align-items-center">
-                                            <i data-feather="server" class="font-size-20 text-primary me-2"></i>
-                                            {{ __('FTP') . ' ' . __('Host') }}
-                                        </div>
-                                    </th>
-                                    <td class="{{ !$account->cpanel_verified ? 'text-muted' : '' }}">
-                                        @if($account->cpanel_verified)
-                                            <div class="copy-btn-container">
-                                                <span id="ftp-host" class="copyable">ftpupload.net</span>
-                                                <button class="mobile-copy-btn d-md-none" data-copy-target="ftp-host">
-                                                    <i class="fas fa-copy"></i>
-                                                </button>
-                                            </div>
-                                        @else
-                                            <span class="text-muted">@lang('translation.Verify_cPanel_to_view')</span>
-                                        @endif
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th scope="row">
-                                        <div class="d-flex align-items-center">
-                                            <i data-feather="git-commit" class="font-size-20 text-primary me-2"></i>
-                                            {{ __('FTP') . ' ' . __('Port') }}
-                                        </div>
-										</th>
-                                    <td class="{{ !$account->cpanel_verified ? 'text-muted' : '' }}">
-                                        @if($account->cpanel_verified)
-                                            21
-                                        @else
-                                            <span class="text-muted">@lang('translation.Verify_cPanel_to_view')</span>
-                                        @endif
+                                        <p class="mt-2 mb-0 text-muted">Loading databases...</p>
                                     </td>
                                 </tr>
                             </tbody>
@@ -518,124 +892,375 @@
             </div>
         </div>
     </div>
+</div>
+@endif
 
-    
-
-    {{-- Usage Statistics --}}
-    <div class="row">
+    {{-- 📊 Usage Statistics Charts --}}
+    @if($account->status === 'active')
+    <div class="row mb-4">
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <h4 class="card-title mb-0">@lang('translation.Usage_Statistics')</h4>
+                    <h5 class="card-title mb-0">Usage Statistics (Last 30 days)</h5>
                 </div>
                 <div class="card-body">
-                    <div class="row">
-                        {{-- Hits Chart --}}
-                        <div class="col-md-6 mb-4">
-                            <div class="card">
-                                <div class="card-body">
-                                    <div class="chart-container">
-                                        <canvas id="hitsChart"></canvas>
-                                    </div>
-                                </div>
-                            </div>
+                    <div class="row g-4">
+                        <div class="col-lg-4">
+                            <div class="chart-container" id="diskChart"></div>
                         </div>
-                        
-                        {{-- Inodes Chart --}}
-                        <div class="col-md-6 mb-4">
-                            <div class="card">
-                                <div class="card-body">
-                                    <div class="chart-container">
-                                        <canvas id="inodesChart"></canvas>
-                                    </div>
-                                </div>
-                            </div>
+                        <div class="col-lg-4">
+                            <div class="chart-container" id="bandwidthChart"></div>
                         </div>
-                        
-                        {{-- Bandwidth Chart --}}
-                        <div class="col-md-6 mb-4">
-                            <div class="card">
-                                <div class="card-body">
-                                    <div class="chart-container">
-                                        <canvas id="bandwidthChart"></canvas>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        {{-- Disk Space Chart --}}
-                        <div class="col-md-6 mb-4">
-                            <div class="card">
-                                <div class="card-body">
-                                    <div class="chart-container">
-                                        <canvas id="diskspaceChart"></canvas>
-                                    </div>
-                                </div>
-                            </div>
+                        <div class="col-lg-4">
+                            <div class="chart-container" id="inodesChart"></div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    @endif
 
-    {{-- Hidden account username for JS --}}
+    {{-- Hidden Data --}}
     <input type="hidden" id="accountUsername" value="{{ $account->username }}">
+    <input type="hidden" id="accountStatus" value="{{ $account->status }}">
+    <input type="hidden" id="cpanelVerified" value="{{ $account->cpanel_verified ? '1' : '0' }}">
+
+    {{-- Toast Notification --}}
+    <div id="toast" class="toast-notification">
+        <div class="d-flex align-items-center">
+            <i class="ri-check-circle-line text-success me-2" id="toast-icon"></i>
+            <span id="toast-message">Copied to clipboard!</span>
+        </div>
+    </div>
+
+    {{-- FTP Connection Guide Modal --}}
+    <div class="modal fade" id="ftpGuideModal" tabindex="-1" aria-labelledby="ftpGuideModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="ftpGuideModalLabel">
+                        <i class="ri-folder-upload-line me-2 text-primary"></i>
+                        FTP Connection Guide
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    {{-- FileZilla Setup --}}
+                    <div class="mb-4">
+                        <h6 class="fw-semibold mb-3">
+                            <i class="ri-download-2-line me-2 text-success"></i>
+                            Step 1: Download & Install FileZilla
+                        </h6>
+                        <p class="text-muted mb-3">FileZilla is a free, reliable FTP client for managing your website files.</p>
+                        <a href="https://filezilla-project.org/download.php?type=client" 
+                           target="_blank" 
+                           class="btn btn-success btn-sm">
+                            <i class="ri-external-link-line me-1"></i>
+                            Download FileZilla Client
+                        </a>
+                    </div>
+
+                    {{-- Connection Settings --}}
+                    <div class="mb-4">
+                        <h6 class="fw-semibold mb-3">
+                            <i class="ri-settings-3-line me-2 text-primary"></i>
+                            Step 2: Connection Settings
+                        </h6>
+                        <div class="bg-light rounded p-3">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-medium">Host / Server</label>
+                                    <input type="text" 
+                                           class="copy-input form-control form-control-sm" 
+                                           value="ftpupload.net" 
+                                           readonly
+                                           onclick="copyToClipboard('ftpupload.net', this)"
+                                           style="cursor: pointer;">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-medium">Port</label>
+                                    <input type="text" 
+                                           class="copy-input form-control form-control-sm" 
+                                           value="21" 
+                                           readonly
+                                           onclick="copyToClipboard('21', this)"
+                                           style="cursor: pointer;">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-medium">Username</label>
+                                    <input type="text" 
+                                           class="copy-input form-control form-control-sm" 
+                                           value="{{ $account->username }}" 
+                                           readonly
+                                           onclick="copyToClipboard('{{ $account->username }}', this)"
+                                           style="cursor: pointer;">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-medium">Password</label>
+                                    <div class="position-relative">
+                                        <input type="password" 
+                                               class="copy-input form-control form-control-sm pe-5" 
+                                               value="{{ $account->password }}" 
+                                               readonly 
+                                               id="modal-password"
+                                               onclick="copyToClipboard('{{ $account->password }}', this)"
+                                               style="cursor: pointer;">
+                                        <button type="button" 
+                                                class="btn btn-link position-absolute end-0 top-50 translate-middle-y border-0 text-muted"
+                                                onclick="togglePassword('modal-password', this)"
+                                                style="z-index: 10; padding: 0.25rem 0.5rem; font-size: 0.875rem;">
+                                            <i class="ri-eye-off-line"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Step by Step Instructions --}}
+                    <div class="mb-4">
+                        <h6 class="fw-semibold mb-3">
+                            <i class="ri-list-ordered me-2 text-info"></i>
+                            Step 3: Connect to Your Server
+                        </h6>
+                        <div class="timeline">
+                            <div class="timeline-item d-flex mb-3">
+                                <div class="timeline-marker bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px;">
+                                    <span class="fw-bold small">1</span>
+                                </div>
+                                <div>
+                                    <p class="mb-1 fw-medium">Open FileZilla</p>
+                                    <p class="text-muted small mb-0">Launch the FileZilla application on your computer.</p>
+                                </div>
+                            </div>
+                            <div class="timeline-item d-flex mb-3">
+                                <div class="timeline-marker bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px;">
+                                    <span class="fw-bold small">2</span>
+                                </div>
+                                <div>
+                                    <p class="mb-1 fw-medium">Enter Connection Details</p>
+                                    <p class="text-muted small mb-0">Fill in the Host, Username, Password, and Port (21) in the Quick Connect bar at the top.</p>
+                                </div>
+                            </div>
+                            <div class="timeline-item d-flex mb-3">
+                                <div class="timeline-marker bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px;">
+                                    <span class="fw-bold small">3</span>
+                                </div>
+                                <div>
+                                    <p class="mb-1 fw-medium">Click "Quickconnect"</p>
+                                    <p class="text-muted small mb-0">Press the Quickconnect button to establish the connection.</p>
+                                </div>
+                            </div>
+                            <div class="timeline-item d-flex mb-3">
+                                <div class="timeline-marker bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px;">
+                                    <i class="ri-check-line small"></i>
+                                </div>
+                                <div>
+                                    <p class="mb-1 fw-medium">Start Managing Files</p>
+                                    <p class="text-muted small mb-0">Once connected, you can upload, download, and manage your website files in the <code>/public_html</code> folder.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Common Issues --}}
+                    <div class="mb-3">
+                        <h6 class="fw-semibold mb-3">
+                            <i class="ri-error-warning-line me-2 text-warning"></i>
+                            Common Issues & Solutions
+                        </h6>
+                        <div class="accordion" id="ftpTroubleshooting">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="issue1">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1">
+                                        Connection Timeout / Can't Connect
+                                    </button>
+                                </h2>
+                                <div id="collapse1" class="accordion-collapse collapse" data-bs-parent="#ftpTroubleshooting">
+                                    <div class="accordion-body">
+                                        <ul class="mb-0">
+                                            <li>Check your internet connection</li>
+                                            <li>Verify firewall settings (allow FTP on port 21)</li>
+                                            <li>Try switching to Passive Mode in FileZilla settings</li>
+                                            <li>Contact your ISP if they block FTP connections</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="issue2">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse2">
+                                        Login Failed / Authentication Error
+                                    </button>
+                                </h2>
+                                <div id="collapse2" class="accordion-collapse collapse" data-bs-parent="#ftpTroubleshooting">
+                                    <div class="accordion-body">
+                                        <ul class="mb-0">
+                                            <li>Double-check your username and password (copy from above)</li>
+                                            <li>Ensure your hosting account is active</li>
+                                            <li>Wait a few minutes if you just created the account</li>
+                                            <li>Contact support if credentials are correct but still failing</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="issue3">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse3">
+                                        Can't Upload Files
+                                    </button>
+                                </h2>
+                                <div id="collapse3" class="accordion-collapse collapse" data-bs-parent="#ftpTroubleshooting">
+                                    <div class="accordion-body">
+                                        <ul class="mb-0">
+                                            <li>Check if you have sufficient disk space</li>
+                                            <li>Ensure you're uploading to the correct directory (<code>/public_html</code>)</li>
+                                            <li>Verify file permissions and ownership</li>
+                                            <li>Try uploading smaller files first</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <a href="https://wiki.filezilla-project.org/Using" target="_blank" class="btn btn-primary">
+                        <i class="ri-external-link-line me-1"></i>
+                        Official Documentation
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @section('script')
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.17/dist/sweetalert2.all.min.js"></script>
 <script>
-// Constants and State
-const CPANEL_VERIFY_KEY = 'cpanel_verify_{{ $account->username }}';
-const VERIFICATION_CHECK_INTERVAL = 5000; // 5 seconds
+// Configuration
+const HOSTING_CONFIG = {
+    CPANEL_VERIFY_KEY: 'cpanel_verify_{{ $account->username }}',
+    VERIFICATION_CHECK_INTERVAL: 5000,
+    accountUsername: '{{ $account->username }}',
+    accountStatus: '{{ $account->status }}',
+    isCpanelVerified: {{ $account->cpanel_verified ? 'true' : 'false' }},
+    csrfToken: '{{ csrf_token() }}'
+};
 let verificationCheckTimer = null;
-let isVerifying = false; // Track verification state
-let charts = {}; // Store chart instances
+let isVerifying = false;
+let currentDatabaseStats = null;
+let charts = {};
 
-// Debug mode
-const DEBUG = {{ config('app.debug') ? 'true' : 'false' }};
+// Get account information
+const accountUsername = document.getElementById('accountUsername')?.value;
+const accountStatus = document.getElementById('accountStatus')?.value;
+const isCpanelVerified = document.getElementById('cpanelVerified')?.value === "1";
 
-function debug(message, data = null) {
-    if (DEBUG) {
-        console.log(`[DEBUG] ${message}`, data || '');
-    }
-}
-
-// Password Toggle Function
-function togglePassword() {
-    const hiddenEl = document.getElementById('password-hidden');
-    const shownEl = document.getElementById('password-shown');
-    const icon = document.querySelector('.fa-eye');
-
-    if (hiddenEl.classList.contains('d-none')) {
-        hiddenEl.classList.remove('d-none');
-        shownEl.classList.add('d-none');
-        icon.classList.remove('fa-eye-slash');
-        icon.classList.add('fa-eye');
+// 🔑 Password Toggle Functions
+function togglePassword(fieldId, button) {
+    const field = document.getElementById(fieldId);
+    const icon = button.querySelector('i');
+    
+    if (field.type === 'password') {
+        field.type = 'text';
+        icon.className = 'ri-eye-line';
     } else {
-        hiddenEl.classList.add('d-none');
-        shownEl.classList.remove('d-none');
-        icon.classList.remove('fa-eye');
-        icon.classList.add('fa-eye-slash');
+        field.type = 'password';
+        icon.className = 'ri-eye-off-line';
     }
 }
 
-// Handle cPanel login and verification process
+// 🖱️ Copy to Clipboard
+function copyToClipboard(text, element) {
+    if (!text || text === '••••••••' || text === 'Loading...' || text === 'N/A') {
+        showToast('Nothing to copy', 'warning');
+        return;
+    }
+    
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text)
+            .then(() => {
+                showCopyAnimation(element);
+                showToast('Copied to clipboard!', 'success');
+            })
+            .catch(() => fallbackCopy(text, element));
+    } else {
+        fallbackCopy(text, element);
+    }
+}
+
+function fallbackCopy(text, element) {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    textarea.style.left = '-9999px';
+    
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    
+    try {
+        document.execCommand('copy');
+        showCopyAnimation(element);
+        showToast('Copied to clipboard!', 'success');
+    } catch (err) {
+        showToast('Copy failed, please try again', 'error');
+    }
+    
+    document.body.removeChild(textarea);
+}
+
+function showCopyAnimation(element) {
+    if (!element) return;
+    
+    element.classList.add('copied');
+    setTimeout(() => {
+        element.classList.remove('copied');
+    }, 1000);
+}
+
+function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    const toastMessage = document.getElementById('toast-message');
+    const toastIcon = document.getElementById('toast-icon');
+    
+    // Set icon and color based on type
+    switch(type) {
+        case 'success':
+            toastIcon.className = 'ri-check-circle-line text-success me-2';
+            break;
+        case 'error':
+            toastIcon.className = 'ri-close-circle-line text-danger me-2';
+            break;
+        case 'warning':
+            toastIcon.className = 'ri-alert-circle-line text-warning me-2';
+            break;
+        case 'info':
+            toastIcon.className = 'ri-information-circle-line text-info me-2';
+            break;
+        default:
+            toastIcon.className = 'ri-check-circle-line text-success me-2';
+    }
+    
+    toastMessage.textContent = message;
+    toast.classList.add('show');
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+}
+
+// 🔐 cPanel Login & Verification
 function handleCpanelLogin() {
-    debug('@lang("translation.Handling_cPanel")');
-    
-    const isCpanelVerified = "{{ $account->cpanel_verified }}" === "1";
-    
     if (isCpanelVerified) {
         window.open("{{ route('hosting.cpanel', $account->username) }}", '_blank');
         return;
     }
     
-    if (isVerifying) {
-        debug('@lang("translation.Verification_progress")');
-        return;  
-    }
+    if (isVerifying) return;
 
     isVerifying = true;
     localStorage.setItem(CPANEL_VERIFY_KEY, '1');
@@ -643,11 +1268,9 @@ function handleCpanelLogin() {
     const cpanelWindow = window.open("{{ route('hosting.cpanel', $account->username) }}", '_blank');
     
     if (cpanelWindow) {
-        debug('cPanel window opened successfully');
-        
         Swal.fire({
-            title: '@lang("translation.Control_Panel") @lang("translation.Login")',
-            text: '@lang("translation.Please_wait_verification")',
+            title: 'cPanel Login',
+            text: 'Please wait while we verify your access...',
             icon: 'info',
             allowOutsideClick: false,
             showConfirmButton: false,
@@ -658,14 +1281,11 @@ function handleCpanelLogin() {
 
         startVerificationCheck();
     } else {
-        debug('Failed to open cPanel window');
         isVerifying = false;
-        
         Swal.fire({
-            title: '@lang("translation.Popup_Blocked")',
-            text: '@lang("translation.Allow_popups_try_again")',
-            icon: 'warning',
-            confirmButtonText: '@lang("translation.Try_Again")'
+            title: 'Popup Blocked',
+            text: 'Please allow popups and try again.',
+            icon: 'warning'
         });
     }
 }
@@ -683,10 +1303,7 @@ function checkVerificationStatus() {
         return;
     }
 
-    const accountUsername = document.getElementById('accountUsername').value;
-    const url = "{{ route('hosting.verify-cpanel', ':username') }}".replace(':username', accountUsername);
-    
-    fetch(url, {
+    fetch(`/hosting/${accountUsername}/verify-cpanel`, {
         method: 'POST',
         headers: {
             'X-CSRF-TOKEN': '{{ csrf_token() }}',
@@ -701,8 +1318,7 @@ function checkVerificationStatus() {
         }
     })
     .catch(error => {
-        debug('Verification failed:', error);
-        handleError(error);
+        console.error('Verification failed:', error);
     });
 }
 
@@ -712,12 +1328,10 @@ function handleVerificationSuccess() {
     isVerifying = false;
 
     Swal.fire({
-        title: '@lang("translation.Verification_Successful")',
-        text: '@lang("translation.cPanel_verified_features_unlocked")',
+        title: 'Verification Successful!',
+        text: 'cPanel verified! All features are now unlocked.',
         icon: 'success',
-        confirmButtonText: '@lang("translation.Continue")',
-        confirmButtonColor: '#4338ca',
-        allowOutsideClick: false
+        confirmButtonText: 'Continue'
     }).then((result) => {
         if (result.isConfirmed) {
             location.reload();
@@ -725,478 +1339,505 @@ function handleVerificationSuccess() {
     });
 }
 
-// Handle error display
-function handleError(error) {
-    Swal.fire({
-        title: '@lang("translation.Verification_Error")',
-        text: error.message || '@lang("translation.Error_during_verification")',
-        icon: 'error',
-        confirmButtonText: '@lang("translation.Try_Again")'
-    });
-    
-    clearInterval(verificationCheckTimer);
-    isVerifying = false;
-}
-
-function showToast(message, type = 'success') {
-    const isMobile = window.innerWidth <= 768;
-    
-    const Toast = Swal.mixin({
-        toast: true,
-        position: isMobile ? 'top-end' : 'bottom-end', 
-        showConfirmButton: false,
-        timer: 2000,
-        timerProgressBar: true,
-        width: isMobile ? 'auto' : null
-    });
-    
-    Toast.fire({
-        icon: type,
-        title: message
-    });
-}
-
-// Hàm copy không cần chọn văn bản - phương pháp số 4
-function copyWithoutSelection(text, element) {
-    if (!text) return;
-    
-    if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(text)
-            .then(() => {
-                showCopyAnimation(element);
-                showToast('@lang("translation.Copied_to_clipboard")');
-            })
-            .catch(err => {
-                console.error('Copy failed:', err);
-                fallbackCopyMethod(text, element);
-            });
-    } else {
-        fallbackCopyMethod(text, element);
-    }
-}
-
-function fallbackCopyMethod(text, element) {
-    try {
-        const textarea = document.createElement('textarea');
-        textarea.value = text;
-        
-        textarea.style.position = 'fixed';
-        textarea.style.opacity = '0';
-        textarea.style.left = '-9999px';
-        textarea.style.top = '-9999px';
-        
-        document.body.appendChild(textarea);
-        
-        textarea.focus();
-        const successful = document.execCommand('copy');
-        
-        document.body.removeChild(textarea);
-        
-        if (successful) {
-            showCopyAnimation(element);
-            showToast('@lang("translation.Copied_to_clipboard")');
-        } else {
-            showToast('@lang("translation.Copy_failed_try_again")', 'error');
-        }
-    } catch (err) {
-        console.error('Fallback copy error:', err);
-        showToast('@lang("translation.Copy_failed_try_again")', 'error');
-    }
-}
-
-function showCopyAnimation(element) {
-    if (!element) return;
-    
-    const isMobile = window.innerWidth <= 768;
-    
-    if (isMobile) {
-        if (element.tagName === 'BUTTON') {
-            const originalIcon = element.innerHTML;
-            element.innerHTML = '<i class="fas fa-check text-success"></i>';
-            
-            setTimeout(() => {
-                element.innerHTML = originalIcon;
-            }, 1000);
-        } else {
-            element.classList.add('copied');
-            setTimeout(() => {
-                element.classList.remove('copied');
-            }, 1000);
-        }
-    } else {
-        element.classList.add('copied');
-        setTimeout(() => {
-            element.classList.remove('copied');
-        }, 1000);
-    }
-}
-
-function initCopyableElements() {
-    document.querySelectorAll('.copyable').forEach(el => {
-        el.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const textToCopy = this.textContent.trim();
-            copyWithoutSelection(textToCopy, this);
-        });
-        
-        el.addEventListener('touchstart', function(e) {
-            if (e.touches.length > 1) return; 
-            e.preventDefault();
-        }, { passive: false }); 
-    });
-    
-    document.querySelectorAll('.mobile-copy-btn').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const targetId = this.getAttribute('data-copy-target');
-            const targetEl = targetId ? 
-                document.getElementById(targetId) : 
-                this.closest('.copy-btn-container').querySelector('.copyable');
-                
-            if (targetEl) {
-                const textToCopy = targetEl.textContent.trim();
-                copyWithoutSelection(textToCopy, this);
-            }
-        });
-    });
-}
-
-// Stats Management
-function showStatsError(message) {
-    debug('Showing stats error:', message);
-    
-    document.querySelectorAll('[data-stat]').forEach(card => {
-        card.style.display = 'block';
-        card.querySelector('.card-body').innerHTML = `
-            <div class="d-flex align-items-center justify-content-center" style="min-height: 120px;">
-                <div class="text-center">
-                    <i class="fas fa-exclamation-circle text-danger mb-2" style="font-size: 24px;"></i>
-                    <p class="text-danger mb-2">${message}</p>
-                    <button onclick="retryLoadStats()" class="btn btn-sm btn-outline-primary">
-                        <i class="fas fa-sync-alt me-1"></i> @lang("translation.Retry")
-                    </button>
-                </div>
-            </div>
-        `;
-    });
-}
-
+// 📊 Load Account Statistics
 function loadAccountStats() {
-    const accountUsername = document.getElementById('accountUsername').value;
-    
-    const url = "{{ route('hosting.stats', ':username') }}".replace(':username', accountUsername);
-    
-    fetch(url)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('@lang("translation.Failed_to_fetch_stats")');
-            }
-            return response.json();
-        })
+    fetch(`/hosting/${accountUsername}/all-stats`)
+        .then(response => response.json())
         .then(data => {
             if (data.success) {
-                updateStatsCards(data.data);
-                initializeCharts();
+                updateStatsCards(data.stats);
+                initializeCharts(data.chart_data || {});
             } else {
-                throw new Error(data.message || '@lang("translation.Failed_to_load_stats")');
+                showStatsError(data.message);
             }
         })
         .catch(error => {
             console.error('Error loading stats:', error);
-            showStatsError(error.message || '@lang("translation.Failed_to_fetch_stats_data")');
+            showStatsError('Failed to fetch statistics');
         });
-}
-
-function retryLoadStats() {
-    debug('Retrying stats load');
-    
-    document.querySelectorAll('[data-stat]').forEach(card => {
-        card.querySelector('.card-body').innerHTML = `
-            <div class="d-flex align-items-center justify-content-center" style="min-height: 120px;">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">@lang("translation.Loading")...</span>
-                </div>
-            </div>
-        `;
-    });
-
-    setTimeout(loadAccountStats, 1000);
 }
 
 function updateStatsCards(stats) {
-    const formatNumber = (num) => num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-    
-    const createStatCard = (title, used, total, unit, percent, icon) => `
-        <div class="d-flex align-items-center">
-            <div class="avatar-sm">
-                <span class="avatar-title bg-primary-subtle text-primary rounded-3">
-                    <i data-feather="${icon}" class="font-size-24"></i>
-                </span>
-            </div>
-            <div class="flex-grow-1 ms-3">
-                <p class="text-muted mb-2">${title}</p>
-                <div class="progress mb-2" style="height: 6px;">
-                    <div class="progress-bar" role="progressbar" 
-                         style="width: ${percent}%;" 
-                         aria-valuenow="${percent}" 
-                         aria-valuemin="0" 
-                         aria-valuemax="100">
-                    </div>
-                </div>
-                <h5 class="mb-0 font-size-14">
-                    ${formatNumber(used)} ${unit} 
-                    ${total === 'Unlimited' ? '' : `/ ${formatNumber(total)} ${unit}`}
-                    <small class="ms-1">(${percent}%)</small>
-                </h5>
-            </div>
-        </div>
-    `;
-
-    Object.entries(stats).forEach(([type, data]) => {
-        const card = document.querySelector(`[data-stat="${type}"]`);
-        if (!card) return;
-
-        let title, icon;
-        switch(type) {
-            case 'disk':
-                title = '@lang("translation.Disk_Space")';
-                icon = 'hard-drive';
-                break;
-            case 'bandwidth':
-                title = '@lang("translation.Bandwidth")';
-                icon = 'wifi';
-                break;
-            case 'inodes':
-                title = '@lang("translation.Inodes")';
-                icon = 'file';
-                break;
-            default:
-                return;
+    const statConfigs = {
+        'disk': {
+            title: 'Disk Space',
+            icon: 'ri-hard-drive-2-line',
+            color: 'var(--minia-info)'
+        },
+        'bandwidth': {
+            title: 'Bandwidth',
+            icon: 'ri-wifi-line',
+            color: 'var(--minia-success)'
+        },
+        'inodes': {
+            title: 'Inodes',
+            icon: 'ri-file-line',
+            color: 'var(--minia-warning)'
         }
+    };
+
+    Object.entries(statConfigs).forEach(([type, config]) => {
+        const card = document.querySelector(`[data-stat="${type}"]`);
+        if (!card || !stats[type]) return;
+
+        const data = stats[type];
+        const used = data.used || 0;
+        const total = data.total || 0;
+        const unit = data.unit || '';
+        const percent = data.percent || 0;
 
         card.style.display = 'block';
-        card.querySelector('.card-body').innerHTML = createStatCard(
-            title,
-            data.used,
-            data.total,
-            data.unit || '',
-            data.percent,
-            icon
-        );
-
-        if (typeof feather !== 'undefined') {
-            feather.replace();
-        }
+        card.innerHTML = `
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <p class="stats-label mb-1">${config.title}</p>
+                    <div class="stats-value">${formatNumber(used)} ${unit}</div>
+                    <small class="text-muted">/ ${total === 'Unlimited' ? 'Unlimited' : formatNumber(total) + ' ' + unit}</small>
+                </div>
+                <div class="icon-box">
+                    <i class="${config.icon}"></i>
+                </div>
+            </div>
+            <div class="progress-custom mt-2">
+                <div class="progress-bar-custom" style="width: ${Math.min(percent, 100)}%"></div>
+            </div>
+            <small class="text-muted">${percent}% used</small>
+        `;
     });
 }
 
-// Chart Management
-function initializeCharts() {
-    try {
-        const types = ['hits', 'bandwidth', 'inodes', 'diskspace'];
-        const chartColors = {
-            usage: '#4B6CBF',
-            limit: '#DC3545',
-            average: '#28A745'
-        };
-
-        types.forEach(type => {
-            const canvas = document.getElementById(`${type}Chart`);
-            if (!canvas) {
-                debug(`Canvas not found for ${type}`);
-                return;
-            }
-
-            const ctx = canvas.getContext('2d');
-            if (!ctx) {
-                debug(`Could not get context for ${type}`);
-                return;
-            }
-
-            charts[type] = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: [],
-                    datasets: [
-                        {
-                            label: '@lang("translation.Usage")',
-                            data: [],
-                            borderColor: chartColors.usage,
-                            borderWidth: 2,
-                            tension: 0.4,
-                            fill: false
-                        },
-                        {
-                            label: '@lang("translation.Limit")',
-                            data: [],
-                            borderColor: chartColors.limit,
-                            borderWidth: 1,
-                            borderDash: [5, 5],
-                            fill: false
-                        },
-                        {
-                            label: '@lang("translation.Average")',
-                            data: [],
-                            borderColor: chartColors.average,
-                            borderWidth: 1,
-                            borderDash: [3, 3],
-                            fill: false
-                        }
-                    ]
-                },
-                options: createChartOptions(type)
-            });
-        });
-
-        loadChartData();
-    } catch (error) {
-        debug('Error initializing charts:', error);
-    }
+function showStatsError(message) {
+    document.querySelectorAll('[data-stat]').forEach(card => {
+        card.style.display = 'block';
+        card.innerHTML = `
+            <div class="text-center py-3">
+                <i class="ri-alert-circle-line text-danger" style="font-size: 2rem;"></i>
+                <p class="mt-2 mb-2 text-muted">${message}</p>
+                <button onclick="loadAccountStats()" class="btn btn-primary btn-sm">
+                    <i class="ri-refresh-line me-1"></i> Retry
+                </button>
+            </div>
+        `;
+    });
 }
 
-function createChartOptions(type) {
-    if(!type) return {};
+// 📊 Chart Functions
+function initializeCharts(chartData) {
+    const chartTypes = [
+        { key: 'diskspace', id: 'diskChart', title: 'Disk Usage', unit: 'MB', color: '#4B38B3' },
+        { key: 'bandwidth', id: 'bandwidthChart', title: 'Bandwidth Usage', unit: 'MB', color: '#45CB85' },
+        { key: 'inodes', id: 'inodesChart', title: 'Inodes Usage', unit: 'Files', color: '#FFB902' }
+    ];
 
-    const titles = {
-        hits: '@lang("translation.Daily_Hits")',
-        bandwidth: '@lang("translation.Bandwidth_Usage")',
-        inodes: '@lang("translation.Inodes_Usage")',
-        diskspace: '@lang("translation.Disk_Space_Usage")'
-    };
+    chartTypes.forEach(chart => {
+        const container = document.getElementById(chart.id);
+        if (!container) return;
 
-    const units = {
-        hits: '@lang("translation.Hits")',
-        bandwidth: 'MB',
-        inodes: '@lang("translation.Files")',
-        diskspace: 'MB'
-    };
-
-    return {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
+        const myChart = echarts.init(container);
+        const data = chartData[chart.key] || { history: [], limit: 0 };
+        
+        const option = {
             title: {
-                display: true,
-                text: titles[type] || ''
-            },
-            tooltip: {
-                mode: 'index',
-                intersect: false
-            }
-        },
-        scales: {
-            x: {
-                display: true,
-                title: {
-                    display: true,
-                    text: '@lang("translation.Date")'
+                text: chart.title,
+                left: 'center',
+                textStyle: {
+                    fontSize: 14,
+                    fontWeight: 'normal'
                 }
             },
-            y: {
-                display: true,
-                title: {
-                    display: true,
-                    text: units[type] || ''
+            tooltip: {
+                trigger: 'axis'
+            },
+            grid: {
+                left: '3%',
+                right: '4%',
+                bottom: '3%',
+                top: '15%',
+                containLabel: true
+            },
+            xAxis: {
+                type: 'category',
+                boundaryGap: false,
+                data: data.history.map(item => item.date) || []
+            },
+            yAxis: {
+                type: 'value',
+                name: chart.unit
+            },
+            series: [{
+                type: 'line',
+                smooth: true,
+                data: data.history.map(item => item.value) || [],
+                itemStyle: {
+                    color: chart.color
                 },
-                suggestedMin: 0
-            }
-        }
-    };
-}
+                areaStyle: {
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                        {
+                            offset: 0,
+                            color: chart.color + '20'
+                        },
+                        {
+                            offset: 1,
+                            color: chart.color + '05'
+                        }
+                    ])
+                }
+            }]
+        };
 
-function loadChartData() {
-    const accountUsername = document.getElementById('accountUsername').value;
+        myChart.setOption(option);
+        charts[chart.key] = myChart;
+    });
 
-    fetch("{{ route('hosting.chart.stats', ':username') }}".replace(':username', accountUsername))
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                Object.keys(charts).forEach(type => {
-                    if (data.data[type]) {
-                        updateChart(charts[type], data.data[type]);
-                    }
-                });
-            }
-        })
-        .catch(error => {
-            debug('Error loading chart data:', error);
-        });
-}
-
-function updateChart(chart, data) {
-    if (!data?.history) return;
-
-    const dates = data.history.map(item => item.date);
-    const values = data.history.map(item => item.value);
-    const movingAverage = calculateMovingAverage(values);
-
-    chart.data.labels = dates;
-    chart.data.datasets[0].data = values;
-    chart.data.datasets[1].data = Array(dates.length).fill(data.limit);
-    chart.data.datasets[2].data = movingAverage;
-
-    chart.update();
-}
-
-function calculateMovingAverage(values, window = 30) {
-    return values.map((_, index) => {
-        if (index < window - 1) return null;
-        
-        const sum = values.slice(index - window + 1, index + 1)
-            .reduce((a, b) => a + b, 0);
-        return Number((sum / window).toFixed(2));
+    // Handle window resize
+    window.addEventListener('resize', function() {
+        Object.values(charts).forEach(chart => chart.resize());
     });
 }
 
-// Initialize
-document.addEventListener('DOMContentLoaded', function() {
-    // Setup DOM event listeners
-    const domainSelect = document.getElementById('subdomain-domain');
-    if (domainSelect) {
-        domainSelect.addEventListener('change', updateDomainDisplay);
-    }
+// 🗄️ Enhanced Database Management Functions
+function loadDatabases() {
+    fetch(`/hosting/${HOSTING_CONFIG.accountUsername}/databases`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            updateDatabasesList(data.databases);
+            updateDatabaseStats(data.stats);
+            updateLimitAlert(data.stats);
+        } else {
+            throw new Error(data.message || 'Failed to load databases');
+        }
+    })
+    .catch(error => {
+        console.error('❌ Error loading databases:', error);
+        showDatabaseError('Failed to load databases: ' + error.message);
+    });
+}
 
-    // Initialize Feather Icons
-    if (typeof feather !== 'undefined') {
-        feather.replace();
+function updateDatabaseStats(stats) {
+    if (!stats) return;
+    
+    currentDatabaseStats = stats;
+    
+    // Update stats display
+    document.getElementById('db-used-count').innerHTML = stats.current_usage;
+    document.getElementById('db-max-count').innerHTML = stats.max_databases;
+    document.getElementById('db-available-count').innerHTML = stats.available;
+    document.getElementById('db-usage-percent').innerHTML = Math.round(stats.usage_percent || 0) + '%';
+}
+
+function updateLimitAlert(stats) {
+    const alertElement = document.getElementById('database-limit-alert');
+    const messageElement = document.getElementById('limit-message');
+    const createBtn = document.getElementById('create-db-btn');
+    const dbInput = document.getElementById('databaseNameInput');
+    
+    if (!stats) return;
+    
+    // Show warning if approaching limit or at limit
+    if (stats.usage_percent >= 80) {
+        let message = '';
+        
+        if (stats.current_usage >= stats.max_databases) {
+            message = `Database limit reached! You are using ${stats.current_usage} of ${stats.max_databases} available databases.`;
+            alertElement.className = 'alert alert-danger';
+            createBtn.disabled = true;
+            dbInput.disabled = true;
+        } else {
+            message = `Currently using <strong>${stats.current_usage}</strong> of <strong>${stats.max_databases}</strong> available databases.`;
+            alertElement.className = 'alert alert-warning';
+            createBtn.disabled = false;
+            dbInput.disabled = false;
+        }
+        
+        messageElement.innerHTML = message;
+        alertElement.classList.remove('d-none');
+    } else {
+        alertElement.classList.add('d-none');
+        createBtn.disabled = false;
+        dbInput.disabled = false;
+    }
+}
+
+function updateDatabasesList(databases) {
+    const tbody = document.getElementById('databaseTableBody');
+    
+    if (databases.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="4" class="text-center py-4">
+                    <i class="ri-database-line text-muted" style="font-size: 3rem;"></i>
+                    <p class="mt-2 mb-0 text-muted">No databases found</p>
+                    <small class="text-muted">Create your first database using the form above.</small>
+                </td>
+            </tr>
+        `;
+    } else {
+        tbody.innerHTML = databases.map(db => `
+            <tr id="db-row-${db.id}">
+                <td>
+                    <div class="fw-medium">${db.name}</div>
+                    <small class="text-muted">${db.short_name}</small>
+                </td>
+                <td>
+                    <small class="text-muted">${db.created_ago || 'N/A'}</small>
+                </td>
+                <td>
+                    <small class="text-muted">${db.size || 'N/A'}</small>
+                </td>
+                <td class="text-end">
+                    <button onclick="openPhpMyAdmin('${db.short_name}')" 
+                            class="btn btn-soft-primary btn-sm me-2"
+                            id="phpmyadmin-btn-${db.id}">
+                        <i class="ri-database-line me-1"></i> phpMyAdmin
+                    </button>
+                    <button onclick="deleteDatabase('${db.short_name}')" 
+                            class="btn btn-soft-danger btn-sm"
+                            id="delete-btn-${db.id}">
+                        <i class="ri-delete-bin-line me-1"></i> Delete
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
+}
+
+// Enhanced Create Database with Loading States
+async function createDatabase() {
+    const form = document.getElementById('createDatabaseForm');
+    const formData = new FormData(form);
+    const databaseName = formData.get('database_name');
+    const createBtn = document.getElementById('create-db-btn');
+    const btnText = createBtn.querySelector('.btn-text');
+    const btnLoading = createBtn.querySelector('.btn-loading');
+    
+    if (!databaseName) {
+        showToast('Please enter a database name', 'error');
+        return;
     }
     
-    initCopyableElements();
+    if (!/^[a-zA-Z0-9_]+$/.test(databaseName)) {
+        showToast('Database name can only contain letters, numbers, and underscores', 'error');
+        return;
+    }
 
-    // Check account status and verification
-    if ('{{ $account->status }}' === 'active') {
-        const isCpanelVerified = "{{ $account->cpanel_verified }}" === "1";
+    // Check limits before creating
+    if (currentDatabaseStats && currentDatabaseStats.current_usage >= currentDatabaseStats.max_databases) {
+        showToast(`Database limit reached! You are using ${currentDatabaseStats.current_usage} of ${currentDatabaseStats.max_databases} available databases.`, 'error');
+        return;
+    }
+    
+    // Show loading state
+    createBtn.disabled = true;
+    btnText.classList.add('d-none');
+    btnLoading.classList.remove('d-none');
+    
+    try {
+        const response = await fetch(`/hosting/${HOSTING_CONFIG.accountUsername}/databases`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': HOSTING_CONFIG.csrfToken,
+                'Accept': 'application/json'
+            },
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showToast(`Database '${databaseName}' created successfully!`, 'success');
+            form.reset();
+            loadDatabases(); // Reload to update stats and list
+        } else {
+            throw new Error(data.message || 'Failed to create database');
+        }
+        
+    } catch (error) {
+        console.error('❌ Create database error:', error);
+        showToast('Failed to create database: ' + error.message, 'error');
+    } finally {
+        // Reset button state
+        createBtn.disabled = false;
+        btnText.classList.remove('d-none');
+        btnLoading.classList.add('d-none');
+    }
+}
+
+// Enhanced Delete Database with Loading States
+async function deleteDatabase(dbName) {
+    const result = await Swal.fire({
+        title: 'Are you sure?',
+        text: `Delete database '${dbName}'? This action cannot be undone.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#F06548',
+        cancelButtonColor: '#74788D',
+        confirmButtonText: 'Yes, delete it!',
+        showLoaderOnConfirm: true,
+        preConfirm: async () => {
+            try {
+                const response = await fetch(`/hosting/${HOSTING_CONFIG.accountUsername}/databases`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': HOSTING_CONFIG.csrfToken,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ database_name: dbName })
+                });
+                
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.message || 'Failed to delete database');
+                }
+                
+                return data;
+            } catch (error) {
+                Swal.showValidationMessage(`Request failed: ${error.message}`);
+            }
+        },
+        allowOutsideClick: () => !Swal.isLoading()
+    });
+
+    if (result.isConfirmed && result.value) {
+        showToast(`Database '${dbName}' deleted successfully!`, 'success');
+        loadDatabases(); // Reload to update stats and list
+    }
+}
+
+// Enhanced phpMyAdmin with Loading State
+function openPhpMyAdmin(dbName) {
+    const btnId = `phpmyadmin-btn-${dbName}`;
+    const btn = document.querySelector(`[onclick="openPhpMyAdmin('${dbName}')"]`);
+    
+    if (btn) {
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<div class="spinner-border spinner-border-sm me-1" role="status"></div> Opening...';
+        btn.disabled = true;
+    }
+    
+    fetch(`/hosting/${HOSTING_CONFIG.accountUsername}/phpmyadmin-link`, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': HOSTING_CONFIG.csrfToken,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({ database: dbName })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.open(data.url, '_blank');
+            showToast('phpMyAdmin opened successfully', 'success');
+        } else {
+            throw new Error(data.message || 'Failed to get phpMyAdmin link');
+        }
+    })
+    .catch(error => {
+        console.error('❌ Error opening phpMyAdmin:', error);
+        showToast('Failed to open phpMyAdmin: ' + error.message, 'error');
+    })
+    .finally(() => {
+        if (btn) {
+            btn.innerHTML = '<i class="ri-database-line me-1"></i> phpMyAdmin';
+            btn.disabled = false;
+        }
+    });
+}
+
+// Enhanced Sync with Loading State
+async function syncDatabases() {
+    const syncBtn = document.getElementById('sync-databases-btn');
+    const originalHTML = syncBtn.innerHTML;
+    
+    syncBtn.innerHTML = '<div class="spinner-border spinner-border-sm me-1" role="status"></div> Syncing...';
+    syncBtn.disabled = true;
+    
+    try {
+        const response = await fetch(`/hosting/${HOSTING_CONFIG.accountUsername}/databases-sync`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': HOSTING_CONFIG.csrfToken,
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showToast('Databases synced successfully!', 'success');
+            loadDatabases();
+        } else {
+            throw new Error(data.message || 'Sync failed');
+        }
+        
+    } catch (error) {
+        console.error('❌ Sync error:', error);
+        showToast('Sync failed: ' + error.message, 'error');
+    } finally {
+        syncBtn.innerHTML = originalHTML;
+        syncBtn.disabled = false;
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Database form handling
+    const dbForm = document.getElementById('createDatabaseForm');
+    if (dbForm) {
+        dbForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            await createDatabase();
+        });
+    }
+
+    // Load data if account is active and verified
+    if (HOSTING_CONFIG.accountStatus === 'active' && HOSTING_CONFIG.isCpanelVerified) {
+        loadDatabases();
+    }
+});
+
+// Utility Functions
+function formatNumber(num) {
+    if (typeof num !== 'number') return num || '0';
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+// Initialize Everything
+document.addEventListener('DOMContentLoaded', function() {
+    // Database form handling
+    const dbForm = document.getElementById('createDatabaseForm');
+    if (dbForm) {
+        dbForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            await createDatabase();
+        });
+    }
+
+    // Load data if account is active
+    if (accountStatus === 'active') {
+        // Always load account stats (includes database limits)
+        loadAccountStats();
         
         if (isCpanelVerified) {
-            // Load stats and charts if verified
-            loadAccountStats();
-            initializeCharts();
-            
-            if (typeof loadDatabases === 'function') loadDatabases();
-            if (typeof loadSubdomains === 'function') loadSubdomains();
+            // Load database list only if verified
+            loadDatabases();
         } else {
-            // Show verification banner if not verified
-            const banner = document.getElementById('verificationBanner');
-            if (banner && !isVerifying) {
-                setTimeout(() => banner.classList.add('show'), 500);
-            }
-
-            // Setup login button
-            const loginBtn = document.getElementById('loginNowBtn');
-            if (loginBtn) {
-                loginBtn.addEventListener('click', e => {
-                    e.preventDefault();
-                    handleCpanelLogin();
-                });
-            }
-
-            // Check for pending verification
+            // Show database info without list if not verified
+            updateDatabaseInfo(0, 1); // Default for free hosting
+            
             const hasVerifyFlag = localStorage.getItem(CPANEL_VERIFY_KEY);
-            if (hasVerifyFlag && !isCpanelVerified) {
+            if (hasVerifyFlag) {
                 isVerifying = true;
                 startVerificationCheck();
             }

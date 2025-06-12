@@ -304,10 +304,45 @@ Route::middleware(['auth', 'verified', '2fa'])->group(function () {
             ->name('builder');
         
         // API/JSON routes for stats and database management
-        Route::get('/stats/{id}', [HostingController::class, 'getStats'])
-            ->name('stats');
-        Route::get('/chart-stats/{id}', [HostingController::class, 'getChartStats'])
-            ->name('chart.stats');
+          Route::get('/{username}/stats', [HostingController::class, 'getStats'])->name('stats');
+        Route::get('/{username}/chart-stats', [HostingController::class, 'getChartStats'])->name('chart.stats');
+        Route::get('/{username}/all-stats', [HostingController::class, 'getAllStats'])->name('all-stats');
+        
+          Route::get('/{username}/databases', [HostingController::class, 'databases'])->name('databases');
+    Route::post('/{username}/databases', [HostingController::class, 'createDatabase'])->name('databases.create');
+    Route::delete('/{username}/databases', [HostingController::class, 'deleteDatabase'])->name('databases.delete');
+          Route::get('{username}/databases-enhanced', [HostingController::class, 'getEnhancedDatabaseStats'])
+        ->name('hosting.databases.enhanced');
+    Route::post('/{username}/export-database', [HostingController::class, 'exportDatabase'])->name('export-database');
+    Route::post('/{username}/phpmyadmin-link', [HostingController::class, 'getPhpMyAdminLink'])->name('phpmyadmin.link');
+    Route::get('/{username}/databases-fast', [HostingController::class, 'databases'])->name('databases.fast');
+    Route::post('/{username}/databases-sync', [HostingController::class, 'syncDatabases'])->name('databases.sync');
+    Route::post('/{username}/databases-auto-sync', [HostingController::class, 'autoSyncDatabases'])->name('databases.auto-sync');
+    Route::get('/{username}/database-stats-fast', [HostingController::class, 'getDatabaseStats'])->name('database.stats.fast');
+   // Get all subdomains
+    Route::get('/{username}/subdomains', [HostingController::class, 'getSubdomains'])
+        ->name('subdomains.index');
+    
+    // Create new subdomain
+    Route::post('/{username}/subdomains', [HostingController::class, 'createSubdomain'])
+        ->name('subdomains.store');
+    
+    // Delete subdomain
+    Route::delete('/{username}/subdomains/{subdomain}', [HostingController::class, 'deleteSubdomain'])
+        ->name('subdomains.destroy');
+    
+    // Toggle subdomain status
+    Route::post('/{username}/subdomains/{subdomain}/toggle', [HostingController::class, 'toggleSubdomain'])
+        ->name('subdomains.toggle');
+    
+    // Get available domain extensions
+    Route::get('/{username}/subdomain-extensions', [HostingController::class, 'getSubdomainExtensions'])
+        ->name('subdomains.extensions');
+    
+    // Sync subdomains with cPanel
+    Route::post('/{username}/subdomains/sync', [HostingController::class, 'syncSubdomains'])
+        ->name('subdomains.sync');
+    
     });
     
     // WebFTP File Manager
