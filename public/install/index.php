@@ -1,956 +1,1344 @@
 <?php
-// Simple Error Handling and Debugging
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-ini_set('log_errors', 1);
+ob_start();
+session_start();
 
-// Start session safely
-if (session_status() == PHP_SESSION_NONE) {
-    session_start();
+// Function to delete directory recursively
+function deleteDirectory($dir) {
+    if (!file_exists($dir)) {
+        return true;
+    }
+    
+    if (!is_dir($dir)) {
+        return unlink($dir);
+    }
+    
+    foreach (scandir($dir) as $item) {
+        if ($item == '.' || $item == '..') {
+            continue;
+        }
+        
+        if (!deleteDirectory($dir . DIRECTORY_SEPARATOR . $item)) {
+            return false;
+        }
+    }
+    
+    return rmdir($dir);
 }
 
-// Simple logging function
-function debug_log($message) {
-    $log_file = __DIR__ . '/installer_debug.log';
-    $timestamp = date('[Y-m-d H:i:s] ');
-    file_put_contents($log_file, $timestamp . $message . PHP_EOL, FILE_APPEND | LOCK_EX);
+$step = isset($_GET['step']) ? intval($_GET['step']) : 0;
+$protocol = isset($_SERVER['HTTPS']) ? 'https://' : 'http://';
+$host = $_SERVER['HTTP_HOST'];
+
+// Smart root URL detection
+$root_url = $protocol . $host;
+
+// Get current script path
+$script_path = $_SERVER['SCRIPT_NAME']; // e.g., /public/install/index.php
+$request_uri = $_SERVER['REQUEST_URI']; // e.g., /public/install/?step=2
+
+// Try to detect the document root relative to web root
+if (strpos($script_path, '/public/install/') !== false) {
+    // Laravel public folder structure: /public/install/index.php
+    // Root should be: domain.com (no path)
+    $root_url = $protocol . $host;
+} elseif (strpos($script_path, '/install/') !== false) {
+    // Direct install folder: /install/index.php  
+    // Root should be: domain.com (no path)
+    $root_url = $protocol . $host;
+} else {
+    // Other configurations - try to detect base path
+    $base_dir = dirname(dirname($script_path));
+    if ($base_dir && $base_dir !== '/' && $base_dir !== '.') {
+        $root_url = $protocol . $host . $base_dir;
+    }
 }
 
-debug_log("Installer accessed - Step: " . ($_GET['step'] ?? 0));
+// Handle non-standard ports
+$port = $_SERVER['SERVER_PORT'] ?? 80;
+if (($protocol === 'https://' && $port != 443) || ($protocol === 'http://' && $port != 80)) {
+    $parsed = parse_url($root_url);
+    $root_url = $parsed['scheme'] . '://' . $parsed['host'] . ':' . $port . ($parsed['path'] ?? '');
+}
 
-// Basic variables
-$step = isset($_GET['step']) ? (int)$_GET['step'] : 0;
-$error = '';
-$success = false;
+// Clean up URL - ensure no trailing slash for root
+$root_url = rtrim($root_url, '/');
+if (empty(parse_url($root_url, PHP_URL_PATH))) {
+    // Root domain, keep clean
+} else {
+    // Has path, keep as is
+}
 
-// Step titles
-$step_titles = [
-    0 => 'Welcome to BIXA',
-    1 => 'Website URL',
-    2 => 'Database Setup',
-    3 => 'Admin Account',
-    4 => 'Complete'
+// Define steps
+$steps = [
+    0 => 'Welcome',
+    1 => 'System Check',
+    2 => 'Website Configuration',
+    3 => 'Database Configuration',
+    4 => 'Admin Account',
+    5 => 'Installation Complete'
 ];
 
-$current_title = $step_titles[$step] ?? 'Installation';
-
-debug_log("Current step: $step, Title: $current_title");
-
+$title = isset($steps[$step]) ? 'Step ' . $step . ': ' . $steps[$step] : 'BIXA Installer';
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BIXA Installer - <?= htmlspecialchars($current_title) ?></title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title><?= htmlspecialchars($title) ?></title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        :root {
-            --primary: #6366f1;
-            --primary-hover: #4f46e5;
-            --success: #10b981;
-            --danger: #ef4444;
-            --warning: #f59e0b;
-            --dark: #111827;
-            --gray: #6b7280;
-            --gray-light: #f3f4f6;
-            --border: #e5e7eb;
-        }
-        
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
         }
-        
+
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
-            color: #1f2937;
-            line-height: 1.5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-        }
-        
-        .container {
-            max-width: 600px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
-        
-        .card {
-            background-color: white;
-            border-radius: 0.75rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-            margin-bottom: 2rem;
-        }
-        
-        .card-header {
-            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-            border-bottom: 1px solid var(--border);
-            padding: 1.5rem;
-            text-align: center;
-        }
-        
-        .card-header h1 {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: var(--dark);
-            margin: 0;
-        }
-        
-        .card-body {
-            padding: 2rem;
-        }
-        
-        .progress-bar {
-            background-color: var(--gray-light);
-            height: 8px;
-            border-radius: 4px;
-            margin-bottom: 2rem;
-            overflow: hidden;
-        }
-        
-        .progress-fill {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary, #a855f7) 100%);
-            height: 100%;
-            transition: width 0.3s ease;
-            border-radius: 4px;
-        }
-        
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-        
-        .form-label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            color: var(--dark);
-        }
-        
-        .form-control {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid var(--border);
-            border-radius: 0.375rem;
-            font-size: 1rem;
-            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-        }
-        
-        .form-control:focus {
-            border-color: var(--primary);
-            outline: 0;
-            box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
-        }
-        
-        .btn {
-            display: inline-flex;
+            display: flex;
             align-items: center;
             justify-content: center;
-            gap: 0.5rem;
-            font-weight: 500;
-            padding: 0.75rem 1.5rem;
-            font-size: 1rem;
-            border-radius: 0.375rem;
-            transition: all 0.15s ease-in-out;
-            cursor: pointer;
-            text-decoration: none;
+            padding: 20px;
+        }
+
+        .installer-container {
+            background: white;
+            max-width: 800px;
             width: 100%;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .installer-header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .installer-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .installer-header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .progress-bar {
+            background: rgba(255,255,255,0.2);
+            height: 6px;
+            border-radius: 3px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: white;
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+        }
+
+        .step-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 0.8rem;
+            opacity: 0.6;
+        }
+
+        .step-item.active {
+            opacity: 1;
+        }
+
+        .step-item.completed {
+            opacity: 1;
+            color: #10b981;
+        }
+
+        .step-circle {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .step-item.active .step-circle {
+            background: white;
+            color: #4f46e5;
+        }
+
+        .step-item.completed .step-circle {
+            background: #10b981;
+            color: white;
+        }
+
+        .installer-content {
+            padding: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #f9fafb;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #4f46e5;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
             border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
-        
+
         .btn-primary {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
             color: white;
-            background-color: var(--primary);
         }
-        
+
         .btn-primary:hover {
-            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(79, 70, 229, 0.3);
         }
-        
-        .btn-success {
+
+        .btn-secondary {
+            background: #6b7280;
             color: white;
-            background-color: var(--success);
         }
-        
+
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
         .btn-success:hover {
-            background-color: #059669;
+            background: #059669;
         }
-        
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-full {
+            width: 100%;
+            justify-content: center;
+        }
+
         .alert {
-            padding: 1rem;
-            margin-bottom: 1rem;
-            border-radius: 0.375rem;
-            border: 1px solid;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
-        
+
         .alert-success {
-            background-color: #d1fae5;
-            color: var(--success);
-            border-color: var(--success);
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
         }
-        
+
         .alert-error {
-            background-color: #fee2e2;
-            color: var(--danger);
-            border-color: var(--danger);
+            background: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
         }
-        
+
         .alert-warning {
-            background-color: #fef3c7;
-            color: var(--warning);
-            border-color: var(--warning);
+            background: #fffbeb;
+            color: #92400e;
+            border: 1px solid #fed7aa;
         }
-        
-        .credentials-box {
-            background-color: var(--gray-light);
-            border-radius: 0.375rem;
-            padding: 1rem;
-            margin: 1rem 0;
+
+        .alert-info {
+            background: #eff6ff;
+            color: #1e40af;
+            border: 1px solid #bfdbfe;
         }
-        
-        .credentials-box ul {
-            list-style: none;
-            padding: 0;
-            margin: 0.5rem 0;
+
+        .system-check {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
         }
-        
-        .credentials-box li {
-            padding: 0.25rem 0;
+
+        .check-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #e5e7eb;
         }
-        
-        .credentials-box code {
-            background-color: white;
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.25rem;
+
+        .check-item:last-child {
+            border-bottom: none;
+        }
+
+        .check-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-pass {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-fail {
+            background: #fef2f2;
+            color: #991b1b;
+        }
+
+        .database-info {
+            background: #f1f5f9;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .database-info h4 {
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+
+        .database-warning {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .database-warning h4 {
+            color: #92400e;
+            margin-bottom: 8px;
+        }
+
+        .btn-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            background: #f8fafc;
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .footer a {
+            color: #4f46e5;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #4f46e5;
+        }
+
+        .command-box {
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
             font-family: monospace;
-            font-size: 0.875rem;
-            color: var(--primary);
+            font-size: 14px;
+            border: 2px solid #333;
+            cursor: pointer;
+            position: relative;
         }
-        
-        .debug-info {
-            background-color: #f3f4f6;
-            border: 1px solid #d1d5db;
-            border-radius: 0.375rem;
-            padding: 1rem;
-            margin-top: 1rem;
-            font-size: 0.875rem;
+
+        .command-box:hover {
+            background: #222;
         }
-        
-        .debug-info pre {
-            margin: 0;
-            white-space: pre-wrap;
-            word-wrap: break-word;
+
+        .copy-hint {
+            font-size: 11px;
+            color: #666;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .installer-container {
+                margin: 10px;
+            }
+            
+            .installer-content {
+                padding: 20px;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .step-indicator {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="card">
-            <div class="card-header">
-                <h1>BIXA Installer</h1>
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width: <?= ($step * 20) ?>%"></div>
-                </div>
-                <p><?= htmlspecialchars($current_title) ?></p>
+    <div class="installer-container">
+        <div class="installer-header">
+            <h1><i class="fas fa-cloud"></i> BIXA</h1>
+            <p>Professional Free Hosting Panel</p>
+            
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: <?= ($step * 20) ?>%"></div>
             </div>
-
-            <div class="card-body">
-                <?php
-                debug_log("Rendering step: $step");
-                
-                try {
-                    if ($step == 0) {
-                        // Welcome Screen
-                        ?>
-                        <p style="text-align: center; margin-bottom: 2rem;">
-                            Welcome to the BIXA installation wizard. This will guide you through setting up your hosting control panel.
-                        </p>
-                        <a href="?step=1" class="btn btn-primary">Start Installation</a>
-                        <?php
-                        
-                    } elseif ($step == 1) {
-                        // Website URL Setup
-                        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['site_url'])) {
-                            $_SESSION['site_url'] = trim($_POST['site_url']);
-                            debug_log("Site URL saved: " . $_SESSION['site_url']);
-                            echo '<script>window.location.href = "?step=2";</script>';
-                            exit;
-                        }
-                        ?>
-                        <form method="post">
-                            <div class="form-group">
-                                <label class="form-label">Website URL</label>
-                                <input type="url" class="form-control" name="site_url" 
-                                       placeholder="https://yourdomain.com" 
-                                       value="<?= htmlspecialchars($_SESSION['site_url'] ?? '') ?>" required>
-                            </div>
-                            <button type="submit" class="btn btn-primary">Continue</button>
-                        </form>
-                        <?php
-                        
-                    } elseif ($step == 2) {
-                        // Database Setup
-                        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['db_host'])) {
-                            $db_data = [
-                                'host' => trim($_POST['db_host']),
-                                'name' => trim($_POST['db_name']),
-                                'user' => trim($_POST['db_user']),
-                                'pass' => $_POST['db_pass']
-                            ];
-                            
-                            debug_log("Testing database connection...");
-                            $conn = @mysqli_connect($db_data['host'], $db_data['user'], $db_data['pass'], $db_data['name']);
-                            
-                            if (!$conn) {
-                                $error = 'Database connection failed: ' . mysqli_connect_error();
-                                debug_log("DB Connection Error: $error");
-                            } else {
-                                $_SESSION['db'] = $db_data;
-                                mysqli_close($conn);
-                                debug_log("Database connection successful");
-                                echo '<script>window.location.href = "?step=3";</script>';
-                                exit;
-                            }
-                        }
-                        
-                        if ($error) {
-                            echo '<div class="alert alert-error">' . htmlspecialchars($error) . '</div>';
-                        }
-                        ?>
-                        <form method="post">
-                            <div class="form-group">
-                                <label class="form-label">Database Host</label>
-                                <input type="text" class="form-control" name="db_host" value="localhost" required>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Database Name</label>
-                                <input type="text" class="form-control" name="db_name" required>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Database Username</label>
-                                <input type="text" class="form-control" name="db_user" required>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Database Password</label>
-                                <input type="password" class="form-control" name="db_pass">
-                            </div>
-                            <button type="submit" class="btn btn-primary">Test Connection</button>
-                        </form>
-                        <?php
-                        
-                    } elseif ($step == 3) {
-                        // Admin Account Setup & Installation
-                        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_name'])) {
-                            debug_log("Starting installation process...");
-                            
-                            try {
-                                // Validate inputs
-                                $admin_name = trim($_POST['admin_name']);
-                                $admin_email = trim($_POST['admin_email']);
-                                $admin_password = $_POST['admin_password'];
-                                
-                                if (empty($admin_name) || empty($admin_email) || empty($admin_password)) {
-                                    throw new Exception('All fields are required.');
-                                }
-                                
-                                if (!filter_var($admin_email, FILTER_VALIDATE_EMAIL)) {
-                                    throw new Exception('Invalid email address.');
-                                }
-                                
-                                if (strlen($admin_password) < 8) {
-                                    throw new Exception('Password must be at least 8 characters.');
-                                }
-                                
-                                // Connect to database
-                                $conn = mysqli_connect(
-                                    $_SESSION['db']['host'],
-                                    $_SESSION['db']['user'],
-                                    $_SESSION['db']['pass'],
-                                    $_SESSION['db']['name']
-                                );
-                                
-                                if (!$conn) {
-                                    throw new Exception('Database connection failed: ' . mysqli_connect_error());
-                                }
-                                
-                                mysqli_set_charset($conn, 'utf8mb4');
-                                debug_log("Connected to database successfully");
-                                
-                                // Check if database has existing tables
-                                $existing_tables = [];
-                                $tables_result = @mysqli_query($conn, "SHOW TABLES");
-                                if ($tables_result) {
-                                    while ($row = mysqli_fetch_array($tables_result)) {
-                                        $existing_tables[] = $row[0];
-                                    }
-                                }
-                                
-                                $has_existing_data = count($existing_tables) > 0;
-                                debug_log("Database analysis: " . count($existing_tables) . " existing tables found");
-                                
-                                // Clean installation if requested AND there's existing data
-                                if (isset($_POST['clean_install']) && $_POST['clean_install'] == '1' && $has_existing_data) {
-                                    debug_log("Performing clean installation - removing " . count($existing_tables) . " existing tables");
-                                    
-                                    // Safely drop existing tables
-                                    @mysqli_query($conn, "SET FOREIGN_KEY_CHECKS = 0");
-                                    foreach ($existing_tables as $table) {
-                                        $escaped_table = mysqli_real_escape_string($conn, $table);
-                                        $drop_result = @mysqli_query($conn, "DROP TABLE IF EXISTS `$escaped_table`");
-                                        if ($drop_result) {
-                                            debug_log("Dropped table: $table");
-                                        } else {
-                                            debug_log("Warning: Could not drop table $table: " . mysqli_error($conn));
-                                        }
-                                    }
-                                    @mysqli_query($conn, "SET FOREIGN_KEY_CHECKS = 1");
-                                    debug_log("Clean installation completed");
-                                } elseif (!$has_existing_data) {
-                                    debug_log("Fresh database detected - skipping clean installation");
-                                }
-                                
-                                // Read SQL file
-                                $sql_file = __DIR__ . '/bixa.sql';
-                                if (!file_exists($sql_file)) {
-                                    throw new Exception('bixa.sql file not found in install directory.');
-                                }
-                                
-                                $sql_content = file_get_contents($sql_file);
-                                if (empty($sql_content)) {
-                                    throw new Exception('SQL file is empty or could not be read.');
-                                }
-                                
-                                debug_log("SQL file loaded, size: " . strlen($sql_content) . " bytes");
-                                
-                                // Fix collation compatibility issues
-                                debug_log("Fixing collation compatibility...");
-                                
-                                // Replace MySQL 8.0+ collations with compatible ones
-                                $collation_replacements = [
-                                    'utf8mb4_0900_ai_ci' => 'utf8mb4_unicode_ci',
-                                    'utf8_0900_ai_ci' => 'utf8_unicode_ci',
-                                    'utf8mb4_0900_as_ci' => 'utf8mb4_unicode_ci',
-                                    'utf8_0900_as_ci' => 'utf8_unicode_ci',
-                                    'utf8mb4_0900_as_cs' => 'utf8mb4_bin',
-                                    'utf8_0900_as_cs' => 'utf8_bin',
-                                ];
-                                
-                                foreach ($collation_replacements as $old => $new) {
-                                    $count = 0;
-                                    $sql_content = str_replace($old, $new, $sql_content, $count);
-                                    if ($count > 0) {
-                                        debug_log("Replaced $count instances of '$old' with '$new'");
-                                    }
-                                }
-                                
-                                // Fix charset declarations that might be incompatible
-                                $sql_content = preg_replace('/DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_[a-z_]+/i', 'DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci', $sql_content);
-                                $sql_content = preg_replace('/DEFAULT CHARSET=utf8 COLLATE=utf8_0900_[a-z_]+/i', 'DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci', $sql_content);
-                                
-                                // Remove version-specific MySQL comments that might cause issues
-                                $sql_content = preg_replace('/\/\*![0-9]+ .*? \*\/;?/s', '', $sql_content);
-                                
-                                // Remove problematic SQL directives
-                                $sql_content = preg_replace('/^(SET SQL_MODE|SET time_zone|START TRANSACTION|COMMIT).*$/m', '', $sql_content);
-                                
-                                debug_log("Collation fixes applied successfully");
-                                
-                                // Execute SQL statements more safely
-                                // Use multi_query for better compatibility
-                                mysqli_autocommit($conn, FALSE); // Start transaction
-                                
-                                // Set MySQL session to be more permissive for compatibility
-                                @mysqli_query($conn, "SET SESSION sql_mode = 'NO_AUTO_VALUE_ON_ZERO'");
-                                @mysqli_query($conn, "SET SESSION FOREIGN_KEY_CHECKS = 0");
-                                
-                                // Execute using multi_query for better results
-                                if (mysqli_multi_query($conn, $sql_content)) {
-                                    $executed = 0;
-                                    do {
-                                        if ($result = mysqli_store_result($conn)) {
-                                            mysqli_free_result($result);
-                                            $executed++;
-                                        }
-                                        $error = mysqli_error($conn);
-                                        if ($error) {
-                                            debug_log("SQL Warning during multi_query: " . $error);
-                                            // Don't fail for collation warnings if we can continue
-                                            if (stripos($error, 'collation') !== false || 
-                                                stripos($error, 'charset') !== false) {
-                                                debug_log("Ignoring collation/charset warning, continuing...");
-                                            }
-                                        }
-                                    } while (mysqli_next_result($conn));
-                                    
-                                    mysqli_commit($conn); // Commit transaction
-                                    debug_log("SQL multi_query executed successfully, processed $executed result sets");
-                                } else {
-                                    $sql_error = mysqli_error($conn);
-                                    debug_log("SQL multi_query failed: $sql_error");
-                                    
-                                    // Check if it's a collation error we can handle
-                                    if (stripos($sql_error, 'collation') !== false || stripos($sql_error, 'charset') !== false) {
-                                        debug_log("Detected collation/charset error, attempting additional fixes...");
-                                        
-                                        // Additional collation fixes
-                                        $sql_content = preg_replace('/COLLATE\s+utf8mb4_0900_[a-z_]+/i', 'COLLATE utf8mb4_unicode_ci', $sql_content);
-                                        $sql_content = preg_replace('/COLLATE\s+utf8_0900_[a-z_]+/i', 'COLLATE utf8_unicode_ci', $sql_content);
-                                        
-                                        // Try again with fixed content
-                                        if (mysqli_multi_query($conn, $sql_content)) {
-                                            do {
-                                                if ($result = mysqli_store_result($conn)) {
-                                                    mysqli_free_result($result);
-                                                }
-                                            } while (mysqli_next_result($conn));
-                                            mysqli_commit($conn);
-                                            debug_log("SQL executed successfully after collation fixes");
-                                        } else {
-                                            mysqli_rollback($conn);
-                                            debug_log("Still failing after collation fixes, trying fallback method");
-                                            
-                                            // Inline fallback execution
-                                            $sql_statements = array_filter(
-                                                array_map('trim', preg_split('/;\s*(?:\r\n|\n|\r)/', $sql_content))
-                                            );
-                                            
-                                            $executed = 0;
-                                            $failed = 0;
-                                            foreach ($sql_statements as $statement) {
-                                                if (empty($statement) || 
-                                                    preg_match('/^(--|#|\/\*)/i', $statement) ||
-                                                    preg_match('/^(SET\s+(SQL_MODE|FOREIGN_KEY_CHECKS|AUTOCOMMIT|time_zone)|START\s+TRANSACTION|COMMIT)/i', $statement)) {
-                                                    continue;
-                                                }
-                                                
-                                                if (mysqli_query($conn, $statement)) {
-                                                    $executed++;
-                                                } else {
-                                                    $failed++;
-                                                    debug_log("Fallback SQL Error: " . mysqli_error($conn));
-                                                }
-                                            }
-                                            
-                                            debug_log("Fallback after collation fixes: $executed successful, $failed failed");
-                                        }
-                                    } else {
-                                        mysqli_rollback($conn); // Rollback on failure
-                                        
-                                        // Fallback: try statement by statement
-                                        debug_log("Attempting fallback: statement by statement execution");
-                                        
-                                        $sql_statements = array_filter(
-                                            array_map('trim', preg_split('/;\s*(?:\r\n|\n|\r)/', $sql_content))
-                                        );
-                                        
-                                        $executed = 0;
-                                        $failed = 0;
-                                        foreach ($sql_statements as $statement) {
-                                            if (empty($statement) || 
-                                                preg_match('/^(--|#|\/\*)/i', $statement) ||
-                                                preg_match('/^(SET\s+(SQL_MODE|FOREIGN_KEY_CHECKS|AUTOCOMMIT|time_zone)|START\s+TRANSACTION|COMMIT)/i', $statement)) {
-                                                continue;
-                                            }
-                                            
-                                            if (mysqli_query($conn, $statement)) {
-                                                $executed++;
-                                            } else {
-                                                $failed++;
-                                                $error = mysqli_error($conn);
-                                                debug_log("SQL Error: $error - Statement: " . substr($statement, 0, 100) . "...");
-                                            }
-                                        }
-                                        
-                                        debug_log("Fallback execution: $executed successful, $failed failed");
-                                        
-                                        if ($executed == 0) {
-                                            throw new Exception("Failed to execute SQL statements. Please check the SQL file format or database compatibility.");
-                                        }
-                                    }
-                                }
-                                
-                                // Restore MySQL session settings
-                                @mysqli_query($conn, "SET SESSION FOREIGN_KEY_CHECKS = 1");
-                                mysqli_autocommit($conn, TRUE); // Restore autocommit
-                                
-                                // Verify critical tables exist
-                                $critical_tables = ['users'];
-                                $tables_created = [];
-                                $tables_missing = [];
-                                
-                                foreach ($critical_tables as $table) {
-                                    $check = @mysqli_query($conn, "SHOW TABLES LIKE '$table'");
-                                    if ($check && mysqli_num_rows($check) > 0) {
-                                        $tables_created[] = $table;
-                                    } else {
-                                        $tables_missing[] = $table;
-                                    }
-                                }
-                                
-                                debug_log("Tables created: " . implode(', ', $tables_created));
-                                if (!empty($tables_missing)) {
-                                    debug_log("Tables missing: " . implode(', ', $tables_missing));
-                                    throw new Exception("Critical tables missing: " . implode(', ', $tables_missing) . ". Please check your SQL file.");
-                                }
-                                
-                                debug_log("Critical tables verification passed");
-                                
-                                // Create admin user
-                                $hashed_password = password_hash($admin_password, PASSWORD_BCRYPT, ['cost' => 10]);
-                                $current_time = date('Y-m-d H:i:s');
-                                
-                                // First check if admin user exists
-                                $check_admin = @mysqli_query($conn, "SELECT id FROM users WHERE id = 1");
-                                if (!$check_admin || mysqli_num_rows($check_admin) == 0) {
-                                    // Insert new admin user
-                                    $admin_sql = "INSERT INTO users (id, name, email, password, role, email_verified_at, created_at, updated_at) VALUES 
-                                        (1, '" . mysqli_real_escape_string($conn, $admin_name) . "',
-                                         '" . mysqli_real_escape_string($conn, $admin_email) . "',
-                                         '" . mysqli_real_escape_string($conn, $hashed_password) . "',
-                                         'admin', '$current_time', '$current_time', '$current_time')";
-                                } else {
-                                    // Update existing admin user
-                                    $admin_sql = "UPDATE users SET 
-                                        name = '" . mysqli_real_escape_string($conn, $admin_name) . "',
-                                        email = '" . mysqli_real_escape_string($conn, $admin_email) . "',
-                                        password = '" . mysqli_real_escape_string($conn, $hashed_password) . "',
-                                        email_verified_at = '$current_time',
-                                        updated_at = '$current_time'
-                                        WHERE id = 1";
-                                }
-                                
-                                if (!mysqli_query($conn, $admin_sql)) {
-                                    throw new Exception('Failed to create admin user: ' . mysqli_error($conn));
-                                }
-                                
-                                debug_log("Admin user created/updated successfully");
-                                
-                                // Create .env file - FIXED PATH: Go up 2 levels instead of 1
-                                $env_content = "APP_NAME=BIXA\n";
-                                $env_content .= "APP_ENV=production\n";
-                                $env_content .= "APP_KEY=base64:X6uVZYIzgW/iAIqgkg3/AKxZDxvfZuhVm+SiM3UweVg=\n";
-                                $env_content .= "APP_DEBUG=false\n";
-                                $env_content .= "APP_URL=" . $_SESSION['site_url'] . "\n\n";
-                                $env_content .= "LOG_CHANNEL=stack\n";
-                                $env_content .= "LOG_DEPRECATIONS_CHANNEL=null\n";
-                                $env_content .= "LOG_LEVEL=debug\n\n";
-                                $env_content .= "DB_CONNECTION=mysql\n";
-                                $env_content .= "DB_HOST=" . $_SESSION['db']['host'] . "\n";
-                                $env_content .= "DB_PORT=3306\n";
-                                $env_content .= "DB_DATABASE=" . $_SESSION['db']['name'] . "\n";
-                                $env_content .= "DB_USERNAME=" . $_SESSION['db']['user'] . "\n";
-                                $env_content .= "DB_PASSWORD=" . $_SESSION['db']['pass'] . "\n\n";
-                                $env_content .= "BROADCAST_DRIVER=log\n";
-                                $env_content .= "CACHE_DRIVER=file\n";
-                                $env_content .= "FILESYSTEM_DISK=local\n";
-                                $env_content .= "QUEUE_CONNECTION=sync\n";
-                                $env_content .= "SESSION_DRIVER=file\n";
-                                $env_content .= "SESSION_LIFETIME=120\n";
-                                
-                                // FIXED: Use correct path - go up 2 levels to reach project root
-                                $env_path = __DIR__ . '/../../.env';
-                                debug_log("Creating .env file at: $env_path");
-                                
-                                if (file_put_contents($env_path, $env_content) === false) {
-                                    throw new Exception('Could not create .env file. Check permissions.');
-                                }
-                                
-                                // Secure the .env file by setting restrictive permissions (owner read/write only)
-                                if (chmod($env_path, 0600)) {
-                                    debug_log("Environment file permissions set to 600 (secure)");
-                                } else {
-                                    debug_log("Warning: Could not set secure permissions on .env file");
-                                }
-                                
-                                debug_log("Environment file created successfully at: $env_path");
-                                
-                                mysqli_close($conn);
-                                
-                                // Store admin info for display
-                                $_SESSION['admin_created'] = [
-                                    'name' => $admin_name,
-                                    'email' => $admin_email
-                                ];
-                                
-                                echo '<script>window.location.href = "?step=4";</script>';
-                                exit;
-                                
-                            } catch (Exception $e) {
-                                $error = $e->getMessage();
-                                debug_log("Installation error: $error");
-                                if (isset($conn)) mysqli_close($conn);
-                            }
-                        }
-                        
-                        // Before showing the form, check database status
-                        $db_status = 'unknown';
-                        $existing_table_count = 0;
-                        $mysql_version = 'Unknown';
-                        
-                        if (isset($_SESSION['db'])) {
-                            $conn = @mysqli_connect(
-                                $_SESSION['db']['host'],
-                                $_SESSION['db']['user'],
-                                $_SESSION['db']['pass'],
-                                $_SESSION['db']['name']
-                            );
-                            
-                            if ($conn) {
-                                // Get MySQL version
-                                $version_result = @mysqli_query($conn, "SELECT VERSION() as version");
-                                if ($version_result) {
-                                    $version_row = mysqli_fetch_assoc($version_result);
-                                    $mysql_version = $version_row['version'];
-                                }
-                                
-                                $tables_result = @mysqli_query($conn, "SHOW TABLES");
-                                if ($tables_result) {
-                                    $existing_table_count = mysqli_num_rows($tables_result);
-                                    $db_status = $existing_table_count > 0 ? 'has_data' : 'empty';
-                                }
-                                mysqli_close($conn);
-                            }
-                        }
-                        
-                        if ($error) {
-                            echo '<div class="alert alert-error">' . htmlspecialchars($error) . '</div>';
-                        }
-                        ?>
-                        <div class="alert alert-warning">
-                            <strong>Admin Account Setup</strong><br>
-                            Create your administrator account to manage BIXA.
-                        </div>
-                        
-                        <?php if ($db_status == 'has_data'): ?>
-                        <div class="alert alert-warning">
-                            <strong>⚠️ Existing Data Detected</strong><br>
-                            Found <?= $existing_table_count ?> existing tables in the database. 
-                            You can choose to keep or remove existing data during installation.
-                        </div>
-                        <?php elseif ($db_status == 'empty'): ?>
-                        <div class="alert alert-success">
-                            <strong>✅ Fresh Database</strong><br>
-                            Database is empty and ready for fresh installation.<br>
-                            <small>MySQL Version: <?= htmlspecialchars($mysql_version) ?></small>
-                        </div>
-                        <?php endif; ?>
-                        
-                        <form method="post" id="adminForm">
-                            <div class="form-group">
-                                <label class="form-label">Administrator Name</label>
-                                <input type="text" class="form-control" name="admin_name" required>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Administrator Email</label>
-                                <input type="email" class="form-control" name="admin_email" required>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Administrator Password</label>
-                                <input type="password" class="form-control" name="admin_password" minlength="8" required>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Confirm Password</label>
-                                <input type="password" class="form-control" name="admin_password_confirm" minlength="8" required>
-                            </div>
-                            
-                            <?php if ($db_status == 'has_data'): ?>
-                            <div class="form-group">
-                                <label style="display: flex; align-items: center; gap: 0.5rem; padding: 1rem; background-color: #fef3c7; border-radius: 0.375rem; border: 1px solid #f59e0b;">
-                                    <input type="checkbox" name="clean_install" value="1" checked>
-                                    <span>Remove existing data (Clean Installation)</span>
-                                </label>
-                                <small style="color: var(--gray); margin-top: 0.5rem; display: block;">
-                                    Recommended: This ensures a fresh installation. Uncheck only if you want to preserve existing data.
-                                </small>
-                            </div>
+            
+            <div class="step-indicator">
+                <?php for($i = 0; $i <= 5; $i++): ?>
+                    <div class="step-item <?= $i < $step ? 'completed' : ($i == $step ? 'active' : '') ?>">
+                        <div class="step-circle">
+                            <?php if($i < $step): ?>
+                                <i class="fas fa-check"></i>
                             <?php else: ?>
-                            <!-- Hidden field for fresh database -->
-                            <input type="hidden" name="clean_install" value="0">
+                                <?= $i ?>
                             <?php endif; ?>
-                            
-                            <button type="submit" class="btn btn-primary">Complete Installation</button>
-                        </form>
-                        
-                        <script>
-                        document.getElementById('adminForm').addEventListener('submit', function(e) {
-                            const pass = document.querySelector('input[name="admin_password"]').value;
-                            const confirm = document.querySelector('input[name="admin_password_confirm"]').value;
-                            if (pass !== confirm) {
-                                e.preventDefault();
-                                alert('Passwords do not match!');
-                                return false;
-                            }
-                        });
-                        </script>
-                        <?php
-                        
-                    } elseif ($step == 4) {
-                        // Installation Complete
-                        $admin_info = $_SESSION['admin_created'] ?? ['name' => 'Administrator', 'email' => 'admin@domain.com'];
-                        
-                        // Try to delete install directory
-                        $delete_success = false;
-                        try {
-                            $files = glob(__DIR__ . '/*');
-                            foreach ($files as $file) {
-                                if (is_file($file)) unlink($file);
-                            }
-                            if (rmdir(__DIR__)) {
-                                $delete_success = true;
-                            }
-                        } catch (Exception $e) {
-                            debug_log("Could not auto-delete install directory: " . $e->getMessage());
-                        }
-                        ?>
-                        <div class="alert alert-success">
-                            <strong>🎉 Installation Complete!</strong><br>
-                            BIXA has been successfully installed with your custom admin account.
                         </div>
-                        
-                        <div class="credentials-box">
-                            <h4>Your Admin Login Credentials</h4>
-                            <ul>
-                                <li>
-                                    <span>Name:</span>
-                                    <code><?= htmlspecialchars($admin_info['name']) ?></code>
-                                </li>
-                                <li>
-                                    <span>Email:</span>
-                                    <code><?= htmlspecialchars($admin_info['email']) ?></code>
-                                </li>
-                                <li>
-                                    <span>Password:</span>
-                                    <code>The password you set during installation</code>
-                                </li>
-                            </ul>
-                        </div>
-                        
-                        <?php if ($delete_success): ?>
-                        <div class="alert alert-success">
-                            <strong>🔒 Security:</strong> Installation files have been automatically removed.
-                        </div>
-                        <?php else: ?>
-                        <div class="alert alert-warning">
-                            <strong>⚠️ Security:</strong> Please manually delete the <code>install</code> directory.
-                        </div>
-                        <?php endif; ?>
-                        
-                        <div class="alert alert-warning">
-                            <strong>⚠️ Important Next Steps:</strong><br>
-                            <strong>If you see database connection errors:</strong><br>
-                            1. <strong>Clear OPcache:</strong> Restart your web server or clear OPcache to load the new .env configuration<br>
-                            2. <strong>Check file permissions:</strong> Ensure <code>storage/</code> and <code>bootstrap/cache/</code> are writable (755/775)<br>
-                            3. <strong>Verify .env location:</strong> Make sure the .env file is in your Laravel root directory<br>
-                            4. <strong>Wait a moment:</strong> Sometimes it takes a few seconds for configuration changes to take effect<br><br>
-                            <strong>If problems persist:</strong> Check your server error logs for detailed information.
-                        </div>
-                        
-                        <a href="../" class="btn btn-success">Launch BIXA</a>
-                        
-                        <div style="margin-top: 1rem; text-align: center;">
-                            <button onclick="testDatabaseConnection()" class="btn" style="background-color: var(--gray-light); color: var(--dark); width: auto; display: inline-flex;">
-                                Test Database Connection
-                            </button>
-                        </div>
-                        
-                        <script>
-                        function testDatabaseConnection() {
-                            fetch('?step=4&test_db=1')
-                                .then(response => response.text())
-                                .then(data => {
-                                    if (data.includes('Connection successful')) {
-                                        alert('✅ Database connection successful!');
-                                    } else {
-                                        alert('❌ Database connection failed. Please check your configuration.');
-                                        console.log('Response:', data);
-                                    }
-                                })
-                                .catch(error => {
-                                    alert('❌ Test failed: ' + error.message);
-                                });
-                        }
-                        </script>
-                        
-                        <?php
-                        // Handle database test request
-                        if (isset($_GET['test_db']) && $_GET['test_db'] == '1') {
-                            if (isset($_SESSION['db'])) {
-                                $test_conn = @mysqli_connect(
-                                    $_SESSION['db']['host'],
-                                    $_SESSION['db']['user'],
-                                    $_SESSION['db']['pass'],
-                                    $_SESSION['db']['name']
-                                );
-                                
-                                if ($test_conn) {
-                                    echo "Connection successful";
-                                    mysqli_close($test_conn);
-                                } else {
-                                    echo "Connection failed: " . mysqli_connect_error();
-                                }
-                            } else {
-                                echo "No database configuration found";
-                            }
-                            exit;
-                        }
-                        ?>
-                        <?php
-                    }
+                        <span><?= $steps[$i] ?? '' ?></span>
+                    </div>
+                <?php endfor; ?>
+            </div>
+        </div>
+
+        <div class="installer-content">
+            <?php if ($step === 0): ?>
+                <!-- Welcome Step -->
+                <div style="text-align: center;">
+                    <h2 style="color: #1f2937; margin-bottom: 20px;">Welcome to BIXA Installation</h2>
+                    <p style="color: #6b7280; margin-bottom: 30px;">Thank you for choosing BIXA! This installer will guide you through the setup process.</p>
                     
-                } catch (Exception $e) {
-                    debug_log("Critical error: " . $e->getMessage());
-                    echo '<div class="alert alert-error">Critical Error: ' . htmlspecialchars($e->getMessage()) . '</div>';
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        Before we begin, make sure you have your database credentials ready.
+                    </div>
+                    
+                    <a href="?step=1" class="btn btn-primary btn-full">
+                        <i class="fas fa-arrow-right"></i>
+                        Start Installation
+                    </a>
+                </div>
+
+            <?php elseif ($step === 1): ?>
+                <!-- System Check Step -->
+                <h2 style="color: #1f2937; margin-bottom: 20px;">System Requirements Check</h2>
+                
+                <div class="system-check">
+                    <?php
+                    $checks = [
+                        'PHP Version >= 8.1' => version_compare(PHP_VERSION, '8.1.0', '>='),
+                        'OpenSSL Extension' => extension_loaded('openssl'),
+                        'PDO Extension' => extension_loaded('pdo'),
+                        'Mbstring Extension' => extension_loaded('mbstring'),
+                        'Tokenizer Extension' => extension_loaded('tokenizer'),
+                        'XML Extension' => extension_loaded('xml'),
+                        'JSON Extension' => extension_loaded('json'),
+                        'cURL Extension' => extension_loaded('curl'),
+                        'Zip Extension' => extension_loaded('zip'),
+                        'GD Extension' => extension_loaded('gd'),
+                    ];
+                    
+                    $allPassed = true;
+                    foreach($checks as $check => $passed): 
+                        if(!$passed) $allPassed = false;
+                    ?>
+                        <div class="check-item">
+                            <span><?= htmlspecialchars($check) ?></span>
+                            <span class="check-status <?= $passed ? 'status-pass' : 'status-fail' ?>">
+                                <?= $passed ? 'PASS' : 'FAIL' ?>
+                            </span>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+                
+                <?php if(!$allPassed): ?>
+                    <div class="alert alert-error">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Please fix the failed requirements before continuing.
+                    </div>
+                <?php endif; ?>
+                
+                <div class="btn-actions">
+                    <a href="?step=0" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i>
+                        Back
+                    </a>
+                    <?php if($allPassed): ?>
+                        <a href="?step=2" class="btn btn-primary">
+                            <i class="fas fa-arrow-right"></i>
+                            Continue
+                        </a>
+                    <?php endif; ?>
+                </div>
+
+            <?php elseif ($step === 2): ?>
+                <!-- Website Configuration Step -->
+                <h2 style="color: #1f2937; margin-bottom: 20px;">Website Configuration</h2>
+                
+                <form method="post" action="?step=3">
+                    <div class="form-group">
+                        <label for="site_url">
+                            <i class="fas fa-globe"></i>
+                            Website URL
+                        </label>
+                        <input type="url" 
+                               id="site_url" 
+                               name="site_url" 
+                               class="form-control" 
+                               value="<?= htmlspecialchars($_SESSION['site_url'] ?? $root_url) ?>" 
+                               placeholder="https://example.com" 
+                               required>
+                        <small style="color: #6b7280; margin-top: 5px; display: block;">
+                            Enter the full URL where your BIXA installation will be accessible.
+                        </small>
+                    </div>
+                    
+                    <div class="btn-actions">
+                        <a href="?step=1" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i>
+                            Back
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-arrow-right"></i>
+                            Continue
+                        </button>
+                    </div>
+                </form>
+
+            <?php elseif ($step === 3):
+                $_SESSION['site_url'] = $_POST['site_url'] ?? $_SESSION['site_url'] ?? '';
+                
+                $error = '';
+                $success = false;
+                $existingTables = [];
+                $tableCount = 0;
+                
+                // Check if form is submitted
+                if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['db_host'])) {
+                    $_SESSION['db'] = [
+                        'host' => $_POST['db_host'],
+                        'name' => $_POST['db_name'],
+                        'user' => $_POST['db_user'],
+                        'pass' => $_POST['db_pass']
+                    ];
+                    
+                    // Test database connection
+                    $conn = @mysqli_connect(
+                        $_SESSION['db']['host'],
+                        $_SESSION['db']['user'],
+                        $_SESSION['db']['pass'],
+                        $_SESSION['db']['name']
+                    );
+                    
+                    if (!$conn) {
+                        $error = 'Database connection failed: ' . mysqli_connect_error();
+                    } else {
+                        // Check for existing tables
+                        $result = mysqli_query($conn, "SHOW TABLES");
+                        if ($result) {
+                            $tableCount = mysqli_num_rows($result);
+                            while ($row = mysqli_fetch_array($result)) {
+                                $existingTables[] = $row[0];
+                            }
+                        }
+                        
+                        // If database has tables and user wants to clear
+                        if ($tableCount > 0 && isset($_POST['clear_database']) && $_POST['clear_database'] == '1') {
+                            // Drop all tables
+                            mysqli_query($conn, "SET FOREIGN_KEY_CHECKS = 0");
+                            foreach ($existingTables as $table) {
+                                mysqli_query($conn, "DROP TABLE IF EXISTS `$table`");
+                            }
+                            mysqli_query($conn, "SET FOREIGN_KEY_CHECKS = 1");
+                            $tableCount = 0;
+                        }
+                        
+                        // If no tables or cleared, proceed with installation
+                        if ($tableCount == 0 && isset($_POST['proceed_install'])) {
+                            $success = true;
+                        }
+                        
+                        mysqli_close($conn);
+                    }
+                }
+            ?>
+                <!-- Database Configuration Step -->
+                <h2 style="color: #1f2937; margin-bottom: 20px;">Database Configuration</h2>
+                
+                <?php if ($error): ?>
+                    <div class="alert alert-error">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <?= htmlspecialchars($error) ?>
+                    </div>
+                <?php endif; ?>
+                
+                <?php if (!$success): ?>
+                    <?php if ($tableCount > 0 && !isset($_POST['clear_database'])): ?>
+                        <div class="database-warning">
+                            <h4><i class="fas fa-exclamation-triangle"></i> Existing Database Detected</h4>
+                            <p>The database "<?= htmlspecialchars($_SESSION['db']['name']) ?>" contains <?= $tableCount ?> tables:</p>
+                            <ul style="margin: 10px 0; padding-left: 20px;">
+                                <?php foreach (array_slice($existingTables, 0, 10) as $table): ?>
+                                    <li><?= htmlspecialchars($table) ?></li>
+                                <?php endforeach; ?>
+                                <?php if (count($existingTables) > 10): ?>
+                                    <li>... and <?= count($existingTables) - 10 ?> more tables</li>
+                                <?php endif; ?>
+                            </ul>
+                            <p><strong>Warning:</strong> Installing BIXA will clear all existing data in this database.</p>
+                        </div>
+                        
+                        <form method="post" action="?step=3">
+                            <input type="hidden" name="db_host" value="<?= htmlspecialchars($_SESSION['db']['host']) ?>">
+                            <input type="hidden" name="db_name" value="<?= htmlspecialchars($_SESSION['db']['name']) ?>">
+                            <input type="hidden" name="db_user" value="<?= htmlspecialchars($_SESSION['db']['user']) ?>">
+                            <input type="hidden" name="db_pass" value="<?= htmlspecialchars($_SESSION['db']['pass']) ?>">
+                            
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="confirm_clear" name="clear_database" value="1" required>
+                                <label for="confirm_clear">I understand that all existing data will be permanently deleted</label>
+                            </div>
+                            
+                            <div class="btn-actions">
+                                <a href="?step=2" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left"></i>
+                                    Back
+                                </a>
+                                <button type="submit" name="proceed_install" class="btn btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                    Clear Database & Continue
+                                </button>
+                            </div>
+                        </form>
+                    <?php else: ?>
+                        <form method="post" action="?step=3">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="db_host">
+                                        <i class="fas fa-server"></i>
+                                        Database Host
+                                    </label>
+                                    <input type="text" 
+                                           id="db_host" 
+                                           name="db_host" 
+                                           class="form-control" 
+                                           value="<?= htmlspecialchars($_SESSION['db']['host'] ?? 'localhost') ?>" 
+                                           required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="db_name">
+                                        <i class="fas fa-database"></i>
+                                        Database Name
+                                    </label>
+                                    <input type="text" 
+                                           id="db_name" 
+                                           name="db_name" 
+                                           class="form-control" 
+                                           value="<?= htmlspecialchars($_SESSION['db']['name'] ?? '') ?>" 
+                                           required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="db_user">
+                                        <i class="fas fa-user"></i>
+                                        Database Username
+                                    </label>
+                                    <input type="text" 
+                                           id="db_user" 
+                                           name="db_user" 
+                                           class="form-control" 
+                                           value="<?= htmlspecialchars($_SESSION['db']['user'] ?? '') ?>" 
+                                           required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="db_pass">
+                                        <i class="fas fa-lock"></i>
+                                        Database Password
+                                    </label>
+                                    <input type="password" 
+                                           id="db_pass" 
+                                           name="db_pass" 
+                                           class="form-control" 
+                                           value="<?= htmlspecialchars($_SESSION['db']['pass'] ?? '') ?>">
+                                </div>
+                            </div>
+                            
+                            <input type="hidden" name="proceed_install" value="1">
+                            
+                            <div class="btn-actions">
+                                <a href="?step=2" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left"></i>
+                                    Back
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-database"></i>
+                                    Test Connection
+                                </button>
+                            </div>
+                        </form>
+                    <?php endif; ?>
+                <?php else: ?>
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle"></i>
+                        Database connection successful! Ready to proceed with installation.
+                    </div>
+                    
+                    <div class="btn-actions">
+                        <a href="?step=2" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i>
+                            Back
+                        </a>
+                        <a href="?step=4" class="btn btn-primary">
+                            <i class="fas fa-arrow-right"></i>
+                            Continue
+                        </a>
+                    </div>
+                <?php endif; ?>
+
+            <?php elseif ($step === 4): ?>
+                <!-- Admin Account Creation Step -->
+                <?php
+                $error = '';
+                $success = false;
+                
+                if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_name'])) {
+                    $_SESSION['admin'] = [
+                        'name' => $_POST['admin_name'],
+                        'email' => $_POST['admin_email'],
+                        'password' => $_POST['admin_password']
+                    ];
+                    
+                    // Validate admin data
+                    if (empty($_POST['admin_name']) || empty($_POST['admin_email']) || empty($_POST['admin_password'])) {
+                        $error = 'All fields are required.';
+                    } elseif (strlen($_POST['admin_password']) < 8) {
+                        $error = 'Password must be at least 8 characters long.';
+                    } elseif ($_POST['admin_password'] !== $_POST['admin_password_confirm']) {
+                        $error = 'Passwords do not match.';
+                    } elseif (!filter_var($_POST['admin_email'], FILTER_VALIDATE_EMAIL)) {
+                        $error = 'Please enter a valid email address.';
+                    } else {
+                        $success = true;
+                    }
                 }
                 ?>
                 
-                <?php if (isset($_GET['debug']) || $error): ?>
-                <div class="debug-info">
-                    <strong>Debug Information:</strong>
-                    <pre>PHP Version: <?= phpversion() ?>
-Current Step: <?= $step ?>
-Session Status: <?= session_status() == PHP_SESSION_ACTIVE ? 'Active' : 'Inactive' ?>
-Install Directory: <?= __DIR__ ?>
-SQL File Exists: <?= file_exists(__DIR__ . '/bixa.sql') ? 'Yes' : 'No' ?>
-<?php if (isset($mysql_version)): ?>
-MySQL Version: <?= htmlspecialchars($mysql_version) ?>
-<?php endif; ?>
-<?php 
-// Check for .env file - UPDATED to check correct paths
-$env_paths = [
-    __DIR__ . '/../../.env',     // Correct path (2 levels up)
-    dirname(__DIR__) . '/.env',  // Old path (1 level up)
-    dirname(dirname(__DIR__)) . '/.env'  // Alternative path (3 levels up)
-];
-
-foreach ($env_paths as $index => $env_path) {
-    $label = $index == 0 ? 'Correct' : ($index == 1 ? 'Old/Wrong' : 'Alternative');
-    if (file_exists($env_path)) {
-        echo ".env File ($label): Found at " . $env_path . "\n";
-        $env_content = file_get_contents($env_path);
-        if (strpos($env_content, 'DB_DATABASE=') !== false) {
-            preg_match('/DB_DATABASE=(.*)/', $env_content, $matches);
-            echo ".env DB Config: " . trim($matches[1] ?? 'Not found') . "\n";
-        }
-    } else {
-        echo ".env File ($label): NOT FOUND at " . $env_path . "\n";
-    }
-}
-?>
-<?php if (isset($_SESSION) && !empty($_SESSION)): ?>
-Session Data: <?= print_r($_SESSION, true) ?>
-<?php endif; ?>
-<?php if ($error): ?>
-Last Error: <?= $error ?>
-<?php endif; ?></pre>
-                </div>
+                <h2 style="color: #1f2937; margin-bottom: 20px;">Create Admin Account</h2>
+                <p style="color: #6b7280; margin-bottom: 30px;">Create your administrator account to manage your BIXA installation.</p>
+                
+                <?php if ($error): ?>
+                    <div class="alert alert-error">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <?= htmlspecialchars($error) ?>
+                    </div>
                 <?php endif; ?>
-            </div>
+                
+                <?php if ($success): ?>
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle"></i>
+                        Admin account configured successfully!
+                    </div>
+                    
+                    <div class="btn-actions">
+                        <a href="?step=3" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i>
+                            Back
+                        </a>
+                        <a href="?step=5" class="btn btn-primary">
+                            <i class="fas fa-rocket"></i>
+                            Install BIXA
+                        </a>
+                    </div>
+                <?php else: ?>
+                    <form method="post" action="?step=4">
+                        <div class="form-group">
+                            <label for="admin_name">
+                                <i class="fas fa-user"></i>
+                                Full Name
+                            </label>
+                            <input type="text" 
+                                   id="admin_name" 
+                                   name="admin_name" 
+                                   class="form-control" 
+                                   value="<?= htmlspecialchars($_SESSION['admin']['name'] ?? '') ?>" 
+                                   placeholder="Enter your full name"
+                                   required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="admin_email">
+                                <i class="fas fa-envelope"></i>
+                                Email Address
+                            </label>
+                            <input type="email" 
+                                   id="admin_email" 
+                                   name="admin_email" 
+                                   class="form-control" 
+                                   value="<?= htmlspecialchars($_SESSION['admin']['email'] ?? '') ?>" 
+                                   placeholder="Enter your email address"
+                                   required>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="admin_password">
+                                    <i class="fas fa-lock"></i>
+                                    Password
+                                </label>
+                                <input type="password" 
+                                       id="admin_password" 
+                                       name="admin_password" 
+                                       class="form-control" 
+                                       placeholder="Enter password (min. 8 characters)"
+                                       minlength="8"
+                                       required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="admin_password_confirm">
+                                    <i class="fas fa-lock"></i>
+                                    Confirm Password
+                                </label>
+                                <input type="password" 
+                                       id="admin_password_confirm" 
+                                       name="admin_password_confirm" 
+                                       class="form-control" 
+                                       placeholder="Confirm your password"
+                                       minlength="8"
+                                       required>
+                            </div>
+                        </div>
+                        
+                        <div class="btn-actions">
+                            <a href="?step=3" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i>
+                                Back
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-user-plus"></i>
+                                Create Admin Account
+                            </button>
+                        </div>
+                    </form>
+                <?php endif; ?>
+
+            <?php elseif ($step === 5): ?>
+                <!-- Installation Step -->
+                <?php
+                $error = '';
+                $success = false;
+                
+                if (!empty($_SESSION['db']) && !empty($_SESSION['admin'])) {
+                    $conn = @mysqli_connect(
+                        $_SESSION['db']['host'],
+                        $_SESSION['db']['user'],
+                        $_SESSION['db']['pass'],
+                        $_SESSION['db']['name']
+                    );
+                    
+                    if (!$conn) {
+                        $error = 'Database connection failed: ' . mysqli_connect_error();
+                    } else {
+                        // Import SQL file
+                        $sql = @file_get_contents('bixa.sql');
+                        if ($sql && mysqli_multi_query($conn, $sql)) {
+                            // Wait for all queries to complete
+                            do {
+                                if ($result = mysqli_store_result($conn)) {
+                                    mysqli_free_result($result);
+                                }
+                            } while (mysqli_next_result($conn));
+                            
+                            // Update admin user
+                            $admin_name = mysqli_real_escape_string($conn, $_SESSION['admin']['name']);
+                            $admin_email = mysqli_real_escape_string($conn, $_SESSION['admin']['email']);
+                            $admin_password = password_hash($_SESSION['admin']['password'], PASSWORD_DEFAULT);
+                            
+                            $updateAdminSql = "UPDATE users SET 
+                                name = '$admin_name', 
+                                email = '$admin_email', 
+                                password = '$admin_password',
+                                email_verified_at = NOW()
+                                WHERE id = 1";
+                            
+                            if (mysqli_query($conn, $updateAdminSql)) {
+                                // Insert default SMTP settings to avoid 500 errors
+                                $site_name = mysqli_real_escape_string($conn, parse_url($_SESSION['site_url'], PHP_URL_HOST) ?: 'BIXA');
+                                $default_email = mysqli_real_escape_string($conn, $_SESSION['admin']['email']);
+                                
+                                $smtpSql = "INSERT INTO smtp_settings (
+                                    type, hostname, username, password, from_email, from_name, 
+                                    port, encryption, status, created_at, updated_at
+                                ) VALUES (
+                                    'SMTP', 
+                                    'smtp.gmail.com', 
+                                    '$default_email', 
+                                    '', 
+                                    '$default_email', 
+                                    '$site_name', 
+                                    587, 
+                                    'tls', 
+                                    0, 
+                                    NOW(), 
+                                    NOW()
+                                )";
+                                
+                                // Execute SMTP settings insertion (non-critical)
+                                mysqli_query($conn, $smtpSql);
+                                
+                                // Insert basic settings to prevent errors
+                                $basicSettings = [
+                                    'site_name' => $site_name,
+                                    'site_description' => 'Free hosting services powered by BIXA',
+                                    'site_logo' => '',
+                                    'site_favicon' => '',
+                                    'registration_enabled' => '1',
+                                    'email_verification_required' => '1',
+                                    'maintenance_mode' => '0',
+                                    'default_language' => 'en',
+                                    'timezone' => 'UTC'
+                                ];
+                                
+                                foreach ($basicSettings as $key => $value) {
+                                    $escaped_key = mysqli_real_escape_string($conn, $key);
+                                    $escaped_value = mysqli_real_escape_string($conn, $value);
+                                    $settingSql = "INSERT INTO settings (`key`, `value`, created_at, updated_at) 
+                                                  VALUES ('$escaped_key', '$escaped_value', NOW(), NOW()) 
+                                                  ON DUPLICATE KEY UPDATE `value` = '$escaped_value', updated_at = NOW()";
+                                    mysqli_query($conn, $settingSql);
+                                }
+                                
+                                // Insert default MOFH API settings (disabled)
+                                $mofhSql = "INSERT INTO mofh_api_settings (
+                                    api_username, api_password, plan, cpanel_url, created_at, updated_at
+                                ) VALUES (
+                                    '', '', 'free', 'https://cpanel.example.com', NOW(), NOW()
+                                )";
+                                mysqli_query($conn, $mofhSql);
+                                
+                                // Create .env file
+                                $envContent = <<<ENV
+APP_NAME=BIXA
+APP_ENV=production
+APP_KEY=base64:X6uVZYIzgW/iAIqgkg3/AKxZDxvfZuhVm+SiM3UweVg=
+APP_DEBUG=false
+APP_URL={$_SESSION['site_url']}
+
+LOG_CHANNEL=stack
+LOG_DEPRECATIONS_CHANNEL=null
+LOG_LEVEL=debug
+
+DB_CONNECTION=mysql
+DB_HOST={$_SESSION['db']['host']}
+DB_PORT=3306
+DB_DATABASE={$_SESSION['db']['name']}
+DB_USERNAME={$_SESSION['db']['user']}
+DB_PASSWORD={$_SESSION['db']['pass']}
+
+BROADCAST_DRIVER=log
+CACHE_DRIVER=file
+FILESYSTEM_DISK=local
+QUEUE_CONNECTION=sync
+SESSION_DRIVER=file
+SESSION_LIFETIME=120
+
+MEMCACHED_HOST=127.0.0.1
+
+REDIS_HOST=127.0.0.1
+REDIS_PASSWORD=null
+REDIS_PORT=6379
+
+MAIL_MAILER=smtp
+MAIL_HOST=
+MAIL_PORT=587
+MAIL_USERNAME=
+MAIL_PASSWORD=
+MAIL_ENCRYPTION=null
+MAIL_FROM_ADDRESS=
+MAIL_FROM_NAME="\${APP_NAME}"
+
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_DEFAULT_REGION=us-east-1
+AWS_BUCKET=
+AWS_USE_PATH_STYLE_ENDPOINT=false
+
+PUSHER_APP_ID=
+PUSHER_APP_KEY=
+PUSHER_APP_SECRET=
+PUSHER_HOST=
+PUSHER_PORT=443
+PUSHER_SCHEME=https
+PUSHER_APP_CLUSTER=mt1
+
+VITE_PUSHER_APP_KEY="\${PUSHER_APP_KEY}"
+VITE_PUSHER_HOST="\${PUSHER_HOST}"
+VITE_PUSHER_PORT="\${PUSHER_PORT}"
+VITE_PUSHER_SCHEME="\${PUSHER_SCHEME}"
+VITE_PUSHER_APP_CLUSTER="\${PUSHER_APP_CLUSTER}"
+
+ACME_EMAIL=hi@bixa.app
+ACME_MODE=live
+MAXMIND_LICENSE_KEY=
+ENV;
+                                
+                                $envCreated = file_put_contents(__DIR__ . '/../../.env', $envContent);
+                                if ($envCreated !== false) {
+                                    $success = true;
+                                    
+                                    // Auto-delete install directory for security
+                                    $installDir = __DIR__;
+                                    $deleted = deleteDirectory($installDir);
+                                    
+                                    // Double check if directory still exists (for shared hosting like cPanel)
+                                    if ($deleted && !file_exists($installDir)) {
+                                        $_SESSION['install_deleted'] = true;
+                                    } else {
+                                        $_SESSION['install_deleted'] = false;
+                                    }
+                                } else {
+                                    $error = '.env file could not be created. Please check file permissions.';
+                                }
+                            } else {
+                                $error = 'Failed to update admin user: ' . mysqli_error($conn);
+                            }
+                        } else {
+                            $error = 'SQL import failed. Please check your bixa.sql file.';
+                        }
+                        
+                        mysqli_close($conn);
+                    }
+                } else {
+                    $error = 'Missing configuration data. Please go back and complete all steps.';
+                }
+                ?>
+                
+                <h2 style="color: #1f2937; margin-bottom: 20px;">Installation Complete!</h2>
+                
+                <?php if ($success): ?>
+                    <?php
+                    // Store values before clearing session (fix for display issue)
+                    $installDeleted = $_SESSION['install_deleted'] ?? false;
+                    $siteUrl = $_SESSION['site_url'] ?? '';
+                    $adminEmail = $_SESSION['admin']['email'] ?? '';
+                    $adminPassword = $_SESSION['admin']['password'] ?? '';
+                    
+                    // Parse site URL to get root domain
+                    $parsedUrl = parse_url($siteUrl);
+                    $rootDomain = ($parsedUrl['scheme'] ?? 'https') . '://' . ($parsedUrl['host'] ?? 'localhost');
+                    if (isset($parsedUrl['port'])) {
+                        $rootDomain .= ':' . $parsedUrl['port'];
+                    }
+                    
+                    // Clear session data
+                    session_destroy();
+                    ?>
+                    
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle"></i>
+                        <div>
+                            <strong>Congratulations!</strong> BIXA has been successfully installed.
+                            <?php if ($installDeleted): ?>
+                                <br><small>✅ Install directory has been automatically removed for security.</small>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    
+                    <?php if (!$installDeleted): ?>
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>Security Notice:</strong> Unable to automatically delete install directory. Please manually delete the <code>install</code> folder for security.
+                        </div>
+                    <?php endif; ?>
+                    
+                    <?php if ($installDeleted): ?>
+                        <div class="alert alert-info">
+                            <i class="fas fa-shield-alt"></i>
+                            <strong>Security:</strong> Install directory has been automatically removed. Your installation is secure!
+                        </div>
+                    <?php endif; ?>
+                    
+                    <div class="database-info">
+                        <h4><i class="fas fa-user-shield"></i> Admin Login Credentials</h4>
+                        <p><strong>Email:</strong> <?= htmlspecialchars($adminEmail) ?></p>
+                        <p><strong>Password:</strong> <?= htmlspecialchars($adminPassword) ?></p>
+                        <p><strong>Login URL:</strong> <a href="<?= htmlspecialchars($siteUrl) ?>/login" target="_blank"><?= htmlspecialchars($siteUrl) ?>/login</a></p>
+                        <small style="color: #6b7280;">After login, you can access the admin panel from your dashboard.</small>
+                    </div>
+                    
+                    <div class="database-info">
+                        <h4><i class="fas fa-envelope"></i> Email Configuration</h4>
+                        <p><strong>Status:</strong> Default SMTP settings created (disabled)</p>
+                        <p><strong>From Email:</strong> <?= htmlspecialchars($adminEmail) ?></p>
+                        <p><strong>From Name:</strong> <?= htmlspecialchars(parse_url($siteUrl, PHP_URL_HOST) ?: 'BIXA') ?></p>
+                        <small style="color: #6b7280;">Please configure your SMTP settings in Admin Panel to enable email functionality.</small>
+                    </div>
+                    
+                    <div class="database-info">
+                        <h4><i class="fas fa-cogs"></i> System Configuration</h4>
+                        <p><strong>Default Settings:</strong> Created successfully</p>
+                        <p><strong>MOFH API:</strong> Default settings created (configure in Admin Panel)</p>
+                        <p><strong>Registration:</strong> Enabled</p>
+                        <p><strong>Email Verification:</strong> Required</p>
+                        <small style="color: #6b7280;">All system settings can be customized in the Admin Panel.</small>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-terminal"></i>
+                        <div>
+                            <strong>🚀 Final Step Required:</strong> Run this command from your terminal to complete the installation:
+                            <div class="command-box" onclick="copyCommand()" title="Click to copy">
+                                $ composer install --no-dev --optimize-autoloader
+                            </div>
+                            <div class="copy-hint">💡 Click the command above to copy it to clipboard</div>
+                            <small><strong>What this does:</strong> Installs all required PHP dependencies for BIXA to function properly.</small>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <div>
+                            <strong>Next Steps:</strong>
+                            <ul style="margin: 10px 0; padding-left: 20px;">
+                                <li>📖 Read the documentation for advanced configuration</li>
+                                <li>💬 Join our community for support and updates</li>
+                                <li>⭐ Star our GitHub repository if you like BIXA</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <div>
+                            <strong>Important Post-Installation Steps:</strong>
+                            <ul style="margin: 10px 0; padding-left: 20px;">
+                                <?php if (!$installDeleted): ?>
+                                    <li>🗂️ <strong>Manually delete the <code>install</code> folder for security</strong></li>
+                                <?php endif; ?>
+                                <li>💻 <strong>Run <code>composer install --no-dev --optimize-autoloader</code> from terminal</strong></li>
+                                <li>🔐 Change your admin password after first login</li>
+                                <li>📧 Configure SMTP email settings in Admin Panel → Settings → Email</li>
+                                <li>🌐 Configure MOFH API settings if you plan to offer hosting services</li>
+                                <li>⚙️ Review and customize system settings as needed</li>
+                                <li>🛡️ Enable SSL certificate for your domain</li>
+                                <li>🔒 Set up regular backups for your database</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="btn-actions">
+                        <a href="<?= htmlspecialchars($rootDomain) ?>" class="btn btn-primary btn-full" target="_blank">
+                            <i class="fas fa-home"></i>
+                            Visit Your Website
+                        </a>
+                    </div>
+                    
+                    <script>
+                        function copyCommand() {
+                            const command = 'composer install --no-dev --optimize-autoloader';
+                            if (navigator.clipboard) {
+                                navigator.clipboard.writeText(command).then(() => {
+                                    const box = document.querySelector('.command-box');
+                                    const original = box.innerHTML;
+                                    box.innerHTML = '✅ Copied to clipboard!';
+                                    box.style.background = '#064e3b';
+                                    setTimeout(() => {
+                                        box.innerHTML = original;
+                                        box.style.background = '#1a1a1a';
+                                    }, 2000);
+                                }).catch(() => {
+                                    alert('Command copied: ' + command);
+                                });
+                            } else {
+                                alert('Please copy this command: ' + command);
+                            }
+                        }
+                        
+                        // Auto redirect after 3 seconds if install was deleted successfully
+                        <?php if ($installDeleted): ?>
+                        setTimeout(function() {
+                            if (confirm('Installation completed successfully! Would you like to visit your website now?')) {
+                                window.open('<?= htmlspecialchars($rootDomain) ?>', '_blank');
+                            }
+                        }, 3000);
+                        <?php endif; ?>
+                    </script>
+                    
+                <?php else: ?>
+                    <div class="alert alert-error">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <strong>Installation Failed:</strong> <?= htmlspecialchars($error) ?>
+                    </div>
+                    
+                    <div class="btn-actions">
+                        <a href="?step=4" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i>
+                            Back
+                        </a>
+                        <a href="?step=5" class="btn btn-primary">
+                            <i class="fas fa-redo"></i>
+                            Retry Installation
+                        </a>
+                    </div>
+                <?php endif; ?>
+                
+            <?php endif; ?>
+        </div>
+
+        <div class="footer">
+            <p>
+                <strong>BIXA</strong> - Professional Free Hosting Panel<br>
+                Created by <a href="https://github.com/itsmerosu" target="_blank">ITSMEROSU</a> • 
+                <a href="https://github.com/itsmerosu/bixa" target="_blank">GitHub</a> • 
+                <a href="https://discord.gg/bixa" target="_blank">Discord</a>
+            </p>
         </div>
     </div>
+
+    <script>
+        // Add form validation and interactions
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animate progress bar on load
+            const progressFill = document.querySelector('.progress-fill');
+            if (progressFill) {
+                setTimeout(() => {
+                    progressFill.style.width = progressFill.style.width;
+                }, 100);
+            }
+            
+            // Add form validation
+            const forms = document.querySelectorAll('form');
+            forms.forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    const requiredFields = form.querySelectorAll('[required]');
+                    let isValid = true;
+                    
+                    requiredFields.forEach(field => {
+                        if (!field.value.trim()) {
+                            field.style.borderColor = '#ef4444';
+                            isValid = false;
+                        } else {
+                            field.style.borderColor = '#e5e7eb';
+                        }
+                    });
+                    
+                    if (!isValid) {
+                        e.preventDefault();
+                        alert('Please fill in all required fields.');
+                    }
+                });
+            });
+            
+            // Password confirmation check
+            const passwordField = document.getElementById('admin_password');
+            const confirmField = document.getElementById('admin_password_confirm');
+            
+            if (passwordField && confirmField) {
+                function checkPasswordMatch() {
+                    if (passwordField.value !== confirmField.value) {
+                        confirmField.style.borderColor = '#ef4444';
+                        confirmField.setCustomValidity('Passwords do not match');
+                    } else {
+                        confirmField.style.borderColor = '#10b981';
+                        confirmField.setCustomValidity('');
+                    }
+                }
+                
+                passwordField.addEventListener('input', checkPasswordMatch);
+                confirmField.addEventListener('input', checkPasswordMatch);
+            }
+        });
+    </script>
 </body>
 </html>
