@@ -25,50 +25,61 @@ function deleteDirectory($dir) {
     return rmdir($dir);
 }
 
+// Function to scan for update SQL files
+function getUpdateFiles($installDir) {
+    $updateFiles = [];
+    
+    if (!is_dir($installDir)) {
+        return $updateFiles;
+    }
+    
+    $files = scandir($installDir);
+    foreach ($files as $file) {
+        if (preg_match('/^(\d+\.\d+\.\d+)\.txt$/', $file, $matches)) {
+            $version = $matches[1];
+            $filePath = $installDir . DIRECTORY_SEPARATOR . $file;
+            
+            if (is_file($filePath) && is_readable($filePath)) {
+                $updateFiles[$version] = [
+                    'file' => $file,
+                    'path' => $filePath,
+                    'version' => $version
+                ];
+            }
+        }
+    }
+    
+    uksort($updateFiles, 'version_compare');
+    return $updateFiles;
+}
+
 $step = isset($_GET['step']) ? intval($_GET['step']) : 0;
 $protocol = isset($_SERVER['HTTPS']) ? 'https://' : 'http://';
 $host = $_SERVER['HTTP_HOST'];
 
 // Smart root URL detection
 $root_url = $protocol . $host;
+$script_path = $_SERVER['SCRIPT_NAME'];
 
-// Get current script path
-$script_path = $_SERVER['SCRIPT_NAME']; // e.g., /public/install/index.php
-$request_uri = $_SERVER['REQUEST_URI']; // e.g., /public/install/?step=2
-
-// Try to detect the document root relative to web root
 if (strpos($script_path, '/public/install/') !== false) {
-    // Laravel public folder structure: /public/install/index.php
-    // Root should be: domain.com (no path)
     $root_url = $protocol . $host;
 } elseif (strpos($script_path, '/install/') !== false) {
-    // Direct install folder: /install/index.php  
-    // Root should be: domain.com (no path)
     $root_url = $protocol . $host;
 } else {
-    // Other configurations - try to detect base path
     $base_dir = dirname(dirname($script_path));
     if ($base_dir && $base_dir !== '/' && $base_dir !== '.') {
         $root_url = $protocol . $host . $base_dir;
     }
 }
 
-// Handle non-standard ports
 $port = $_SERVER['SERVER_PORT'] ?? 80;
 if (($protocol === 'https://' && $port != 443) || ($protocol === 'http://' && $port != 80)) {
     $parsed = parse_url($root_url);
     $root_url = $parsed['scheme'] . '://' . $parsed['host'] . ':' . $port . ($parsed['path'] ?? '');
 }
 
-// Clean up URL - ensure no trailing slash for root
 $root_url = rtrim($root_url, '/');
-if (empty(parse_url($root_url, PHP_URL_PATH))) {
-    // Root domain, keep clean
-} else {
-    // Has path, keep as is
-}
 
-// Define steps
 $steps = [
     0 => 'Welcome',
     1 => 'System Check',
@@ -103,6 +114,7 @@ $title = isset($steps[$step]) ? 'Step ' . $step . ': ' . $steps[$step] : 'BIXA I
             align-items: center;
             justify-content: center;
             padding: 20px;
+            margin: 0;
         }
 
         .installer-container {
@@ -119,7 +131,6 @@ $title = isset($steps[$step]) ? 'Step ' . $step . ': ' . $steps[$step] : 'BIXA I
             color: white;
             padding: 30px;
             text-align: center;
-            position: relative;
         }
 
         .installer-header h1 {
@@ -152,6 +163,8 @@ $title = isset($steps[$step]) ? 'Step ' . $step . ': ' . $steps[$step] : 'BIXA I
             display: flex;
             justify-content: space-between;
             margin: 20px 0;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .step-item {
@@ -160,6 +173,8 @@ $title = isset($steps[$step]) ? 'Step ' . $step . ': ' . $steps[$step] : 'BIXA I
             align-items: center;
             font-size: 0.8rem;
             opacity: 0.6;
+            flex: 1;
+            min-width: 80px;
         }
 
         .step-item.active {
@@ -292,7 +307,7 @@ $title = isset($steps[$step]) ? 'Step ' . $step . ': ' . $steps[$step] : 'BIXA I
             border-radius: 8px;
             margin-bottom: 20px;
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: 12px;
         }
 
@@ -428,7 +443,6 @@ $title = isset($steps[$step]) ? 'Step ' . $step . ': ' . $steps[$step] : 'BIXA I
             font-size: 14px;
             border: 2px solid #333;
             cursor: pointer;
-            position: relative;
         }
 
         .command-box:hover {
@@ -458,6 +472,11 @@ $title = isset($steps[$step]) ? 'Step ' . $step . ': ' . $steps[$step] : 'BIXA I
             .step-indicator {
                 flex-wrap: wrap;
                 gap: 10px;
+            }
+            
+            .step-item {
+                min-width: 60px;
+                font-size: 0.7rem;
             }
         }
     </style>
@@ -497,7 +516,7 @@ $title = isset($steps[$step]) ? 'Step ' . $step . ': ' . $steps[$step] : 'BIXA I
                     
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle"></i>
-                        Before we begin, make sure you have your database credentials ready.
+                        <div>Before we begin, make sure you have your database credentials ready.</div>
                     </div>
                     
                     <a href="?step=1" class="btn btn-primary btn-full">
@@ -541,7 +560,7 @@ $title = isset($steps[$step]) ? 'Step ' . $step . ': ' . $steps[$step] : 'BIXA I
                 <?php if(!$allPassed): ?>
                     <div class="alert alert-error">
                         <i class="fas fa-exclamation-triangle"></i>
-                        Please fix the failed requirements before continuing.
+                        <div>Please fix the failed requirements before continuing.</div>
                     </div>
                 <?php endif; ?>
                 
@@ -562,6 +581,14 @@ $title = isset($steps[$step]) ? 'Step ' . $step . ': ' . $steps[$step] : 'BIXA I
                 <!-- Website Configuration Step -->
                 <h2 style="color: #1f2937; margin-bottom: 20px;">Website Configuration</h2>
                 
+                <div class="alert alert-info">
+                    <i class="fas fa-globe"></i>
+                    <div>
+                        <strong>Auto-Detection:</strong> We've automatically detected your website URL as <code><?= htmlspecialchars($root_url) ?></code>
+                        <br><small>Please verify this is correct. This will be the main URL where users access your BIXA panel.</small>
+                    </div>
+                </div>
+                
                 <form method="post" action="?step=3">
                     <div class="form-group">
                         <label for="site_url">
@@ -576,7 +603,8 @@ $title = isset($steps[$step]) ? 'Step ' . $step . ': ' . $steps[$step] : 'BIXA I
                                placeholder="https://example.com" 
                                required>
                         <small style="color: #6b7280; margin-top: 5px; display: block;">
-                            Enter the full URL where your BIXA installation will be accessible.
+                            <i class="fas fa-info-circle"></i>
+                            Auto-detected: <strong><?= htmlspecialchars($root_url) ?></strong> - You can change this if needed.
                         </small>
                     </div>
                     
@@ -600,7 +628,6 @@ $title = isset($steps[$step]) ? 'Step ' . $step . ': ' . $steps[$step] : 'BIXA I
                 $existingTables = [];
                 $tableCount = 0;
                 
-                // Check if form is submitted
                 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['db_host'])) {
                     $_SESSION['db'] = [
                         'host' => $_POST['db_host'],
@@ -609,7 +636,6 @@ $title = isset($steps[$step]) ? 'Step ' . $step . ': ' . $steps[$step] : 'BIXA I
                         'pass' => $_POST['db_pass']
                     ];
                     
-                    // Test database connection
                     $conn = @mysqli_connect(
                         $_SESSION['db']['host'],
                         $_SESSION['db']['user'],
@@ -620,7 +646,6 @@ $title = isset($steps[$step]) ? 'Step ' . $step . ': ' . $steps[$step] : 'BIXA I
                     if (!$conn) {
                         $error = 'Database connection failed: ' . mysqli_connect_error();
                     } else {
-                        // Check for existing tables
                         $result = mysqli_query($conn, "SHOW TABLES");
                         if ($result) {
                             $tableCount = mysqli_num_rows($result);
@@ -629,9 +654,7 @@ $title = isset($steps[$step]) ? 'Step ' . $step . ': ' . $steps[$step] : 'BIXA I
                             }
                         }
                         
-                        // If database has tables and user wants to clear
                         if ($tableCount > 0 && isset($_POST['clear_database']) && $_POST['clear_database'] == '1') {
-                            // Drop all tables
                             mysqli_query($conn, "SET FOREIGN_KEY_CHECKS = 0");
                             foreach ($existingTables as $table) {
                                 mysqli_query($conn, "DROP TABLE IF EXISTS `$table`");
@@ -640,7 +663,6 @@ $title = isset($steps[$step]) ? 'Step ' . $step . ': ' . $steps[$step] : 'BIXA I
                             $tableCount = 0;
                         }
                         
-                        // If no tables or cleared, proceed with installation
                         if ($tableCount == 0 && isset($_POST['proceed_install'])) {
                             $success = true;
                         }
@@ -655,7 +677,7 @@ $title = isset($steps[$step]) ? 'Step ' . $step . ': ' . $steps[$step] : 'BIXA I
                 <?php if ($error): ?>
                     <div class="alert alert-error">
                         <i class="fas fa-exclamation-circle"></i>
-                        <?= htmlspecialchars($error) ?>
+                        <div><?= htmlspecialchars($error) ?></div>
                     </div>
                 <?php endif; ?>
                 
@@ -771,7 +793,7 @@ $title = isset($steps[$step]) ? 'Step ' . $step . ': ' . $steps[$step] : 'BIXA I
                 <?php else: ?>
                     <div class="alert alert-success">
                         <i class="fas fa-check-circle"></i>
-                        Database connection successful! Ready to proceed with installation.
+                        <div>Database connection successful! Ready to proceed with installation.</div>
                     </div>
                     
                     <div class="btn-actions">
@@ -799,7 +821,6 @@ $title = isset($steps[$step]) ? 'Step ' . $step . ': ' . $steps[$step] : 'BIXA I
                         'password' => $_POST['admin_password']
                     ];
                     
-                    // Validate admin data
                     if (empty($_POST['admin_name']) || empty($_POST['admin_email']) || empty($_POST['admin_password'])) {
                         $error = 'All fields are required.';
                     } elseif (strlen($_POST['admin_password']) < 8) {
@@ -820,14 +841,38 @@ $title = isset($steps[$step]) ? 'Step ' . $step . ': ' . $steps[$step] : 'BIXA I
                 <?php if ($error): ?>
                     <div class="alert alert-error">
                         <i class="fas fa-exclamation-circle"></i>
-                        <?= htmlspecialchars($error) ?>
+                        <div><?= htmlspecialchars($error) ?></div>
                     </div>
                 <?php endif; ?>
                 
                 <?php if ($success): ?>
                     <div class="alert alert-success">
                         <i class="fas fa-check-circle"></i>
-                        Admin account configured successfully!
+                        <div>Admin account configured successfully!</div>
+                    </div>
+                    
+                    <?php $updateFiles = getUpdateFiles(__DIR__); ?>
+                    
+                    <div class="database-info">
+                        <h4><i class="fas fa-info-circle"></i> Installation Preview</h4>
+                        <p><strong>Main Database:</strong> bixa.sql will be imported</p>
+                        
+                        <?php if (!empty($updateFiles)): ?>
+                            <p><strong>Update Files Detected:</strong></p>
+                            <ul style="margin: 10px 0; padding-left: 20px;">
+                                <?php foreach ($updateFiles as $version => $fileInfo): ?>
+                                    <li><strong>v<?= htmlspecialchars($version) ?></strong> - <?= htmlspecialchars($fileInfo['file']) ?></li>
+                                <?php endforeach; ?>
+                            </ul>
+                            <small style="color: #10b981;">
+                                ✅ Found <?= count($updateFiles) ?> update file(s) that will be applied after main installation.
+                            </small>
+                        <?php else: ?>
+                            <p><strong>Update Files:</strong> <span style="color: #6b7280;">None detected</span></p>
+                            <small style="color: #6b7280;">
+                                Only the main database will be installed.
+                            </small>
+                        <?php endif; ?>
                     </div>
                     
                     <div class="btn-actions">
@@ -918,6 +963,7 @@ $title = isset($steps[$step]) ? 'Step ' . $step . ': ' . $steps[$step] : 'BIXA I
                 <?php
                 $error = '';
                 $success = false;
+                $updateResults = [];
                 
                 if (!empty($_SESSION['db']) && !empty($_SESSION['admin'])) {
                     $conn = @mysqli_connect(
@@ -930,15 +976,36 @@ $title = isset($steps[$step]) ? 'Step ' . $step . ': ' . $steps[$step] : 'BIXA I
                     if (!$conn) {
                         $error = 'Database connection failed: ' . mysqli_connect_error();
                     } else {
-                        // Import SQL file
+                        // Import main SQL file
                         $sql = @file_get_contents('bixa.sql');
                         if ($sql && mysqli_multi_query($conn, $sql)) {
-                            // Wait for all queries to complete
                             do {
                                 if ($result = mysqli_store_result($conn)) {
                                     mysqli_free_result($result);
                                 }
                             } while (mysqli_next_result($conn));
+                            
+                            // Check for and import update files
+                            $updateFiles = getUpdateFiles(__DIR__);
+                            if (!empty($updateFiles)) {
+                                foreach ($updateFiles as $version => $fileInfo) {
+                                    $updateSql = @file_get_contents($fileInfo['path']);
+                                    if ($updateSql && trim($updateSql)) {
+                                        if (mysqli_multi_query($conn, $updateSql)) {
+                                            do {
+                                                if ($result = mysqli_store_result($conn)) {
+                                                    mysqli_free_result($result);
+                                                }
+                                            } while (mysqli_next_result($conn));
+                                            $updateResults[$version] = 'Success';
+                                        } else {
+                                            $updateResults[$version] = 'Failed: ' . mysqli_error($conn);
+                                        }
+                                    } else {
+                                        $updateResults[$version] = 'Empty file';
+                                    }
+                                }
+                            }
                             
                             // Update admin user
                             $admin_name = mysqli_real_escape_string($conn, $_SESSION['admin']['name']);
@@ -953,7 +1020,7 @@ $title = isset($steps[$step]) ? 'Step ' . $step . ': ' . $steps[$step] : 'BIXA I
                                 WHERE id = 1";
                             
                             if (mysqli_query($conn, $updateAdminSql)) {
-                                // Insert default SMTP settings to avoid 500 errors
+                                // Insert default settings
                                 $site_name = mysqli_real_escape_string($conn, parse_url($_SESSION['site_url'], PHP_URL_HOST) ?: 'BIXA');
                                 $default_email = mysqli_real_escape_string($conn, $_SESSION['admin']['email']);
                                 
@@ -974,10 +1041,8 @@ $title = isset($steps[$step]) ? 'Step ' . $step . ': ' . $steps[$step] : 'BIXA I
                                     NOW()
                                 )";
                                 
-                                // Execute SMTP settings insertion (non-critical)
                                 mysqli_query($conn, $smtpSql);
                                 
-                                // Insert basic settings to prevent errors
                                 $basicSettings = [
                                     'site_name' => $site_name,
                                     'site_description' => 'Free hosting services powered by BIXA',
@@ -999,7 +1064,6 @@ $title = isset($steps[$step]) ? 'Step ' . $step . ': ' . $steps[$step] : 'BIXA I
                                     mysqli_query($conn, $settingSql);
                                 }
                                 
-                                // Insert default MOFH API settings (disabled)
                                 $mofhSql = "INSERT INTO mofh_api_settings (
                                     api_username, api_password, plan, cpanel_url, created_at, updated_at
                                 ) VALUES (
@@ -1077,11 +1141,9 @@ ENV;
                                 if ($envCreated !== false) {
                                     $success = true;
                                     
-                                    // Auto-delete install directory for security
                                     $installDir = __DIR__;
                                     $deleted = deleteDirectory($installDir);
                                     
-                                    // Double check if directory still exists (for shared hosting like cPanel)
                                     if ($deleted && !file_exists($installDir)) {
                                         $_SESSION['install_deleted'] = true;
                                     } else {
@@ -1108,20 +1170,17 @@ ENV;
                 
                 <?php if ($success): ?>
                     <?php
-                    // Store values before clearing session (fix for display issue)
                     $installDeleted = $_SESSION['install_deleted'] ?? false;
                     $siteUrl = $_SESSION['site_url'] ?? '';
                     $adminEmail = $_SESSION['admin']['email'] ?? '';
                     $adminPassword = $_SESSION['admin']['password'] ?? '';
                     
-                    // Parse site URL to get root domain
                     $parsedUrl = parse_url($siteUrl);
                     $rootDomain = ($parsedUrl['scheme'] ?? 'https') . '://' . ($parsedUrl['host'] ?? 'localhost');
                     if (isset($parsedUrl['port'])) {
                         $rootDomain .= ':' . $parsedUrl['port'];
                     }
                     
-                    // Clear session data
                     session_destroy();
                     ?>
                     
@@ -1129,23 +1188,22 @@ ENV;
                         <i class="fas fa-check-circle"></i>
                         <div>
                             <strong>Congratulations!</strong> BIXA has been successfully installed.
-                            <?php if ($installDeleted): ?>
-                                <br><small>✅ Install directory has been automatically removed for security.</small>
-                            <?php endif; ?>
                         </div>
                     </div>
                     
                     <?php if (!$installDeleted): ?>
                         <div class="alert alert-warning">
                             <i class="fas fa-exclamation-triangle"></i>
-                            <strong>Security Notice:</strong> Unable to automatically delete install directory. Please manually delete the <code>install</code> folder for security.
+                            <div><strong>Security Notice:</strong> Please manually delete the <code>install</code> folder for security.</div>
                         </div>
                     <?php endif; ?>
                     
-                    <?php if ($installDeleted): ?>
-                        <div class="alert alert-info">
-                            <i class="fas fa-shield-alt"></i>
-                            <strong>Security:</strong> Install directory has been automatically removed. Your installation is secure!
+                    <?php if (!empty($updateResults)): ?>
+                        <div class="database-info">
+                            <h4><i class="fas fa-sync-alt"></i> Update Files Processed</h4>
+                            <?php foreach ($updateResults as $version => $result): ?>
+                                <p><strong>v<?= htmlspecialchars($version) ?>:</strong> <?= htmlspecialchars($result) ?></p>
+                            <?php endforeach; ?>
                         </div>
                     <?php endif; ?>
                     
@@ -1154,66 +1212,16 @@ ENV;
                         <p><strong>Email:</strong> <?= htmlspecialchars($adminEmail) ?></p>
                         <p><strong>Password:</strong> <?= htmlspecialchars($adminPassword) ?></p>
                         <p><strong>Login URL:</strong> <a href="<?= htmlspecialchars($siteUrl) ?>/login" target="_blank"><?= htmlspecialchars($siteUrl) ?>/login</a></p>
-                        <small style="color: #6b7280;">After login, you can access the admin panel from your dashboard.</small>
-                    </div>
-                    
-                    <div class="database-info">
-                        <h4><i class="fas fa-envelope"></i> Email Configuration</h4>
-                        <p><strong>Status:</strong> Default SMTP settings created (disabled)</p>
-                        <p><strong>From Email:</strong> <?= htmlspecialchars($adminEmail) ?></p>
-                        <p><strong>From Name:</strong> <?= htmlspecialchars(parse_url($siteUrl, PHP_URL_HOST) ?: 'BIXA') ?></p>
-                        <small style="color: #6b7280;">Please configure your SMTP settings in Admin Panel to enable email functionality.</small>
-                    </div>
-                    
-                    <div class="database-info">
-                        <h4><i class="fas fa-cogs"></i> System Configuration</h4>
-                        <p><strong>Default Settings:</strong> Created successfully</p>
-                        <p><strong>MOFH API:</strong> Default settings created (configure in Admin Panel)</p>
-                        <p><strong>Registration:</strong> Enabled</p>
-                        <p><strong>Email Verification:</strong> Required</p>
-                        <small style="color: #6b7280;">All system settings can be customized in the Admin Panel.</small>
                     </div>
                     
                     <div class="alert alert-info">
                         <i class="fas fa-terminal"></i>
                         <div>
-                            <strong>🚀 Final Step Required:</strong> Run this command from your terminal to complete the installation:
-                            <div class="command-box" onclick="copyCommand()" title="Click to copy">
+                            <strong>🚀 Final Step Required:</strong> Run this command from your terminal:
+                            <div class="command-box" onclick="copyCommand()">
                                 $ composer install --no-dev --optimize-autoloader
                             </div>
-                            <div class="copy-hint">💡 Click the command above to copy it to clipboard</div>
-                            <small><strong>What this does:</strong> Installs all required PHP dependencies for BIXA to function properly.</small>
-                        </div>
-                    </div>
-                    
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i>
-                        <div>
-                            <strong>Next Steps:</strong>
-                            <ul style="margin: 10px 0; padding-left: 20px;">
-                                <li>📖 Read the documentation for advanced configuration</li>
-                                <li>💬 Join our community for support and updates</li>
-                                <li>⭐ Star our GitHub repository if you like BIXA</li>
-                            </ul>
-                        </div>
-                    </div>
-                    
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <div>
-                            <strong>Important Post-Installation Steps:</strong>
-                            <ul style="margin: 10px 0; padding-left: 20px;">
-                                <?php if (!$installDeleted): ?>
-                                    <li>🗂️ <strong>Manually delete the <code>install</code> folder for security</strong></li>
-                                <?php endif; ?>
-                                <li>💻 <strong>Run <code>composer install --no-dev --optimize-autoloader</code> from terminal</strong></li>
-                                <li>🔐 Change your admin password after first login</li>
-                                <li>📧 Configure SMTP email settings in Admin Panel → Settings → Email</li>
-                                <li>🌐 Configure MOFH API settings if you plan to offer hosting services</li>
-                                <li>⚙️ Review and customize system settings as needed</li>
-                                <li>🛡️ Enable SSL certificate for your domain</li>
-                                <li>🔒 Set up regular backups for your database</li>
-                            </ul>
+                            <div class="copy-hint">💡 Click to copy</div>
                         </div>
                     </div>
                     
@@ -1231,34 +1239,21 @@ ENV;
                                 navigator.clipboard.writeText(command).then(() => {
                                     const box = document.querySelector('.command-box');
                                     const original = box.innerHTML;
-                                    box.innerHTML = '✅ Copied to clipboard!';
-                                    box.style.background = '#064e3b';
+                                    box.innerHTML = '✅ Copied!';
                                     setTimeout(() => {
                                         box.innerHTML = original;
-                                        box.style.background = '#1a1a1a';
                                     }, 2000);
-                                }).catch(() => {
-                                    alert('Command copied: ' + command);
                                 });
                             } else {
-                                alert('Please copy this command: ' + command);
+                                alert('Command: ' + command);
                             }
                         }
-                        
-                        // Auto redirect after 3 seconds if install was deleted successfully
-                        <?php if ($installDeleted): ?>
-                        setTimeout(function() {
-                            if (confirm('Installation completed successfully! Would you like to visit your website now?')) {
-                                window.open('<?= htmlspecialchars($rootDomain) ?>', '_blank');
-                            }
-                        }, 3000);
-                        <?php endif; ?>
                     </script>
                     
                 <?php else: ?>
                     <div class="alert alert-error">
                         <i class="fas fa-exclamation-circle"></i>
-                        <strong>Installation Failed:</strong> <?= htmlspecialchars($error) ?>
+                        <div><strong>Installation Failed:</strong> <?= htmlspecialchars($error) ?></div>
                     </div>
                     
                     <div class="btn-actions">
@@ -1268,7 +1263,7 @@ ENV;
                         </a>
                         <a href="?step=5" class="btn btn-primary">
                             <i class="fas fa-redo"></i>
-                            Retry Installation
+                            Retry
                         </a>
                     </div>
                 <?php endif; ?>
@@ -1279,66 +1274,11 @@ ENV;
         <div class="footer">
             <p>
                 <strong>BIXA</strong> - Professional Free Hosting Panel<br>
-                Created by <a href="https://github.com/itsmerosu" target="_blank">ITSMEROSU</a> • 
-                <a href="https://github.com/itsmerosu/bixa" target="_blank">GitHub</a> • 
-                <a href="https://discord.gg/bixa" target="_blank">Discord</a>
+                Created by <a href="https://github.com/bixacloud" target="_blank">Bixa</a> • 
+                <a href="https://github.com/bixacloud/bixa" target="_blank">GitHub</a> • 
+                <a href="https://t.me/bixacloud" target="_blank">Telegram</a>
             </p>
         </div>
     </div>
-
-    <script>
-        // Add form validation and interactions
-        document.addEventListener('DOMContentLoaded', function() {
-            // Animate progress bar on load
-            const progressFill = document.querySelector('.progress-fill');
-            if (progressFill) {
-                setTimeout(() => {
-                    progressFill.style.width = progressFill.style.width;
-                }, 100);
-            }
-            
-            // Add form validation
-            const forms = document.querySelectorAll('form');
-            forms.forEach(form => {
-                form.addEventListener('submit', function(e) {
-                    const requiredFields = form.querySelectorAll('[required]');
-                    let isValid = true;
-                    
-                    requiredFields.forEach(field => {
-                        if (!field.value.trim()) {
-                            field.style.borderColor = '#ef4444';
-                            isValid = false;
-                        } else {
-                            field.style.borderColor = '#e5e7eb';
-                        }
-                    });
-                    
-                    if (!isValid) {
-                        e.preventDefault();
-                        alert('Please fill in all required fields.');
-                    }
-                });
-            });
-            
-            // Password confirmation check
-            const passwordField = document.getElementById('admin_password');
-            const confirmField = document.getElementById('admin_password_confirm');
-            
-            if (passwordField && confirmField) {
-                function checkPasswordMatch() {
-                    if (passwordField.value !== confirmField.value) {
-                        confirmField.style.borderColor = '#ef4444';
-                        confirmField.setCustomValidity('Passwords do not match');
-                    } else {
-                        confirmField.style.borderColor = '#10b981';
-                        confirmField.setCustomValidity('');
-                    }
-                }
-                
-                passwordField.addEventListener('input', checkPasswordMatch);
-                confirmField.addEventListener('input', checkPasswordMatch);
-            }
-        });
-    </script>
 </body>
 </html>
