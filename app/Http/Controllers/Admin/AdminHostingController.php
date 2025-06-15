@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\Hosting\AccountDeactivatedMail;
 use App\Models\MofhApiSetting;
+use App\Models\WebFtpSetting;
+use Coderflex\LaravelTicket\Models\Ticket;
 
 class AdminHostingController extends Controller
 {
@@ -82,8 +84,8 @@ class AdminHostingController extends Controller
                 $account->refresh();
             }
 
-            // Get domains if active
-            $domains = $account->status === 'active' ?
+            // Get domains if active AND verified (admin should see domains after user verification)
+            $domains = ($account->status === 'active' && $account->cpanel_verified) ?
                 $this->mofhService->getDomains($account->username) : [];
 
             // Get Server IP
@@ -100,10 +102,28 @@ class AdminHostingController extends Controller
                 $serverIp = false;
             }
 
+            // Get related tickets for this hosting account user
+            $relatedTickets = Ticket::with(['category', 'messages'])
+                ->where('user_id', $account->user_id)
+                ->where(function($query) use ($account) {
+                    // Search for tickets containing hosting-related keywords or account info
+                    $query->where('title', 'like', '%hosting%')
+                          ->orWhere('title', 'like', '%cpanel%')
+                          ->orWhere('title', 'like', '%' . $account->username . '%')
+                          ->orWhere('title', 'like', '%' . $account->domain . '%')
+                          ->orWhereHas('messages', function($messageQuery) use ($account) {
+                              $messageQuery->where('message', 'like', '%' . $account->username . '%')
+                                          ->orWhere('message', 'like', '%' . $account->domain . '%');
+                          });
+                })
+                ->latest()
+                ->limit(10)
+                ->get();
+
             // Get callback logs
             $callbackLogs = $this->mofhService->getCallbackLogs($account->username);
 
-            return view('admin.hosting.view', compact('account', 'domains', 'serverIp', 'callbackLogs'));
+            return view('admin.hosting.view', compact('account', 'domains', 'serverIp', 'callbackLogs', 'relatedTickets'));
 
         } catch (\Exception $e) {
             Log::error('Error in admin view method', [
@@ -336,99 +356,78 @@ class AdminHostingController extends Controller
     }
 	
 	/**
- * Show cPanel login page
- */
-public function cpanel($identifier)
-{
-    $account = HostingAccount::where('username', $identifier)
-        ->orWhere('id', $identifier)
-        ->firstOrFail();
-
-    if ($account->status !== 'active') {
-        return back()->with('error', 'Account must be active to access cPanel.');
-    }
-
-    $settings = MofhApiSetting::first();
-    if (!$settings) {
-        return back()->with('error', 'MOFH API settings not configured.');
-    }
-
-    $cpanel_url = str_replace(['https://', 'http://'], '', $settings->cpanel_url);
-
-    return view('hosting.cpanel', [
-        'username' => $account->username,
-        'password' => $account->password,
-        'cpanel_url' => $cpanel_url
-    ]);
-}
-
-/**
- * Show file manager login page
- */
-public function fileManager($identifier)
-{
-    $account = HostingAccount::where('username', $identifier)
-        ->orWhere('id', $identifier)
-        ->firstOrFail();
-
-    if ($account->status !== 'active') {
-        return back()->with('error', 'Account must be active to access file manager.');
-    }
-
-    return view('hosting.filemanager', [
-        'username' => $account->username,
-        'password' => $account->password,
-        'dir' => '/htdocs/'
-    ]);
-}
-
-/**
- * Verify cPanel access
- */
-public function verifyCpanel($identifier)
-{
-    Log::info('Admin verifying cPanel access', [
-        'identifier' => $identifier,
-        'admin_id' => auth()->id()
-    ]);
-
-    try {
+     * Show cPanel login page (Only if user has verified)
+     */
+    public function cpanel($identifier)
+    {
         $account = HostingAccount::where('username', $identifier)
             ->orWhere('id', $identifier)
             ->firstOrFail();
 
         if ($account->status !== 'active') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Account must be active to verify cPanel.'
-            ]);
+            return back()->with('error', 'Account must be active to access cPanel.');
         }
 
-        $account->cpanel_verified = true;
-        $account->cpanel_verified_at = now();
-        $account->save();
+        // Check if user has verified cPanel access
+        if (!$account->cpanel_verified) {
+            return back()->with('error', 'User must verify their cPanel access first. Admins cannot access unverified accounts for security reasons.');
+        }
 
-        Log::info('Admin cPanel verification successful', [
-            'identifier' => $identifier,
+        $settings = MofhApiSetting::first();
+        if (!$settings) {
+            return back()->with('error', 'MOFH API settings not configured.');
+        }
+
+        $cpanel_url = str_replace(['https://', 'http://'], '', $settings->cpanel_url);
+
+        Log::info('Admin accessing cPanel for verified account', [
+            'account_id' => $account->id,
+            'username' => $account->username,
             'admin_id' => auth()->id()
         ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'cPanel access verified successfully'
+        return view('hosting.cpanel', [
+            'username' => $account->username,
+            'password' => $account->password,
+            'cpanel_url' => $cpanel_url
         ]);
-
-    } catch (\Exception $e) {
-        Log::error('Admin cPanel verification failed', [
-            'identifier' => $identifier,
-            'error' => $e->getMessage()
-        ]);
-
-        return response()->json([
-            'success' => false,
-            'message' => $e->getMessage()
-        ], 500);
     }
-}
+
+    /**
+     * Show file manager login page (Only if user has verified, with WebFTP check)
+     */
+    public function fileManager($identifier)
+    {
+        $account = HostingAccount::where('username', $identifier)
+            ->orWhere('id', $identifier)
+            ->firstOrFail();
+
+        if ($account->status !== 'active') {
+            return back()->with('error', 'Account must be active to access file manager.');
+        }
+
+        // Check if user has verified cPanel access
+        if (!$account->cpanel_verified) {
+            return back()->with('error', 'User must verify their cPanel access first. Admins cannot access unverified accounts for security reasons.');
+        }
+
+        Log::info('Admin accessing file manager for verified account', [
+            'account_id' => $account->id,
+            'username' => $account->username,
+            'admin_id' => auth()->id()
+        ]);
+
+        // Check if WebFTP is enabled - redirect to WebFTP if available
+        if (WebFtpSetting::isEnabled()) {
+            return redirect()->route('webftp.index', $account->username);
+        }
+
+        // Use traditional file manager
+        return view('hosting.filemanager', [
+            'username' => $account->username,
+            'password' => $account->password,
+            'dir' => '/htdocs/'
+        ]);
+    }
 
 }

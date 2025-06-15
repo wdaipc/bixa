@@ -16,10 +16,53 @@ use Illuminate\Support\Facades\Auth;
 
 class TicketController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $tickets = Ticket::with(['user', 'category'])->latest()->paginate(10);
-        return view('admin.tickets.index', compact('tickets'));
+        $query = Ticket::with(['user', 'category']);
+        
+        // Filter by user ID if provided (for hosting account view)
+        if ($request->has('user_id') && !empty($request->user_id)) {
+            $query->where('user_id', $request->user_id);
+        }
+        
+        // Filter by status if provided
+        if ($request->has('status') && !empty($request->status)) {
+            $query->where('status', $request->status);
+        }
+        
+        // Filter by category if provided
+        if ($request->has('category') && !empty($request->category)) {
+            $query->where('category_id', $request->category);
+        }
+        
+        // Search in title and messages
+        if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhereHas('messages', function($messageQuery) use ($search) {
+                      $messageQuery->where('message', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('user', function($userQuery) use ($search) {
+                      $userQuery->where('email', 'like', "%{$search}%")
+                                ->orWhere('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+        
+        $tickets = $query->latest()->paginate(15);
+        
+        // Get filter data for dropdowns
+        $categories = Category::all();
+        $statuses = ['open', 'answered', 'pending', 'closed'];
+        
+        // Get user info if filtering by user
+        $filterUser = null;
+        if ($request->has('user_id')) {
+            $filterUser = User::find($request->user_id);
+        }
+        
+        return view('admin.tickets.index', compact('tickets', 'categories', 'statuses', 'filterUser'));
     }
 
     public function show(Ticket $ticket)

@@ -72,6 +72,7 @@
                                     <th>Domain</th>
                                     <th>Owner</th>
                                     <th>Status</th>
+                                    <th>Verification</th>
                                     <th>Created</th>
                                     <th class="text-end">Action</th>
                                 </tr>
@@ -91,10 +92,17 @@
                                                 {{ ucfirst($account->status) }}
                                             </span>
                                         @elseif($account->status === 'active')
-                                            <span class="badge bg-success">
-                                                <i data-feather="check-circle" class="font-size-14 align-middle me-1"></i>
-                                                Active
-                                            </span>
+                                            @if($account->cpanel_verified)
+                                                <span class="badge bg-success">
+                                                    <i data-feather="check-circle" class="font-size-14 align-middle me-1"></i>
+                                                    Active & Verified
+                                                </span>
+                                            @else
+                                                <span class="badge bg-warning">
+                                                    <i data-feather="shield" class="font-size-14 align-middle me-1"></i>
+                                                    Active (Unverified)
+                                                </span>
+                                            @endif
                                         @else
                                             <span class="badge bg-danger">
                                                 <i data-feather="x-circle" class="font-size-14 align-middle me-1"></i>
@@ -103,9 +111,31 @@
                                         @endif
 
                                         @if($account->admin_deactivated)
-                                            <span class="badge bg-dark">
+                                            <span class="badge bg-dark ms-1">
                                                 <i data-feather="shield" class="font-size-14 align-middle me-1"></i>
                                                 Admin
+                                            </span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if($account->status === 'active')
+                                            @if($account->cpanel_verified)
+                                                <span class="badge bg-success-subtle text-success">
+                                                    <i data-feather="check-circle" class="font-size-12 align-middle me-1"></i>
+                                                    Verified
+                                                </span>
+                                                <br><small class="text-muted">{{ $account->cpanel_verified_at?->format('M j, Y') }}</small>
+                                            @else
+                                                <span class="badge bg-warning-subtle text-warning">
+                                                    <i data-feather="alert-circle" class="font-size-12 align-middle me-1"></i>
+                                                    Pending Verification
+                                                </span>
+                                                <br><small class="text-muted">User must verify</small>
+                                            @endif
+                                        @else
+                                            <span class="badge bg-secondary-subtle text-secondary">
+                                                <i data-feather="minus-circle" class="font-size-12 align-middle me-1"></i>
+                                                N/A
                                             </span>
                                         @endif
                                     </td>
@@ -120,7 +150,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="8" class="text-center">No accounts found</td>
+                                    <td colspan="9" class="text-center">No accounts found</td>
                                 </tr>
                                 @endforelse
                             </tbody>

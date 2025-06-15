@@ -45,10 +45,17 @@
                                             @lang('translation.status_' . $account->status)
                                         </span>
                                     @elseif($account->status === 'active')
-                                        <span class="badge bg-success">
-                                            <i data-feather="check-circle" class="font-size-14 align-middle me-1"></i>
-                                            @lang('translation.status_active')
-                                        </span>
+                                        @if($account->cpanel_verified)
+                                            <span class="badge bg-success">
+                                                <i data-feather="check-circle" class="font-size-14 align-middle me-1"></i>
+                                                @lang('translation.status_active') & Verified
+                                            </span>
+                                        @else
+                                            <span class="badge bg-warning">
+                                                <i data-feather="shield" class="font-size-14 align-middle me-1"></i>
+                                                @lang('translation.status_active') (Unverified)
+                                            </span>
+                                        @endif
                                     @else
                                         <span class="badge bg-danger">
                                             <i data-feather="x-circle" class="font-size-14 align-middle me-1"></i>
@@ -64,10 +71,18 @@
                                     @endif
                                 </td>
                                 <td class="text-end">
+                                    @php
+                                        $btnClass = 'btn-danger'; // Default for inactive states
+                                        if ($account->status === 'active' && $account->cpanel_verified) {
+                                            $btnClass = 'btn-success';
+                                        } elseif ($account->status === 'active' && !$account->cpanel_verified) {
+                                            $btnClass = 'btn-warning';
+                                        } elseif (in_array($account->status, ['pending', 'deactivating', 'reactivating'])) {
+                                            $btnClass = 'btn-warning';
+                                        }
+                                    @endphp
                                     <a href="{{ route('hosting.view', $account->username) }}" 
-                                       class="btn btn-sm waves-effect waves-light
-                                       {{ $account->status === 'active' ? 'btn-success' : 
-                                          (in_array($account->status, ['pending', 'deactivating', 'reactivating']) ? 'btn-warning' : 'btn-danger') }}">
+                                       class="btn btn-sm waves-effect waves-light {{ $btnClass }}">
                                         <i data-feather="settings" class="font-size-14 align-middle me-1"></i>
                                         @lang('translation.Manage')
                                     </a>
@@ -85,6 +100,16 @@
                     @if(count($accounts) > 0)
                         <div class="mt-3">
                             <span class="badge bg-info">{{ count($accounts) }} / 3 @lang('translation.Free_accounts')</span>
+                            @php
+                                $verifiedCount = $accounts->where('status', 'active')->where('cpanel_verified', true)->count();
+                                $unverifiedCount = $accounts->where('status', 'active')->where('cpanel_verified', false)->count();
+                            @endphp
+                            @if($verifiedCount > 0)
+                                <span class="badge bg-success ms-1">{{ $verifiedCount }} Verified</span>
+                            @endif
+                            @if($unverifiedCount > 0)
+                                <span class="badge bg-warning ms-1">{{ $unverifiedCount }} Unverified</span>
+                            @endif
                         </div>
                     @endif
                 </div>

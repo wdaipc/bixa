@@ -46,9 +46,23 @@ body {
     transition: all 0.3s ease;
 }
 
-.stats-card:hover {
+.stats-card:not(.locked):hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(75,56,179,0.1);
+}
+
+.stats-card.locked {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.stats-card.locked .icon-box {
+    background: #6c757d !important;
+}
+
+.stats-card.locked:hover {
+    transform: none !important;
+    box-shadow: 0 1px 2px rgba(56,65,74,0.15) !important;
 }
 
 .stats-card::before {
@@ -94,6 +108,14 @@ body {
     border-radius: 8px;
     padding: 1rem;
     margin-bottom: 1.5rem;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+}
+
+.verification-banner.show {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .quick-action-card {
@@ -130,6 +152,147 @@ body {
 
 .quick-action-card:hover .icon-box {
     transform: scale(1.1);
+}
+
+/* Feature Locking Styles */
+.feature-locked .feature-btn {
+    position: relative;
+    opacity: 0.6;
+    cursor: not-allowed !important;
+    pointer-events: none;
+}
+
+.feature-locked .feature-btn::before {
+    content: "Verify cPanel first";
+    position: absolute;
+    top: -35px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #333;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 10;
+    pointer-events: auto;
+}
+
+.feature-locked .feature-btn:hover::before {
+    opacity: 1;
+}
+
+.disabled {
+    opacity: 0.6 !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+    text-decoration: none !important;
+}
+
+.disabled:hover {
+    opacity: 0.6 !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.quick-action-card.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+    background-color: #f8f9fa !important;
+    border-color: #e9ecef !important;
+}
+
+.quick-action-card.disabled .icon-box {
+    background: #6c757d !important;
+}
+
+.quick-action-card.disabled:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.database-section-locked, .statistics-section-locked, .account-section-locked, .ftp-section-locked {
+    position: relative;
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.database-section-locked::before, .statistics-section-locked::before, .account-section-locked::before, .ftp-section-locked::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    z-index: 10;
+}
+
+.database-section-locked::after {
+    content: "🔒 Verify cPanel to unlock database management";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff;
+    border: 2px solid #ffc107;
+    border-radius: 8px;
+    padding: 1rem 1.5rem;
+    font-weight: 600;
+    color: #856404;
+    z-index: 11;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.statistics-section-locked::after {
+    content: "📊 Verify cPanel to unlock usage statistics";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff;
+    border: 2px solid #ffc107;
+    border-radius: 8px;
+    padding: 1rem 1.5rem;
+    font-weight: 600;
+    color: #856404;
+    z-index: 11;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.account-section-locked::after {
+    content: "👤 Verify cPanel to unlock account details";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff;
+    border: 2px solid #ffc107;
+    border-radius: 8px;
+    padding: 1rem 1.5rem;
+    font-weight: 600;
+    color: #856404;
+    z-index: 11;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.ftp-section-locked::after {
+    content: "📁 Verify cPanel to unlock FTP details";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff;
+    border: 2px solid #ffc107;
+    border-radius: 8px;
+    padding: 1rem 1.5rem;
+    font-weight: 600;
+    color: #856404;
+    z-index: 11;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 .copy-field {
@@ -299,36 +462,6 @@ body {
     height: 1rem;
 }
 
-@media (max-width: 768px) {
-    .stats-card {
-        margin-bottom: 1rem;
-    }
-    
-    .quick-action-card {
-        margin-bottom: 0.75rem;
-    }
-    
-    .chart-container {
-        height: 220px;
-    }
-}
-
-.btn-soft-primary {
-    color: var(--minia-primary);
-    background-color: rgba(75,56,179,0.1);
-    border: 1px solid rgba(75,56,179,0.2);
-}
-
-.btn-soft-primary:hover {
-    background-color: var(--minia-primary);
-    color: white;
-}
-
-.table > :not(caption) > * > * {
-    padding: 0.75rem 1rem;
-    border-bottom-color: #e9ecef;
-}
-
 .status-badge {
     display: inline-flex;
     align-items: center;
@@ -352,6 +485,22 @@ body {
 .status-pending {
     background: rgba(255,185,2,0.1);
     color: var(--minia-warning);
+}
+
+.btn-soft-primary {
+    color: var(--minia-primary);
+    background-color: rgba(75,56,179,0.1);
+    border: 1px solid rgba(75,56,179,0.2);
+}
+
+.btn-soft-primary:hover {
+    background-color: var(--minia-primary);
+    color: white;
+}
+
+.table > :not(caption) > * > * {
+    padding: 0.75rem 1rem;
+    border-bottom-color: #e9ecef;
 }
 
 .timeline {
@@ -389,6 +538,32 @@ body {
 .accordion-button:focus {
     box-shadow: 0 0 0 0.25rem rgba(75,56,179,0.25);
 }
+
+@media (max-width: 768px) {
+    .stats-card {
+        margin-bottom: 1rem;
+    }
+    
+    .quick-action-card {
+        margin-bottom: 0.75rem;
+    }
+    
+    .chart-container {
+        height: 220px;
+    }
+    
+    .feature-locked .feature-btn::before {
+        content: "🔒 Verify cPanel";
+        top: -30px;
+        font-size: 11px;
+        padding: 3px 6px;
+    }
+    
+    .database-section-locked::after, .statistics-section-locked::after, .account-section-locked::after, .ftp-section-locked::after {
+        font-size: 0.875rem;
+        padding: 0.75rem 1rem;
+    }
+}
 </style>
 @endsection
 
@@ -400,7 +575,7 @@ body {
 
     {{-- 🔐 Verification Banner --}}
     @if($account->status === 'active' && !$account->cpanel_verified)
-    <div class="verification-banner">
+    <div id="verificationBanner" class="verification-banner">
         <div class="d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center">
                 <div class="me-3">
@@ -421,19 +596,62 @@ body {
     </div>
     @endif
 
+    {{-- Alert Messages --}}
+    @if(session()->has('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="ri-check-circle-line me-2"></i>
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    @if($errors->any())
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="ri-close-circle-line me-2"></i>
+            @foreach ($errors->all() as $error)
+                {{ $error }}<br>
+            @endforeach
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    {{-- Admin Deactivation Notice --}}
+    @if($account->admin_deactivated)
+    <div class="alert alert-danger">
+        <div class="d-flex">
+            <div class="flex-shrink-0 me-3">
+                <i class="ri-alert-octagon-line" style="font-size: 1.5rem;"></i>
+            </div>
+            <div class="flex-grow-1">
+                <h5 class="mt-0 mb-1">@lang('translation.admin_deactivated')</h5>
+                <p class="mb-0">@lang('translation.can_reactivated')</p>
+                <p class="mt-2 mb-0"><strong>@lang('translation.Reason'):</strong> {{ $account->admin_deactivation_reason }}</p>
+                <p class="mt-2 mb-0">@lang('translation.If_Questions') <a href="{{ route('user.tickets.create') }}" class="text-decoration-underline">{{ __('Open') . ' ' . __('Tickets') }}</a>.</p>
+            </div>
+        </div>
+    </div>
+    @endif
+
     {{-- 📊 Stats Grid --}}
     <div class="row mb-4">
-        {{-- Account Status --}}
+        {{-- Account Status with Verification Status --}}
         <div class="col-xl-3 col-md-6">
             <div class="stats-card">
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <div>
                         <p class="stats-label mb-2">Account Status</p>
                         @if($account->status === 'active')
-                            <span class="status-badge status-active">
-                                <i class="ri-check-circle-line me-1"></i>
-                                Active
-                            </span>
+                            @if($account->cpanel_verified)
+                                <span class="status-badge status-active">
+                                    <i class="ri-check-circle-line me-1"></i>
+                                    Active & Verified
+                                </span>
+                            @else
+                                <span class="status-badge status-pending">
+                                    <i class="ri-shield-keyhole-line me-1"></i>
+                                    Active (Unverified)
+                                </span>
+                            @endif
                         @elseif($account->status === 'suspended')
                             <span class="status-badge status-suspended">
                                 <i class="ri-close-circle-line me-1"></i>
@@ -460,13 +678,26 @@ body {
         {{-- Dynamic Stats Cards --}}
         @foreach(['disk', 'bandwidth', 'inodes'] as $index => $stat)
         <div class="col-xl-3 col-md-6">
-            <div class="stats-card" data-stat="{{ $stat }}" style="display: none;">
-                <div class="text-center">
-                    <div class="spinner-border spinner-border-sm text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
+            <div class="stats-card" data-stat="{{ $stat }}">
+                @if($account->status === 'active' && !$account->cpanel_verified)
+                    {{-- Locked State --}}
+                    <div class="text-center py-3">
+                        <div class="icon-box mb-3" style="background: #6c757d;">
+                            <i class="ri-lock-line"></i>
+                        </div>
+                        <h6 class="text-muted mb-2">{{ ucfirst($stat) }}</h6>
+                        <p class="text-muted small mb-2">🔒 Locked</p>
+                        <small class="text-muted">Verify cPanel to view</small>
                     </div>
-                    <p class="mt-2 mb-0 text-muted">Loading...</p>
-                </div>
+                @else
+                    {{-- Loading State --}}
+                    <div class="text-center">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2 mb-0 text-muted">Loading...</p>
+                    </div>
+                @endif
             </div>
         </div>
         @endforeach
@@ -482,10 +713,17 @@ body {
                             <i class="ri-apps-2-line me-2 text-primary"></i>
                             Quick Actions
                         </h5>
+                        @if(!$account->cpanel_verified && $account->status === 'active')
+                            <small class="text-warning">
+                                <i class="ri-lock-line me-1"></i>
+                                Login to cPanel to unlock all features
+                            </small>
+                        @endif
                     </div>
                 </div>
                 <div class="card-body">
                     <div class="row g-3">
+                        {{-- Control Panel - Always available if account is active --}}
                         <div class="col-lg-3 col-md-6">
                             <button type="button" 
                                     onclick="handleCpanelLogin()" 
@@ -494,15 +732,23 @@ body {
                                     <i class="ri-computer-line"></i>
                                 </div>
                                 <h6 class="fw-medium mb-1">Control Panel</h6>
-                                <p class="text-muted mb-0 small">Manage cPanel</p>
+                                <p class="text-muted mb-0 small">
+                                    @if($account->cpanel_verified)
+                                        Access cPanel
+                                    @else
+                                        Login & Verify
+                                    @endif
+                                </p>
                             </button>
                         </div>
 
-                        <div class="col-lg-3 col-md-6">
+                        {{-- File Manager - Locked until verified --}}
+                        <div class="col-lg-3 col-md-6 {{ (!$account->cpanel_verified && $account->status === 'active') ? 'feature-locked' : '' }}">
                             @if(App\Models\WebFtpSetting::isEnabled())
                                 <a href="{{ route('webftp.index', $account->username) }}"
                                    target="_blank"
-                                   class="quick-action-card {{ (!$account->cpanel_verified || $account->status !== 'active') ? 'disabled' : '' }}">
+                                   class="quick-action-card feature-btn {{ (!$account->cpanel_verified || $account->status !== 'active') ? 'disabled' : '' }}"
+                                   onclick="return checkVerification(event, 'File Manager')">
                                     <div class="icon-box">
                                         <i class="ri-folder-line"></i>
                                     </div>
@@ -512,7 +758,8 @@ body {
                             @else
                                 <a href="{{ route('hosting.filemanager', $account->username) }}"
                                    target="_blank"
-                                   class="quick-action-card {{ (!$account->cpanel_verified || $account->status !== 'active') ? 'disabled' : '' }}">
+                                   class="quick-action-card feature-btn {{ (!$account->cpanel_verified || $account->status !== 'active') ? 'disabled' : '' }}"
+                                   onclick="return checkVerification(event, 'File Manager')">
                                     <div class="icon-box">
                                         <i class="ri-folder-line"></i>
                                     </div>
@@ -522,10 +769,12 @@ body {
                             @endif
                         </div>
 
-                        <div class="col-lg-3 col-md-6">
+                        {{-- Softaculous - Locked until verified --}}
+                        <div class="col-lg-3 col-md-6 {{ (!$account->cpanel_verified && $account->status === 'active') ? 'feature-locked' : '' }}">
                             <a href="{{ route('hosting.softaculous', $account->username) }}" 
                                target="_blank"
-                               class="quick-action-card {{ (!$account->cpanel_verified || $account->status !== 'active') ? 'disabled' : '' }}">
+                               class="quick-action-card feature-btn {{ (!$account->cpanel_verified || $account->status !== 'active') ? 'disabled' : '' }}"
+                               onclick="return checkVerification(event, 'Softaculous')">
                                 <div class="icon-box">
                                     <i class="ri-archive-line"></i>
                                 </div>
@@ -534,7 +783,8 @@ body {
                             </a>
                         </div>
 
-                        <div class="col-lg-3 col-md-6">
+                        {{-- Settings/Actions - Conditional based on account status --}}
+                        <div class="col-lg-3 col-md-6 {{ (!$account->cpanel_verified && $account->status === 'active') ? 'feature-locked' : '' }}">
                             @if($account->status === 'deactivated')
                                 <a href="{{ route('hosting.reactivate', $account->username) }}"
                                    class="quick-action-card">
@@ -555,7 +805,8 @@ body {
                                 </a>
                             @else
                                 <a href="{{ route('hosting.settings', $account->username) }}"
-                                   class="quick-action-card {{ (!$account->cpanel_verified || $account->status !== 'active') ? 'disabled' : '' }}">
+                                   class="quick-action-card feature-btn {{ (!$account->cpanel_verified || $account->status !== 'active') ? 'disabled' : '' }}"
+                                   onclick="return checkVerification(event, 'Account Settings')">
                                     <div class="icon-box">
                                         <i class="ri-settings-line"></i>
                                     </div>
@@ -576,95 +827,126 @@ body {
         <div class="col-lg-8">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">Account Details</h5>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <h5 class="card-title mb-0">
+                            <i class="ri-user-line me-2 text-primary"></i>
+                            Account Details
+                        </h5>
+                        @if(!$account->cpanel_verified && $account->status === 'active')
+                            <span class="badge bg-warning-subtle text-warning">
+                                <i class="ri-lock-line me-1"></i>Locked
+                            </span>
+                        @endif
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Username</label>
-                            <div class="copy-field">
-                                <input type="text" 
-                                       value="{{ $account->status === 'active' ? $account->username : 'Loading...' }}" 
-                                       class="copy-input form-control" 
-                                       readonly 
-                                       onclick="copyToClipboard('{{ $account->username }}', this)">
+                <div class="card-body {{ (!$account->cpanel_verified && $account->status === 'active') ? 'account-section-locked' : '' }}">
+                    @if(!$account->cpanel_verified && $account->status === 'active')
+                        {{-- Verification Required Notice --}}
+                        <div class="text-center py-5">
+                            <div class="mb-4">
+                                <i class="ri-user-settings-line text-warning" style="font-size: 4rem; opacity: 0.5;"></i>
+                            </div>
+                            <h5 class="text-warning mb-3">Account Details Locked</h5>
+                            <p class="text-muted mb-4">
+                                Your account credentials and connection details are protected.<br>
+                                Verify your cPanel access to view sensitive information.
+                            </p>
+                            <button type="button" 
+                                    onclick="handleCpanelLogin()" 
+                                    class="btn btn-warning">
+                                <i class="ri-login-circle-line me-1"></i>
+                                Verify cPanel Access
+                            </button>
+                        </div>
+                    @else
+                        {{-- Account Details Content --}}
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Username</label>
+                                <div class="copy-field">
+                                    <input type="text" 
+                                           value="{{ $account->status === 'active' ? $account->username : 'Loading...' }}" 
+                                           class="copy-input form-control" 
+                                           readonly 
+                                           onclick="copyToClipboard('{{ $account->username }}', this)">
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Password</label>
+                                <div class="position-relative">
+                                    <input type="password" 
+                                           value="{{ $account->status === 'active' ? $account->password : '••••••••••••••' }}" 
+                                           id="password-field" 
+                                           class="form-control pe-5" 
+                                           readonly
+                                           onclick="copyToClipboard('{{ $account->password }}', this)"
+                                           style="cursor: pointer;">
+                                    <button type="button" 
+                                            class="btn btn-link position-absolute end-0 top-50 translate-middle-y border-0 text-muted"
+                                            onclick="togglePassword('password-field', this)"
+                                            style="z-index: 10; padding: 0.375rem 0.75rem;">
+                                        <i class="ri-eye-off-line"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Domain</label>
+                                <div class="copy-field">
+                                    <input type="text" 
+                                           value="{{ $account->domain }}" 
+                                           class="copy-input form-control" 
+                                           readonly 
+                                           onclick="copyToClipboard('{{ $account->domain }}', this)">
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Server IP</label>
+                                <div class="copy-field">
+                                    <input type="text" 
+                                           value="{{ $serverIp ?? 'N/A' }}" 
+                                           class="copy-input form-control" 
+                                           readonly 
+                                           onclick="copyToClipboard('{{ $serverIp ?? '' }}', this)">
+                                </div>
                             </div>
                         </div>
 
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Password</label>
-                            <div class="position-relative">
-                                <input type="password" 
-                                       value="{{ $account->status === 'active' ? $account->password : '••••••••••••••' }}" 
-                                       id="password-field" 
-                                       class="form-control pe-5" 
-                                       readonly
-                                       onclick="copyToClipboard('{{ $account->password }}', this)"
-                                       style="cursor: pointer;">
-                                <button type="button" 
-                                        class="btn btn-link position-absolute end-0 top-50 translate-middle-y border-0 text-muted"
-                                        onclick="togglePassword('password-field', this)"
-                                        style="z-index: 10; padding: 0.375rem 0.75rem;">
-                                    <i class="ri-eye-off-line"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Domain</label>
-                            <div class="copy-field">
-                                <input type="text" 
-                                       value="{{ $account->domain }}" 
-                                       class="copy-input form-control" 
-                                       readonly 
-                                       onclick="copyToClipboard('{{ $account->domain }}', this)">
-                            </div>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Server IP</label>
-                            <div class="copy-field">
-                                <input type="text" 
-                                       value="{{ $serverIp ?? 'N/A' }}" 
-                                       class="copy-input form-control" 
-                                       readonly 
-                                       onclick="copyToClipboard('{{ $serverIp ?? '' }}', this)">
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- Domain Actions --}}
-                    @if($account->status === 'active' && $account->cpanel_verified)
-                    <div class="mt-4">
-                        <label class="form-label fw-semibold">Quick Actions</label>
-                        <div class="d-flex flex-wrap gap-2">
-                            <a href="{{ route('hosting.builder', ['username' => $account->username, 'domain' => $account->domain]) }}"
-                               target="_blank"
-                               class="btn btn-primary btn-sm">
-                                <i class="ri-layout-line me-1"></i> SitePro
-                            </a>
-                            
-                            @if(App\Models\WebFtpSetting::isEnabled())
-                                <a href="{{ route('webftp.index', $account->username) }}"
+                        {{-- Domain Actions --}}
+                        @if($account->status === 'active' && $account->cpanel_verified)
+                        <div class="mt-4">
+                            <label class="form-label fw-semibold">Quick Actions</label>
+                            <div class="d-flex flex-wrap gap-2">
+                                <a href="{{ route('hosting.builder', ['username' => $account->username, 'domain' => $account->domain]) }}"
                                    target="_blank"
-                                   class="btn btn-info btn-sm">
-                                    <i class="ri-folder-line me-1"></i> Files
+                                   class="btn btn-primary btn-sm">
+                                    <i class="ri-layout-line me-1"></i> SitePro
                                 </a>
-                            @else
-                                <a href="{{ route('hosting.filemanager', $account->username) }}"
+                                
+                                @if(App\Models\WebFtpSetting::isEnabled())
+                                    <a href="{{ route('webftp.index', $account->username) }}"
+                                       target="_blank"
+                                       class="btn btn-info btn-sm">
+                                        <i class="ri-folder-line me-1"></i> Files
+                                    </a>
+                                @else
+                                    <a href="{{ route('hosting.filemanager', $account->username) }}"
+                                       target="_blank"
+                                       class="btn btn-info btn-sm">
+                                        <i class="ri-folder-line me-1"></i> Files
+                                    </a>
+                                @endif
+                                
+                                <a href="https://{{ $account->domain }}" 
                                    target="_blank"
-                                   class="btn btn-info btn-sm">
-                                    <i class="ri-folder-line me-1"></i> Files
+                                   class="btn btn-success btn-sm">
+                                    <i class="ri-external-link-line me-1"></i> Visit Website
                                 </a>
-                            @endif
-                            
-                            <a href="https://{{ $account->domain }}" 
-                               target="_blank"
-                               class="btn btn-success btn-sm">
-                                <i class="ri-external-link-line me-1"></i> Visit Website
-                            </a>
+                            </div>
                         </div>
-                    </div>
+                        @endif
                     @endif
                 </div>
             </div>
@@ -674,226 +956,284 @@ body {
         <div class="col-lg-4">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">FTP Details</h5>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <h5 class="card-title mb-0">
+                            <i class="ri-folder-transfer-line me-2 text-primary"></i>
+                            FTP Details
+                        </h5>
+                        @if(!$account->cpanel_verified && $account->status === 'active')
+                            <span class="badge bg-warning-subtle text-warning">
+                                <i class="ri-lock-line me-1"></i>Locked
+                            </span>
+                        @endif
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-12">
-                            <label class="form-label fw-semibold">Hostname</label>
-                            <div class="copy-field">
-                                <input type="text" 
-                                       value="ftpupload.net" 
-                                       class="copy-input form-control" 
-                                       readonly 
-                                       onclick="copyToClipboard('ftpupload.net', this)">
+                <div class="card-body {{ (!$account->cpanel_verified && $account->status === 'active') ? 'ftp-section-locked' : '' }}">
+                    @if(!$account->cpanel_verified && $account->status === 'active')
+                        {{-- Verification Required Notice --}}
+                        <div class="text-center py-5">
+                            <div class="mb-4">
+                                <i class="ri-folder-lock-line text-warning" style="font-size: 3rem; opacity: 0.5;"></i>
+                            </div>
+                            <h6 class="text-warning mb-3">FTP Access Locked</h6>
+                            <p class="text-muted mb-4 small">
+                                FTP credentials are protected until verification.
+                            </p>
+                            <button type="button" 
+                                    onclick="handleCpanelLogin()" 
+                                    class="btn btn-warning btn-sm">
+                                <i class="ri-login-circle-line me-1"></i>
+                                Verify Access
+                            </button>
+                        </div>
+                    @else
+                        {{-- FTP Details Content --}}
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Hostname</label>
+                                <div class="copy-field">
+                                    <input type="text" 
+                                           value="ftpupload.net" 
+                                           class="copy-input form-control" 
+                                           readonly 
+                                           onclick="copyToClipboard('ftpupload.net', this)">
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Username</label>
+                                <div class="copy-field">
+                                    <input type="text" 
+                                           value="{{ $account->username }}" 
+                                           class="copy-input form-control" 
+                                           readonly 
+                                           onclick="copyToClipboard('{{ $account->username }}', this)">
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Password</label>
+                                <div class="position-relative">
+                                    <input type="password" 
+                                           value="{{ $account->password }}" 
+                                           id="ftp-password-field" 
+                                           class="form-control pe-5" 
+                                           readonly
+                                           onclick="copyToClipboard('{{ $account->password }}', this)"
+                                           style="cursor: pointer;">
+                                    <button type="button" 
+                                            class="btn btn-link position-absolute end-0 top-50 translate-middle-y border-0 text-muted"
+                                            onclick="togglePassword('ftp-password-field', this)"
+                                            style="z-index: 10; padding: 0.375rem 0.75rem;">
+                                        <i class="ri-eye-off-line"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Port</label>
+                                <div class="copy-field">
+                                    <input type="text" 
+                                           value="21" 
+                                           class="copy-input form-control" 
+                                           readonly 
+                                           onclick="copyToClipboard('21', this)">
+                                </div>
                             </div>
                         </div>
 
-                        <div class="col-12">
-                            <label class="form-label fw-semibold">Username</label>
-                            <div class="copy-field">
-                                <input type="text" 
-                                       value="{{ $account->username }}" 
-                                       class="copy-input form-control" 
-                                       readonly 
-                                       onclick="copyToClipboard('{{ $account->username }}', this)">
-                            </div>
-                        </div>
-
-                        <div class="col-12">
-                            <label class="form-label fw-semibold">Password</label>
-                            <div class="position-relative">
-                                <input type="password" 
-                                       value="{{ $account->password }}" 
-                                       id="ftp-password-field" 
-                                       class="form-control pe-5" 
-                                       readonly
-                                       onclick="copyToClipboard('{{ $account->password }}', this)"
-                                       style="cursor: pointer;">
-                                <button type="button" 
-                                        class="btn btn-link position-absolute end-0 top-50 translate-middle-y border-0 text-muted"
-                                        onclick="togglePassword('ftp-password-field', this)"
-                                        style="z-index: 10; padding: 0.375rem 0.75rem;">
-                                    <i class="ri-eye-off-line"></i>
+                        <div class="mt-3">
+                            <div class="d-flex flex-wrap gap-2">
+                                <a href="https://filezilla-project.org/download.php?type=client" 
+                                   target="_blank"
+                                   class="btn btn-primary flex-fill">
+                                    <i class="ri-download-cloud-line me-1"></i> Download FileZilla
+                                </a>
+                                <button type="button"
+                                        class="btn btn-outline-secondary flex-fill"
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#ftpGuideModal">
+                                    <i class="ri-question-line me-1"></i> Guide
                                 </button>
                             </div>
                         </div>
-
-                        <div class="col-12">
-                            <label class="form-label fw-semibold">Port</label>
-                            <div class="copy-field">
-                                <input type="text" 
-                                       value="21" 
-                                       class="copy-input form-control" 
-                                       readonly 
-                                       onclick="copyToClipboard('21', this)">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="mt-3">
-                        <div class="d-flex flex-wrap gap-2">
-                            <a href="https://filezilla-project.org/download.php?type=client" 
-                               target="_blank"
-                               class="btn btn-primary flex-fill">
-                                <i class="ri-download-cloud-line me-1"></i> Download FileZilla
-                            </a>
-                            <button type="button"
-                                    class="btn btn-outline-secondary flex-fill"
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#ftpGuideModal">
-                                <i class="ri-question-line me-1"></i> Connection Guide
-                            </button>
-                        </div>
-                    </div>
+                    @endif
                 </div>
             </div>
         </div>
     </div>
 
     {{-- 🗄️ Database Management --}}
-@if($account->status === 'active' && $account->cpanel_verified)
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <div class="d-flex align-items-center justify-content-between">
-                    <h5 class="card-title mb-0">Database Management</h5>
-                    <button type="button" 
-                            onclick="syncDatabases()" 
-                            class="btn btn-soft-primary btn-sm"
-                            id="sync-databases-btn">
-                        <i class="ri-refresh-line me-1"></i> Sync
-                    </button>
-                </div>
-            </div>
-            
-            <div class="card-body">
-                {{-- Database Stats --}}
-                <div id="databaseStatsContainer">
-                    <div class="row g-3 mb-4">
-                        <div class="col-lg-3 col-md-6">
-                            <div class="db-stats-card">
-                                <div class="db-stats-value" id="db-used-count">
-                                    <div class="spinner-border spinner-border-sm text-primary" role="status">
-                                        <span class="visually-hidden">Loading...</span>
-                                    </div>
-                                </div>
-                                <div class="db-stats-label">Used</div>
-                            </div>
-                        </div>
-                        <div class="col-lg-3 col-md-6">
-                            <div class="db-stats-card">
-                                <div class="db-stats-value" id="db-max-count">
-                                    <div class="spinner-border spinner-border-sm text-primary" role="status">
-                                        <span class="visually-hidden">Loading...</span>
-                                    </div>
-                                </div>
-                                <div class="db-stats-label">Maximum</div>
-                            </div>
-                        </div>
-                        <div class="col-lg-3 col-md-6">
-                            <div class="db-stats-card">
-                                <div class="db-stats-value" id="db-available-count">
-                                    <div class="spinner-border spinner-border-sm text-primary" role="status">
-                                        <span class="visually-hidden">Loading...</span>
-                                    </div>
-                                </div>
-                                <div class="db-stats-label">Available</div>
-                            </div>
-                        </div>
-                        <div class="col-lg-3 col-md-6">
-                            <div class="db-stats-card">
-                                <div class="db-stats-value" id="db-usage-percent">
-                                    <div class="spinner-border spinner-border-sm text-primary" role="status">
-                                        <span class="visually-hidden">Loading...</span>
-                                    </div>
-                                </div>
-                                <div class="db-stats-label">Usage</div>
-                            </div>
-                        </div>
+    @if($account->status === 'active')
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <h5 class="card-title mb-0">
+                            <i class="ri-database-line me-2 text-primary"></i>
+                            Database Management
+                            @if(!$account->cpanel_verified)
+                                <span class="badge bg-warning-subtle text-warning ms-2">
+                                    <i class="ri-lock-line me-1"></i>Locked
+                                </span>
+                            @endif
+                        </h5>
+                        @if($account->cpanel_verified)
+                            <button type="button" 
+                                    onclick="syncDatabases()" 
+                                    class="btn btn-soft-primary btn-sm"
+                                    id="sync-databases-btn">
+                                <i class="ri-refresh-line me-1"></i> Sync
+                            </button>
+                        @endif
                     </div>
                 </div>
-
-                {{-- Create Database Form --}}
-                <div class="mb-4">
-                    <h6 class="fw-semibold mb-3">Create New Database</h6>
-                    
-                    {{-- Warning Alert for Limits --}}
-                    <div id="database-limit-alert" class="alert alert-warning d-none">
-                        <span class="glyphicon glyphicon-exclamation-sign"></span>
-                        <div class="alert-message">
-                            <span id="limit-message"></span>
-                        </div>
-                    </div>
-                    
-                    <form id="createDatabaseForm">
-                        @csrf
-                        <div class="row g-3">
-                            <div class="col-md-10">
-                                <label class="form-label small">Database Name</label>
-                                <div class="input-group">
-                                    <span class="form-prefix">{{ $account->username }}_</span>
-                                    <input type="text" 
-                                           id="databaseNameInput"
-                                           name="database_name"
-                                           class="form-control" 
-                                           placeholder="Enter database name"
-                                           maxlength="54"
-                                           pattern="[a-zA-Z0-9_]+"
-                                           autocomplete="off">
-                                </div>
-                                <div class="form-text">Only letters, numbers, and underscores allowed</div>
+                
+                <div class="card-body {{ !$account->cpanel_verified ? 'database-section-locked' : '' }}">
+                    @if(!$account->cpanel_verified)
+                        {{-- Verification Required Notice --}}
+                        <div class="text-center py-5">
+                            <div class="mb-4">
+                                <i class="ri-lock-line text-warning" style="font-size: 4rem; opacity: 0.5;"></i>
                             </div>
-                            <div class="col-md-2">
-                                <label class="form-label small text-transparent">Action</label>
-                                <button type="submit" class="btn btn-primary w-100" id="create-db-btn">
-                                    <span class="btn-text">
-                                        <i class="ri-add-line me-1"></i> Create Database
-                                    </span>
-                                    <span class="btn-loading d-none">
-                                        <div class="spinner-border spinner-border-sm me-1" role="status">
-                                            <span class="visually-hidden">Loading...</span>
+                            <h5 class="text-warning mb-3">Database Management Locked</h5>
+                            <p class="text-muted mb-4">
+                                You need to verify your cPanel access before you can manage databases.<br>
+                                Click the <strong>"Control Panel"</strong> button above to get started.
+                            </p>
+                            <button type="button" 
+                                    onclick="handleCpanelLogin()" 
+                                    class="btn btn-warning">
+                                <i class="ri-login-circle-line me-1"></i>
+                                Verify cPanel Access
+                            </button>
+                        </div>
+                    @else
+                        {{-- Database Stats --}}
+                        <div id="databaseStatsContainer">
+                            <div class="row g-3 mb-4">
+                                <div class="col-lg-3 col-md-6">
+                                    <div class="db-stats-card">
+                                        <div class="db-stats-value" id="db-used-count">
+                                            <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
                                         </div>
-                                        Creating...
-                                    </span>
-                                </button>
+                                        <div class="db-stats-label">Used</div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3 col-md-6">
+                                    <div class="db-stats-card">
+                                        <div class="db-stats-value" id="db-max-count">
+                                            <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                        </div>
+                                        <div class="db-stats-label">Maximum</div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3 col-md-6">
+                                    <div class="db-stats-card">
+                                        <div class="db-stats-value" id="db-available-count">
+                                            <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                        </div>
+                                        <div class="db-stats-label">Available</div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3 col-md-6">
+                                    <div class="db-stats-card">
+                                        <div class="db-stats-value" id="db-usage-percent">
+                                            <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                        </div>
+                                        <div class="db-stats-label">Usage</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </form>
-                </div>
 
-                {{-- Database List --}}
-                <div id="databaseList">
-                    <h6 class="fw-semibold mb-3">Current Databases</h6>
-                    <div class="table-responsive">
-                        <table class="table table-nowrap table-hover">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Database Name</th>
-                                    <th>Created</th>
-                                    <th>Size</th>
-                                    <th class="text-end">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="databaseTableBody">
-                                <tr>
-                                    <td colspan="4" class="text-center py-4">
-                                        <div class="spinner-border spinner-border-sm text-primary" role="status">
-                                            <span class="visually-hidden">Loading...</span>
+                        {{-- Create Database Form --}}
+                        <div class="mb-4">
+                            <h6 class="fw-semibold mb-3">Create New Database</h6>
+                            
+                            {{-- Warning Alert for Limits --}}
+                            <div id="database-limit-alert" class="alert alert-warning d-none">
+                                <i class="ri-alert-triangle-line me-2"></i>
+                                <span id="limit-message"></span>
+                            </div>
+                            
+                            <form id="createDatabaseForm">
+                                @csrf
+                                <div class="row g-3">
+                                    <div class="col-md-10">
+                                        <label class="form-label small">Database Name</label>
+                                        <div class="input-group">
+                                            <span class="form-prefix">{{ $account->username }}_</span>
+                                            <input type="text" 
+                                                   id="databaseNameInput"
+                                                   name="database_name"
+                                                   class="form-control" 
+                                                   placeholder="Enter database name"
+                                                   maxlength="54"
+                                                   pattern="[a-zA-Z0-9_]+"
+                                                   autocomplete="off">
                                         </div>
-                                        <p class="mt-2 mb-0 text-muted">Loading databases...</p>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                                        <div class="form-text">Only letters, numbers, and underscores allowed</div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small text-transparent">Action</label>
+                                        <button type="submit" class="btn btn-primary w-100" id="create-db-btn">
+                                            <span class="btn-text">
+                                                <i class="ri-add-line me-1"></i> Create Database
+                                            </span>
+                                            <span class="btn-loading d-none">
+                                                <div class="spinner-border spinner-border-sm me-1" role="status">
+                                                    <span class="visually-hidden">Loading...</span>
+                                                </div>
+                                                Creating...
+                                            </span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+
+                        {{-- Database List --}}
+                        <div id="databaseList">
+                            <h6 class="fw-semibold mb-3">Current Databases</h6>
+                            <div class="table-responsive">
+                                <table class="table table-nowrap table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Database Name</th>
+                                            <th>Created</th>
+                                            <th>Size</th>
+                                            <th class="text-end">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="databaseTableBody">
+                                        <tr>
+                                            <td colspan="4" class="text-center py-4">
+                                                <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                                    <span class="visually-hidden">Loading...</span>
+                                                </div>
+                                                <p class="mt-2 mb-0 text-muted">Loading databases...</p>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
     </div>
-</div>
-@endif
+    @endif
 
     {{-- 📊 Usage Statistics Charts --}}
     @if($account->status === 'active')
@@ -901,20 +1241,51 @@ body {
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">Usage Statistics (Last 30 days)</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row g-4">
-                        <div class="col-lg-4">
-                            <div class="chart-container" id="diskChart"></div>
-                        </div>
-                        <div class="col-lg-4">
-                            <div class="chart-container" id="bandwidthChart"></div>
-                        </div>
-                        <div class="col-lg-4">
-                            <div class="chart-container" id="inodesChart"></div>
-                        </div>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <h5 class="card-title mb-0">
+                            <i class="ri-line-chart-line me-2 text-primary"></i>
+                            Usage Statistics (Last 30 days)
+                            @if(!$account->cpanel_verified)
+                                <span class="badge bg-warning-subtle text-warning ms-2">
+                                    <i class="ri-lock-line me-1"></i>Locked
+                                </span>
+                            @endif
+                        </h5>
                     </div>
+                </div>
+                <div class="card-body {{ !$account->cpanel_verified ? 'statistics-section-locked' : '' }}">
+                    @if(!$account->cpanel_verified)
+                        {{-- Verification Required Notice --}}
+                        <div class="text-center py-5">
+                            <div class="mb-4">
+                                <i class="ri-bar-chart-line text-warning" style="font-size: 4rem; opacity: 0.5;"></i>
+                            </div>
+                            <h5 class="text-warning mb-3">Usage Statistics Locked</h5>
+                            <p class="text-muted mb-4">
+                                Detailed usage statistics and charts are available after cPanel verification.<br>
+                                Click the <strong>"Control Panel"</strong> button above to verify your access.
+                            </p>
+                            <button type="button" 
+                                    onclick="handleCpanelLogin()" 
+                                    class="btn btn-warning">
+                                <i class="ri-login-circle-line me-1"></i>
+                                Verify cPanel Access
+                            </button>
+                        </div>
+                    @else
+                        {{-- Charts Content --}}
+                        <div class="row g-4">
+                            <div class="col-lg-4">
+                                <div class="chart-container" id="diskChart"></div>
+                            </div>
+                            <div class="col-lg-4">
+                                <div class="chart-container" id="bandwidthChart"></div>
+                            </div>
+                            <div class="col-lg-4">
+                                <div class="chart-container" id="inodesChart"></div>
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -1063,67 +1434,6 @@ body {
                             </div>
                         </div>
                     </div>
-
-                    {{-- Common Issues --}}
-                    <div class="mb-3">
-                        <h6 class="fw-semibold mb-3">
-                            <i class="ri-error-warning-line me-2 text-warning"></i>
-                            Common Issues & Solutions
-                        </h6>
-                        <div class="accordion" id="ftpTroubleshooting">
-                            <div class="accordion-item">
-                                <h2 class="accordion-header" id="issue1">
-                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1">
-                                        Connection Timeout / Can't Connect
-                                    </button>
-                                </h2>
-                                <div id="collapse1" class="accordion-collapse collapse" data-bs-parent="#ftpTroubleshooting">
-                                    <div class="accordion-body">
-                                        <ul class="mb-0">
-                                            <li>Check your internet connection</li>
-                                            <li>Verify firewall settings (allow FTP on port 21)</li>
-                                            <li>Try switching to Passive Mode in FileZilla settings</li>
-                                            <li>Contact your ISP if they block FTP connections</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="accordion-item">
-                                <h2 class="accordion-header" id="issue2">
-                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse2">
-                                        Login Failed / Authentication Error
-                                    </button>
-                                </h2>
-                                <div id="collapse2" class="accordion-collapse collapse" data-bs-parent="#ftpTroubleshooting">
-                                    <div class="accordion-body">
-                                        <ul class="mb-0">
-                                            <li>Double-check your username and password (copy from above)</li>
-                                            <li>Ensure your hosting account is active</li>
-                                            <li>Wait a few minutes if you just created the account</li>
-                                            <li>Contact support if credentials are correct but still failing</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="accordion-item">
-                                <h2 class="accordion-header" id="issue3">
-                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse3">
-                                        Can't Upload Files
-                                    </button>
-                                </h2>
-                                <div id="collapse3" class="accordion-collapse collapse" data-bs-parent="#ftpTroubleshooting">
-                                    <div class="accordion-body">
-                                        <ul class="mb-0">
-                                            <li>Check if you have sufficient disk space</li>
-                                            <li>Ensure you're uploading to the correct directory (<code>/public_html</code>)</li>
-                                            <li>Verify file permissions and ownership</li>
-                                            <li>Try uploading smaller files first</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -1139,24 +1449,18 @@ body {
 
 @section('script')
 <script>
-// Configuration
-const HOSTING_CONFIG = {
-    CPANEL_VERIFY_KEY: 'cpanel_verify_{{ $account->username }}',
-    VERIFICATION_CHECK_INTERVAL: 5000,
-    accountUsername: '{{ $account->username }}',
-    accountStatus: '{{ $account->status }}',
-    isCpanelVerified: {{ $account->cpanel_verified ? 'true' : 'false' }},
-    csrfToken: '{{ csrf_token() }}'
-};
+// 🔧 Configuration and Global Variables
+const CPANEL_VERIFY_KEY = 'cpanel_verify_{{ $account->username }}';
+const VERIFICATION_CHECK_INTERVAL = 5000;
 let verificationCheckTimer = null;
 let isVerifying = false;
 let currentDatabaseStats = null;
 let charts = {};
 
 // Get account information
-const accountUsername = document.getElementById('accountUsername')?.value;
-const accountStatus = document.getElementById('accountStatus')?.value;
-const isCpanelVerified = document.getElementById('cpanelVerified')?.value === "1";
+const accountUsername = document.getElementById('accountUsername')?.value || '{{ $account->username }}';
+const accountStatus = document.getElementById('accountStatus')?.value || '{{ $account->status }}';
+const isCpanelVerified = document.getElementById('cpanelVerified')?.value === "1" || {{ $account->cpanel_verified ? 'true' : 'false' }};
 
 // 🔑 Password Toggle Functions
 function togglePassword(fieldId, button) {
@@ -1172,7 +1476,7 @@ function togglePassword(fieldId, button) {
     }
 }
 
-// 🖱️ Copy to Clipboard
+// 🖱️ Copy to Clipboard Functions
 function copyToClipboard(text, element) {
     if (!text || text === '••••••••' || text === 'Loading...' || text === 'N/A') {
         showToast('Nothing to copy', 'warning');
@@ -1222,6 +1526,7 @@ function showCopyAnimation(element) {
     }, 1000);
 }
 
+// 🎨 Toast Notification System
 function showToast(message, type = 'success') {
     const toast = document.getElementById('toast');
     const toastMessage = document.getElementById('toast-message');
@@ -1253,14 +1558,231 @@ function showToast(message, type = 'success') {
     }, 3000);
 }
 
-// 🔐 cPanel Login & Verification
+// 🔒 Feature Verification Check Functions
+function checkVerification(event, featureName = 'this feature') {
+    if (!isCpanelVerified && accountStatus === 'active') {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        Swal.fire({
+            title: 'Verification Required',
+            html: `
+                <div class="text-center">
+                    <i class="ri-lock-line text-warning" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                    <p>You need to verify your cPanel access before using <strong>${featureName}</strong>.</p>
+                    <p class="text-muted small">Click "Verify Now" to login to cPanel and unlock all features.</p>
+                    ${showFeaturePreview(featureName)}
+                </div>
+            `,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: '<i class="ri-login-circle-line me-1"></i> Verify Now',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#ffc107',
+            cancelButtonColor: '#6c757d',
+            reverseButtons: true,
+            customClass: {
+                popup: 'swal-wide'
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                handleCpanelLogin();
+            }
+        });
+        
+        return false;
+    }
+    
+    return true;
+}
+
+function showFeaturePreview(featureName) {
+    let previewContent = '';
+    
+    switch(featureName) {
+        case 'File Manager':
+            previewContent = `
+                <div class="text-start mt-3">
+                    <h6>📁 File Manager Features:</h6>
+                    <ul class="list-unstyled ms-3">
+                        <li>✅ Upload and download files</li>
+                        <li>✅ Create and edit folders</li>
+                        <li>✅ Edit code files online</li>
+                        <li>✅ Set file permissions</li>
+                        <li>✅ Extract ZIP archives</li>
+                    </ul>
+                </div>
+            `;
+            break;
+        case 'Softaculous':
+            previewContent = `
+                <div class="text-start mt-3">
+                    <h6>🚀 Softaculous Apps:</h6>
+                    <ul class="list-unstyled ms-3">
+                        <li>✅ WordPress - Blog & CMS</li>
+                        <li>✅ Joomla - Content Management</li>
+                        <li>✅ phpMyAdmin - Database Manager</li>
+                        <li>✅ 400+ other applications</li>
+                        <li>✅ One-click installation</li>
+                    </ul>
+                </div>
+            `;
+            break;
+        case 'Database Management':
+            previewContent = `
+                <div class="text-start mt-3">
+                    <h6>🗄️ Database Features:</h6>
+                    <ul class="list-unstyled ms-3">
+                        <li>✅ Create MySQL databases</li>
+                        <li>✅ Manage database users</li>
+                        <li>✅ phpMyAdmin access</li>
+                        <li>✅ Import/Export data</li>
+                        <li>✅ Real-time usage stats</li>
+                    </ul>
+                </div>
+            `;
+            break;
+        case 'Usage Statistics':
+            previewContent = `
+                <div class="text-start mt-3">
+                    <h6>📊 Statistics Features:</h6>
+                    <ul class="list-unstyled ms-3">
+                        <li>✅ Real-time disk usage charts</li>
+                        <li>✅ Bandwidth usage tracking</li>
+                        <li>✅ Inodes usage monitoring</li>
+                        <li>✅ 30-day historical data</li>
+                        <li>✅ Interactive data visualization</li>
+                    </ul>
+                </div>
+            `;
+            break;
+        case 'Account Details':
+            previewContent = `
+                <div class="text-start mt-3">
+                    <h6>👤 Account Details Features:</h6>
+                    <ul class="list-unstyled ms-3">
+                        <li>✅ Username and password access</li>
+                        <li>✅ Domain information</li>
+                        <li>✅ Server IP details</li>
+                        <li>✅ One-click copy credentials</li>
+                        <li>✅ Quick action buttons</li>
+                    </ul>
+                </div>
+            `;
+            break;
+        case 'FTP Details':
+            previewContent = `
+                <div class="text-start mt-3">
+                    <h6>📁 FTP Access Features:</h6>
+                    <ul class="list-unstyled ms-3">
+                        <li>✅ FTP hostname and credentials</li>
+                        <li>✅ FileZilla download links</li>
+                        <li>✅ Connection setup guide</li>
+                        <li>✅ Copy credentials to clipboard</li>
+                        <li>✅ Port and security settings</li>
+                    </ul>
+                </div>
+            `;
+            break;
+        case 'Disk Statistics':
+        case 'Bandwidth Statistics':
+        case 'Inodes Statistics':
+            previewContent = `
+                <div class="text-start mt-3">
+                    <h6>📊 ${featureName} Features:</h6>
+                    <ul class="list-unstyled ms-3">
+                        <li>✅ Real-time usage monitoring</li>
+                        <li>✅ Historical usage trends</li>
+                        <li>✅ Usage percentage calculations</li>
+                        <li>✅ Limit and quota tracking</li>
+                        <li>✅ Visual progress indicators</li>
+                    </ul>
+                </div>
+            `;
+            break;
+        default:
+            previewContent = `<p class="mt-3">This feature will be available after cPanel verification.</p>`;
+    }
+    
+    return previewContent;
+}
+
+function preventLockedAction(event, featureName = 'this feature') {
+    if (!isCpanelVerified && accountStatus === 'active') {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        showToast(`Verify cPanel access to use ${featureName}`, 'warning');
+        
+        // Show verification modal after a short delay
+        setTimeout(() => {
+            checkVerification({ preventDefault: () => {}, stopPropagation: () => {} }, featureName);
+        }, 500);
+        
+        return false;
+    }
+    return true;
+}
+
+function updateFeatureLockStates() {
+    console.log('🔓 Updating feature lock states...');
+    
+    // Remove disabled classes
+    document.querySelectorAll('.disabled').forEach(el => {
+        if (!el.classList.contains('permanent-disabled')) {
+            el.classList.remove('disabled');
+        }
+    });
+    
+    // Remove feature-locked classes
+    document.querySelectorAll('.feature-locked').forEach(el => {
+        el.classList.remove('feature-locked');
+    });
+    
+    // Remove locked classes from stats cards
+    document.querySelectorAll('[data-stat]').forEach(card => {
+        card.classList.remove('locked');
+    });
+    
+    // Remove all section locks
+    const lockedSections = [
+        '.database-section-locked',
+        '.statistics-section-locked', 
+        '.account-section-locked',
+        '.ftp-section-locked'
+    ];
+    
+    lockedSections.forEach(selector => {
+        const section = document.querySelector(selector);
+        if (section) {
+            section.classList.remove(selector.substring(1)); // Remove the '.' from selector
+        }
+    });
+    
+    // Update quick action text
+    const controlPanelCard = document.querySelector('.quick-action-card p');
+    if (controlPanelCard && controlPanelCard.textContent.includes('Login & Verify')) {
+        controlPanelCard.textContent = 'Access cPanel';
+    }
+    
+    // Show success message
+    showToast('All features unlocked! 🎉', 'success');
+}
+
+// 🔐 cPanel Login & Verification System
 function handleCpanelLogin() {
+    console.log('🔐 Handling cPanel login...');
+    
     if (isCpanelVerified) {
+        console.log('✅ Already verified, opening cPanel');
         window.open("{{ route('hosting.cpanel', $account->username) }}", '_blank');
         return;
     }
     
-    if (isVerifying) return;
+    if (isVerifying) {
+        console.log('⏳ Verification already in progress');
+        return;
+    }
 
     isVerifying = true;
     localStorage.setItem(CPANEL_VERIFY_KEY, '1');
@@ -1268,19 +1790,30 @@ function handleCpanelLogin() {
     const cpanelWindow = window.open("{{ route('hosting.cpanel', $account->username) }}", '_blank');
     
     if (cpanelWindow) {
+        console.log('🚀 cPanel window opened, starting verification check');
+        
         Swal.fire({
             title: 'cPanel Login',
-            text: 'Please wait while we verify your access...',
+            html: `
+                <div class="text-center">
+                    <div class="spinner-border text-primary mb-3" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p>Please wait while we verify your access...</p>
+                    <small class="text-muted">This window will automatically close once verification is complete.</small>
+                </div>
+            `,
             icon: 'info',
             allowOutsideClick: false,
             showConfirmButton: false,
-            didOpen: () => {
-                Swal.showLoading();
+            customClass: {
+                popup: 'swal-wide'
             }
         });
 
         startVerificationCheck();
     } else {
+        console.log('❌ Failed to open cPanel window');
         isVerifying = false;
         Swal.fire({
             title: 'Popup Blocked',
@@ -1293,6 +1826,7 @@ function handleCpanelLogin() {
 function startVerificationCheck() {
     if (!isVerifying) return;
     
+    console.log('🔄 Starting verification check timer');
     checkVerificationStatus();
     verificationCheckTimer = setInterval(checkVerificationStatus, VERIFICATION_CHECK_INTERVAL);
 }
@@ -1303,7 +1837,12 @@ function checkVerificationStatus() {
         return;
     }
 
-    fetch(`/hosting/${accountUsername}/verify-cpanel`, {
+    console.log('🔍 Checking verification status...');
+    
+    // Use proper route helper instead of hard-coded URL
+    const verifyUrl = "{{ route('hosting.verify-cpanel', ':username') }}".replace(':username', accountUsername);
+    
+    fetch(verifyUrl, {
         method: 'POST',
         headers: {
             'X-CSRF-TOKEN': '{{ csrf_token() }}',
@@ -1311,42 +1850,84 @@ function checkVerificationStatus() {
             'Content-Type': 'application/json'
         }
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
     .then(data => {
+        console.log('📡 Verification response:', data);
         if (data.success) {
             handleVerificationSuccess();
         }
     })
     .catch(error => {
-        console.error('Verification failed:', error);
+        console.error('❌ Verification failed:', error);
+        // Don't stop verification on network errors, just log them
     });
 }
 
 function handleVerificationSuccess() {
+    console.log('🎉 Verification successful!');
+    
     clearInterval(verificationCheckTimer);
     localStorage.removeItem(CPANEL_VERIFY_KEY);
     isVerifying = false;
 
     Swal.fire({
         title: 'Verification Successful!',
-        text: 'cPanel verified! All features are now unlocked.',
+        html: `
+            <div class="text-center">
+                <i class="ri-check-circle-line text-success" style="font-size: 4rem; margin-bottom: 1rem;"></i>
+                <p><strong>cPanel verified successfully!</strong></p>
+                <p class="text-muted">All features are now unlocked and ready to use.</p>
+            </div>
+        `,
         icon: 'success',
-        confirmButtonText: 'Continue'
+        confirmButtonText: 'Continue',
+        confirmButtonColor: '#28a745',
+        timer: 3000,
+        timerProgressBar: true
     }).then((result) => {
-        if (result.isConfirmed) {
+        // Update global verification state
+        window.isCpanelVerified = true;
+        
+        // Update feature lock states
+        updateFeatureLockStates();
+        
+        // Load charts now that verification is complete
+        loadAccountStats();
+        
+        // Reload page after a short delay to ensure all states are updated
+        setTimeout(() => {
             location.reload();
-        }
+        }, 1000);
     });
 }
 
-// 📊 Load Account Statistics
+// 📊 Account Statistics Management
 function loadAccountStats() {
-    fetch(`/hosting/${accountUsername}/all-stats`)
+    // Only load stats if cPanel is verified
+    if (!isCpanelVerified && accountStatus === 'active') {
+        console.log('⚠️ Stats not loaded - cPanel not verified');
+        return;
+    }
+    
+    const statsUrl = "{{ route('hosting.all-stats', ':username') }}".replace(':username', accountUsername);
+    
+    fetch(statsUrl)
         .then(response => response.json())
         .then(data => {
             if (data.success) {
                 updateStatsCards(data.stats);
-                initializeCharts(data.chart_data || {});
+                
+                // Only initialize charts if cPanel is verified
+                if (isCpanelVerified) {
+                    initializeCharts(data.chart_data || {});
+                } else {
+                    console.log('⚠️ Charts not loaded - cPanel not verified');
+                }
             } else {
                 showStatsError(data.message);
             }
@@ -1386,7 +1967,9 @@ function updateStatsCards(stats) {
         const unit = data.unit || '';
         const percent = data.percent || 0;
 
-        card.style.display = 'block';
+        // Remove locked class if it exists
+        card.classList.remove('locked');
+        
         card.innerHTML = `
             <div class="d-flex justify-content-between align-items-start">
                 <div>
@@ -1421,7 +2004,7 @@ function showStatsError(message) {
     });
 }
 
-// 📊 Chart Functions
+// 📊 Chart Management System
 function initializeCharts(chartData) {
     const chartTypes = [
         { key: 'diskspace', id: 'diskChart', title: 'Disk Usage', unit: 'MB', color: '#4B38B3' },
@@ -1496,9 +2079,11 @@ function initializeCharts(chartData) {
     });
 }
 
-// 🗄️ Enhanced Database Management Functions
+// 🗄️ Database Management Functions
 function loadDatabases() {
-    fetch(`/hosting/${HOSTING_CONFIG.accountUsername}/databases`, {
+    const databasesUrl = "{{ route('hosting.databases', ':username') }}".replace(':username', accountUsername);
+    
+    fetch(databasesUrl, {
         method: 'GET',
         headers: {
             'Accept': 'application/json',
@@ -1609,7 +2194,6 @@ function updateDatabasesList(databases) {
     }
 }
 
-// Enhanced Create Database with Loading States
 async function createDatabase() {
     const form = document.getElementById('createDatabaseForm');
     const formData = new FormData(form);
@@ -1640,10 +2224,10 @@ async function createDatabase() {
     btnLoading.classList.remove('d-none');
     
     try {
-        const response = await fetch(`/hosting/${HOSTING_CONFIG.accountUsername}/databases`, {
+        const response = await fetch(`/hosting/${accountUsername}/databases`, {
             method: 'POST',
             headers: {
-                'X-CSRF-TOKEN': HOSTING_CONFIG.csrfToken,
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
                 'Accept': 'application/json'
             },
             body: formData
@@ -1670,7 +2254,6 @@ async function createDatabase() {
     }
 }
 
-// Enhanced Delete Database with Loading States
 async function deleteDatabase(dbName) {
     const result = await Swal.fire({
         title: 'Are you sure?',
@@ -1683,10 +2266,10 @@ async function deleteDatabase(dbName) {
         showLoaderOnConfirm: true,
         preConfirm: async () => {
             try {
-                const response = await fetch(`/hosting/${HOSTING_CONFIG.accountUsername}/databases`, {
+                const response = await fetch(`/hosting/${accountUsername}/databases`, {
                     method: 'DELETE',
                     headers: {
-                        'X-CSRF-TOKEN': HOSTING_CONFIG.csrfToken,
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
                         'Content-Type': 'application/json',
                         'Accept': 'application/json'
                     },
@@ -1713,9 +2296,7 @@ async function deleteDatabase(dbName) {
     }
 }
 
-// Enhanced phpMyAdmin with Loading State
 function openPhpMyAdmin(dbName) {
-    const btnId = `phpmyadmin-btn-${dbName}`;
     const btn = document.querySelector(`[onclick="openPhpMyAdmin('${dbName}')"]`);
     
     if (btn) {
@@ -1724,10 +2305,10 @@ function openPhpMyAdmin(dbName) {
         btn.disabled = true;
     }
     
-    fetch(`/hosting/${HOSTING_CONFIG.accountUsername}/phpmyadmin-link`, {
+    fetch(`/hosting/${accountUsername}/phpmyadmin-link`, {
         method: 'POST',
         headers: {
-            'X-CSRF-TOKEN': HOSTING_CONFIG.csrfToken,
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
             'Content-Type': 'application/json',
             'Accept': 'application/json'
         },
@@ -1754,7 +2335,6 @@ function openPhpMyAdmin(dbName) {
     });
 }
 
-// Enhanced Sync with Loading State
 async function syncDatabases() {
     const syncBtn = document.getElementById('sync-databases-btn');
     const originalHTML = syncBtn.innerHTML;
@@ -1763,10 +2343,10 @@ async function syncDatabases() {
     syncBtn.disabled = true;
     
     try {
-        const response = await fetch(`/hosting/${HOSTING_CONFIG.accountUsername}/databases-sync`, {
+        const response = await fetch(`/hosting/${accountUsername}/databases-sync`, {
             method: 'POST',
             headers: {
-                'X-CSRF-TOKEN': HOSTING_CONFIG.csrfToken,
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
                 'Accept': 'application/json',
                 'Content-Type': 'application/json'
             }
@@ -1790,65 +2370,186 @@ async function syncDatabases() {
     }
 }
 
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', function() {
-    // Database form handling
-    const dbForm = document.getElementById('createDatabaseForm');
-    if (dbForm) {
-        dbForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            await createDatabase();
+// 🔒 Feature Lock Initialization
+function initializeFeatureLocks() {
+    console.log('🔒 Initializing feature locks...');
+    console.log('Account status:', accountStatus);
+    console.log('cPanel verified:', isCpanelVerified);
+    
+    if (accountStatus === 'active' && !isCpanelVerified) {
+        console.log('⚠️ Account active but cPanel not verified - applying locks');
+        
+        // Add locked class to stats cards and click listeners
+        document.querySelectorAll('[data-stat]').forEach(card => {
+            card.classList.add('locked');
+            card.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const statType = this.getAttribute('data-stat');
+                const featureName = `${statType.charAt(0).toUpperCase() + statType.slice(1)} Statistics`;
+                checkVerification(e, featureName);
+            });
         });
+        
+        // Add click event listeners to locked features
+        document.querySelectorAll('.feature-locked .feature-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                const featureName = this.querySelector('h6')?.textContent || 'this feature';
+                return checkVerification(e, featureName);
+            });
+        });
+        
+        // Add form submission prevention for database forms
+        const dbForm = document.getElementById('createDatabaseForm');
+        if (dbForm) {
+            dbForm.addEventListener('submit', function(e) {
+                return preventLockedAction(e, 'Database Management');
+            });
+        }
+        
+        // Add click listeners for locked sections
+        const lockedSections = [
+            { selector: '.statistics-section-locked', name: 'Usage Statistics' },
+            { selector: '.account-section-locked', name: 'Account Details' },
+            { selector: '.ftp-section-locked', name: 'FTP Details' }
+        ];
+        
+        lockedSections.forEach(section => {
+            const element = document.querySelector(section.selector);
+            if (element) {
+                element.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    checkVerification(e, section.name);
+                });
+            }
+        });
+        
+        // Show warning in verification banner if exists
+        const banner = document.getElementById('verificationBanner');
+        if (banner) {
+            banner.style.display = 'block';
+        }
+    } else {
+        console.log('✅ Account verified or not active - no locks needed');
     }
+}
 
-    // Load data if account is active and verified
-    if (HOSTING_CONFIG.accountStatus === 'active' && HOSTING_CONFIG.isCpanelVerified) {
-        loadDatabases();
-    }
-});
-
-// Utility Functions
+// 🛠️ Utility Functions
 function formatNumber(num) {
     if (typeof num !== 'number') return num || '0';
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
-// Initialize Everything
+function isMobileDevice() {
+    return window.innerWidth <= 768;
+}
+
+// 🚀 Main Initialization
 document.addEventListener('DOMContentLoaded', function() {
-    // Database form handling
+    console.log('🚀 Initializing hosting management...');
+    console.log('Account status:', accountStatus);
+    console.log('cPanel verified:', isCpanelVerified);
+    
+    // Initialize feature locks first
+    initializeFeatureLocks();
+    
+    // Database form handling - with verification check
     const dbForm = document.getElementById('createDatabaseForm');
     if (dbForm) {
         dbForm.addEventListener('submit', async function(e) {
             e.preventDefault();
+            
+            // Check verification before allowing database creation
+            if (!isCpanelVerified && accountStatus === 'active') {
+                return preventLockedAction(e, 'Database Management');
+            }
+            
             await createDatabase();
         });
     }
 
-    // Load data if account is active
+    // Load data based on account status and verification
     if (accountStatus === 'active') {
-        // Always load account stats (includes database limits)
-        loadAccountStats();
-        
         if (isCpanelVerified) {
-            // Load database list only if verified
+            console.log('✅ Account verified - loading all features');
+            // Load account stats (includes disk, bandwidth, inodes)
+            loadAccountStats();
+            // Load database list and charts
             loadDatabases();
         } else {
-            // Show database info without list if not verified
-            updateDatabaseInfo(0, 1); // Default for free hosting
+            console.log('⚠️ Account not verified - stats and features locked');
             
+            // Check for pending verification
             const hasVerifyFlag = localStorage.getItem(CPANEL_VERIFY_KEY);
             if (hasVerifyFlag) {
+                console.log('🔄 Found pending verification, resuming...');
                 isVerifying = true;
                 startVerificationCheck();
             }
+            
+            // Show verification reminder after a delay
+            setTimeout(() => {
+                const banner = document.getElementById('verificationBanner');
+                if (banner) {
+                    banner.classList.add('show');
+                }
+                
+                // Show a gentle reminder toast
+                showToast('💡 Tip: Login to cPanel to unlock all features', 'info');
+            }, 2000);
         }
+    } else {
+        console.log('❌ Account not active - no data loading');
+    }
+    
+    // Add global click handler for disabled elements
+    document.addEventListener('click', function(e) {
+        const disabledElement = e.target.closest('.disabled');
+        if (disabledElement) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (accountStatus !== 'active') {
+                showToast('Account must be active to use this feature', 'warning');
+            } else if (!isCpanelVerified) {
+                showToast('Please verify cPanel access first', 'warning');
+            }
+            
+            return false;
+        }
+    });
+    
+    // Add hover effect for locked features on desktop
+    if (!isMobileDevice()) {
+        document.querySelectorAll('.feature-locked').forEach(container => {
+            let hoverTimeout;
+            container.addEventListener('mouseenter', function() {
+                if (!isCpanelVerified && accountStatus === 'active') {
+                    hoverTimeout = setTimeout(() => {
+                        showToast('🔒 Verify cPanel to unlock this feature', 'info');
+                    }, 1000);
+                }
+            });
+            
+            container.addEventListener('mouseleave', function() {
+                if (hoverTimeout) {
+                    clearTimeout(hoverTimeout);
+                }
+            });
+        });
     }
 });
 
-// Cleanup
+// 🔄 Cleanup
 window.addEventListener('beforeunload', () => {
     if (verificationCheckTimer) {
         clearInterval(verificationCheckTimer);
+    }
+    
+    // Clean up any verification flags
+    if (isVerifying) {
+        localStorage.removeItem(CPANEL_VERIFY_KEY);
     }
 });
 </script>
