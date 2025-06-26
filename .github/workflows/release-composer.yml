@@ -1,17 +1,20 @@
-
-name: 📦 构建并发布（Composer / 官方包）
+name: 📦 构建并发布 (Composer / 官方包)
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: '版本号（例如：2.0.2）'
+        description: '版本号 (例如: 2.0.2)'
         required: true
       use_official:
         description: '是否使用官方发布包（来自 bixacloud 仓库）？'
         type: boolean
         required: false
         default: false
+      php_version:
+        description: 'PHP 版本'
+        required: false
+        default: '8.3.19'
 
 jobs:
   build-and-release:
@@ -21,7 +24,7 @@ jobs:
       - name: 🧰 准备构建目录
         run: mkdir workspace
 
-      - name: 🌐 下载并解压官方包（如果选择）
+      - name: 🌐 下载并解压官方包 (如果选择)
         if: ${{ github.event.inputs.use_official == 'true' }}
         run: |
           echo "✅ 使用官方包版本 v${{ github.event.inputs.version }}"
@@ -38,11 +41,11 @@ jobs:
       - name: ⚙️ 安装 PHP 与 Composer
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
+          php-version: ${{ github.event.inputs.php_version }}
           extensions: mbstring, zip, intl
           tools: composer
 
-      - name: 📦 安装生产环境依赖（Composer）
+      - name: 📦 安装生产环境依赖 (Composer)
         working-directory: workspace
         run: composer install --no-dev --optimize-autoloader
 
@@ -61,11 +64,12 @@ jobs:
       - name: 🚀 发布 Release 到 GitHub
         uses: softprops/action-gh-release@v2
         with:
-          name: 📦 bixa v${{ github.event.inputs.version }}（composer 构建）
+          name: 📦 bixa v${{ github.event.inputs.version }} (composer 构建)
           tag_name: v${{ github.event.inputs.version }}-composer
           files: bixa-v${{ github.event.inputs.version }}-composer.zip
           body: |
-            🎉 发布版本：v${{ github.event.inputs.version }}
-            🔧 构建方式：${{ github.event.inputs.use_official == 'true' && '官方源码包' || '当前仓库源码' }}
+            🎉 发布版本: v${{ github.event.inputs.version }}
+            🔧 构建方式: ${{ github.event.inputs.use_official == 'true' && '官方源码包' || '当前仓库源码' }}
+            🐘 PHP 版本: ${{ github.event.inputs.php_version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
