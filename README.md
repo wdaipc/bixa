@@ -13,7 +13,7 @@
 Bixa is a comprehensive hosting account and support management system designed primarily for MOFH (MyOwnFreeHost). Built with Laravel 11, it provides a robust platform for managing hosting accounts, support tickets, SSL certificates, and more.
 
 [![License](https://img.shields.io/badge/License-GPL_2.0-orange)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-v2.0.1-informational)](https://github.com/bixacloud/bixa/releases/latest)
+[![Version](https://img.shields.io/badge/Version-v2.0.2-informational)](https://github.com/bixacloud/bixa/releases/latest)
 ![Build](https://img.shields.io/badge/Build-Passed-brightgreen)
 ![Framework](https://img.shields.io/badge/Framework-Laravel_11-red)
 ![Interface](https://img.shields.io/badge/Interface-Tabler-lightgreen)
