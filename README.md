@@ -4,9 +4,7 @@
 
 # Bixa - Hosting Management Platform
 
-> **Note:**  
-> **Development is active again!**
-> A bugfix release is coming to address currently known issues.
+> **Note: Development is currently paused !**
 > Pull requests are welcome and will still be accepted. If you want to see a feature, feel free to contribute it.
 
 ## 👀 What is Bixa?
@@ -17,7 +15,7 @@ Bixa is a comprehensive hosting account and support management system designed p
 ![Build](https://img.shields.io/badge/Build-Passed-brightgreen)
 ![Framework](https://img.shields.io/badge/Framework-Laravel_11-red)
 ![Interface](https://img.shields.io/badge/Interface-Tabler-lightgreen)
-![Development](https://img.shields.io/badge/Development-Active-brightgreen)
+![Development](https://img.shields.io/badge/Development-Paused-brightgreen)
 
 ### 🎮 User Features
 - **Dashboard**: Central hub with account overview and quick service access
