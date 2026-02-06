@@ -5,7 +5,6 @@
 # Bixa - Hosting Management Platform
 
 > **Development is currently on hold as the team is working on the BIXA Upgrade, now branded as Znode.**
-> Pull requests are welcome and will still be accepted. If you want to see a feature, feel free to contribute it.
 
 ## 👀 What is Bixa?
 Bixa is a comprehensive hosting account and support management system designed primarily for MOFH (MyOwnFreeHost). Built with Laravel 11, it provides a robust platform for managing hosting accounts, support tickets, SSL certificates, and more.
