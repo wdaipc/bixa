@@ -4,7 +4,7 @@
 
 # Bixa - Hosting Management Platform
 
-> **Note: Development is currently paused !**
+> **Development is currently on hold as the team is working on the BIXA Upgrade, now branded as Znode.**
 > Pull requests are welcome and will still be accepted. If you want to see a feature, feel free to contribute it.
 
 ## 👀 What is Bixa?
